@@ -33,7 +33,7 @@ export const OrganizationRoute = ({ children }: PropsWithChildren) => {
       dispatch(trackers.actions.setMainTracker({ id: trackerConfigForOrgId.id }));
     } else {
       // otherwise create a new default tracker and set it as main
-      const defaultTracker = getDefaultTracker(persistedCurrentOrgId);
+      const defaultTracker = getDefaultTracker(persistedCurrentOrgId, false);
       dispatch(trackers.actions.upsertTracker({ nextTracker: defaultTracker }));
       dispatch(trackers.actions.setMainTracker({ id: defaultTracker.id }));
     }

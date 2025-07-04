@@ -9,7 +9,7 @@ import { TTrackerConfig } from 'entities/tracker/model/types';
  */
 export const useUserHasCreatedTrackers = () => {
   const { ids, trackers } = useAppSelector(selectTrackers);
-  const defaultTracker = useMemo(() => getDefaultTracker(''), []);
+  const defaultTracker = useMemo(() => getDefaultTracker('', false), []);
 
   const hasMoreThanOneTracker = ids.length > 1;
 
