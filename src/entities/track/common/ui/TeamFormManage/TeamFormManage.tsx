@@ -19,18 +19,12 @@ type TProps = {
   tracker: TTrackerConfig;
   initialValues: TTeamManageCreate;
   isTrackCreateLoading: boolean;
-  createTrack(form: TTeamFormManageFields): void;
-  renderIssueTracksConnected(props: Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'>): ReactNode;
-  renderIssuesSearchConnected(props: AutoCompleteProps<string> & FieldInputProps<string>): ReactNode;
 };
 
 export const TeamFormManage: FC<TProps> = ({
   initialValues,
   tracker,
-  createTrack,
   isTrackCreateLoading,
-  renderIssueTracksConnected,
-  renderIssuesSearchConnected,
 }) => {
   const message = useMessage();
   
@@ -81,7 +75,7 @@ export const TeamFormManage: FC<TProps> = ({
   };
   return (
     <>
-    <Form initialValues={initialValues} onSubmit={createTrack} validate={validate}>
+    <Form initialValues={initialValues} onSubmit={() => {}} validate={validate}>
       {({ handleSubmit, invalid, form }) => (
         <>
           <form onSubmit={handleSubmit} className={styles.form}>

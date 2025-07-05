@@ -22,7 +22,6 @@ type TProps = {
 
 export const TeamModalCreate = ({
   tracker,
-  createTrack,
   isTrackCreateLoading,
   renderIssueTracksConnected,
   renderIssuesSearchConnected,
@@ -49,7 +48,6 @@ export const TeamModalCreate = ({
       <TeamFormManage
         tracker={tracker}
         initialValues={trackInput}
-        createTrack={createTrack}
         isTrackCreateLoading={isTrackCreateLoading}
         renderIssueTracksConnected={renderIssueTracksConnected}
         renderIssuesSearchConnected={renderIssuesSearchConnected}
