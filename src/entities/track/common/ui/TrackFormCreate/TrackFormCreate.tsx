@@ -54,6 +54,8 @@ export const TrackFormCreate: FC<TProps> = ({
                       tracker,
                       status: error ? ('error' as const) : undefined,
                       placeholder: message('issue.issueKey.placeholder'),
+                      maxItems: 10,
+                      perPage: 10,
                     })}
                   </FieldItem>
                 );

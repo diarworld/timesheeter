@@ -29,6 +29,8 @@ type TIssuesCommonParams = {
   language?: TLocale | null;
   utcOffsetInMinutes: number | undefined;
   tracker: TTrackerConfig;
+  maxItems?: number;
+  perPage?: number;
 };
 
 export type TGetUserIssuesParams = TIssuesCommonParams & {

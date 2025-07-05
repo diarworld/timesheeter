@@ -28,7 +28,7 @@ export const yandexIssueApi = api.injectEndpoints({
               url: yandexIssueEndpoints.issues,
               method: 'POST',
               body: createYandexIssueRequest(arg),
-              params: { page, perPage: 50 },
+              params: { page, perPage: arg.perPage ?? 50 },
               headers: getTrackerHeaders(arg.tracker, {
                 // if we don't send this header, Yandex Tracker will always respond with russian status names
                 'Accept-language': arg.language ?? undefined,
@@ -36,7 +36,7 @@ export const yandexIssueApi = api.injectEndpoints({
             }) as TFetchAllPagesBaseQueryResult<TYandexIssue[]>,
           identity,
           undefined,
-          300
+          arg.maxItems ?? 300 // Use arg.maxItems if provided, else default to 300
         );
       },
     }),

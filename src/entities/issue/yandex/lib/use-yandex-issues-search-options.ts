@@ -9,12 +9,12 @@ import { getOptionFromIssue } from 'entities/issue/common/lib/get-option-from-is
 
 const emptyArray: TOption[] = [];
 
-export const useYandexIssuesSearchOptions = (tracker: TTrackerConfig, value: string | undefined) => {
+export const useYandexIssuesSearchOptions = (tracker: TTrackerConfig, value: string | undefined, maxItems?: number, perPage?: number) => {
   const [search, setSearch, isDebouncingSearch] = useDebouncedState('');
   const initialIssueKey = useInitialValue(value);
 
   const { currentData: issueList, isFetching: isFetchingIssues } = yandexIssueApi.useGetYandexIssuesQuery(
-    { search, utcOffsetInMinutes: undefined, tracker },
+    { search, utcOffsetInMinutes: undefined, tracker, maxItems, perPage },
     { skip: !search },
   );
   const { currentData: initialIssue, isFetching: isFetchingIssue } = yandexIssueApi.useGetYandexIssueQuery(
