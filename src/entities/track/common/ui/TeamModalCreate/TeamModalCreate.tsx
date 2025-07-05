@@ -15,16 +15,11 @@ import styles from './TeamModalCreate.module.scss';
 type TProps = {
   tracker: TTrackerConfig;
   isTrackCreateLoading: boolean;
-  createTrack(form: TTeamFormManageFields): void;
-  renderIssueTracksConnected(props: Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'>): ReactNode;
-  renderIssuesSearchConnected(props: AutoCompleteProps<string> & FieldInputProps<string>): ReactNode;
 };
 
 export const TeamModalCreate = ({
   tracker,
   isTrackCreateLoading,
-  renderIssueTracksConnected,
-  renderIssuesSearchConnected,
 }: TProps) => {
   const message = useMessage();
   const dispatch = useAppDispatch();
@@ -49,8 +44,6 @@ export const TeamModalCreate = ({
         tracker={tracker}
         initialValues={trackInput}
         isTrackCreateLoading={isTrackCreateLoading}
-        renderIssueTracksConnected={renderIssueTracksConnected}
-        renderIssuesSearchConnected={renderIssuesSearchConnected}
       />
     </Modal>
   );

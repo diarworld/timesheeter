@@ -103,9 +103,6 @@ export const TrackCalendar: FC<TProps> = ({
             <TeamModalCreate
               tracker={tracker}
               isTrackCreateLoading={isTrackCreateLoading}
-              createTrack={createTrack}
-              renderIssueTracksConnected={renderIssueTracksConnected}
-              renderIssuesSearchConnected={renderIssuesSearchConnected}
             />
           </>
         )}
