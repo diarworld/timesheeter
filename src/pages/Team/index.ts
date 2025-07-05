@@ -1,1 +1,0 @@
-export { TeamPage } from './TeamPage'; 

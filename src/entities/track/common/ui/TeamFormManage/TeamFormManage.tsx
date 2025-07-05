@@ -64,7 +64,7 @@ export const TeamFormManage: FC<TProps> = ({
       setError('Юзер не найден');
       return;
     }
-    if (team.some(e => e.login === user.login)) {
+    if (team.some(e => e.login === user!.login)) {
       // setError('Юзер уже в командном списке');
       return;
     }
