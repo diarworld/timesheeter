@@ -108,5 +108,3 @@ npm error 401 Unauthorized - GET https://npm.pkg.github.com/download/... - unaut
   ### Возможные проблемы
   
   - В режиме разработки в Google Chrome иногда возникает ошибка `400 Bad Request`, связанная с устаревшими куками. Чтобы её исправить, необходимо очистить куки в настройках браузера.
-
-[<img src="https://evrone.com/logo/evrone-sponsored-logo.png" width=231>](https://evrone.com/?utm_source=github&utm_medium=timesheet)
