@@ -1,5 +1,6 @@
 import { useDateRangeFilter } from 'features/filters/lib/useDateRangeFilter';
 import { useUserIdFilter } from 'features/filters/lib/useUserIdFilter';
+import { useUserLoginFilter } from 'features/filters/lib/useUserLoginFilter';
 import { useShowWeekends } from 'features/filters/lib/useShowWeekends';
 import { useIssueStatusFilter } from 'features/filters/lib/useIssueStatusFilter';
 import { useSorting } from 'features/filters/lib/useSorting';
@@ -11,6 +12,7 @@ export const useFilterValues = () => {
   const utcOffsetInMinutes = useTimeOffsetFilter();
   const { from, to, fromTimestamp, toTimestamp } = useDateRangeFilter(utcOffsetInMinutes);
   const userId = useUserIdFilter();
+  const login = useUserLoginFilter();
   const showWeekends = useShowWeekends();
   const issueStatus = useIssueStatusFilter();
   const summary = useSummaryFilter();
@@ -23,6 +25,7 @@ export const useFilterValues = () => {
     fromTimestamp,
     toTimestamp,
     userId,
+    login,
     showWeekends,
     issueStatus,
     summary,

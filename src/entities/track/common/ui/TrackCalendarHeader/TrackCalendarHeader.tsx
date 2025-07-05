@@ -1,6 +1,7 @@
 import { Col, Row, Space } from 'antd';
 import { LocaleSelector } from 'entities/locale/ui/LocaleSelector';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
+import { ManageTeamButton } from 'entities/track/common/ui/TrackCalendarHeader/ManageTeamButton';
 import { TimeOffsetSelect } from 'features/date/ui/TimeOffsetSelect/TimeOffsetSelect';
 import { GlobalFetching } from 'shared/ui/GlobalFetching';
 import { ReactNode } from 'react';
@@ -19,10 +20,11 @@ interface ITrackCalendarHeaderProps {
 export function TrackCalendarHeader({ isEdit, filters, upperRowControls }: ITrackCalendarHeaderProps) {
   return (
     <div className={styles.header}>
-      <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
       <Row justify="space-between">
         <Col>
-          <TodayText />
+        <ManageTeamButton className={styles.addTrackBtn} isEdit={isEdit} />
+        <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
+        <TodayText />
         </Col>
 
         <Col>

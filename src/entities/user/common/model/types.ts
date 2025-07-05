@@ -5,6 +5,11 @@ export type TGetUserParams = {
   tracker: TTrackerConfig;
 };
 
+export type TGetUserByLoginParams = {
+  login: string;
+  tracker: TTrackerConfig;
+};
+
 export type TGetMyselfParams = {
   tracker: TTrackerConfig;
 };

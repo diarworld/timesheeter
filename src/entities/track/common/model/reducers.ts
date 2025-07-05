@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TTrackInputCreate, TTrackInputDelete, TTrackStore } from 'entities/track/common/model/types';
+import { TTrackInputCreate, TTrackInputDelete, TTeamManageCreate, TTrackStore } from 'entities/track/common/model/types';
 
 const initialState: TTrackStore = {};
 
@@ -13,5 +13,8 @@ export const track = createSlice({
     setInputDelete: (state, { payload }: PayloadAction<TTrackInputDelete | undefined>) => {
       state.inputDelete = payload;
     },
+    setTeamManageCreate: (state, { payload }: PayloadAction<TTeamManageCreate | undefined>) => {
+        state.manageCreate = payload;
+      },
   },
 });

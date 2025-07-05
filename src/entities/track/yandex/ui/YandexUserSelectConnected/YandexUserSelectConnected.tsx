@@ -8,14 +8,16 @@ import { useMemo, useState } from 'react';
 type TProps = {
   tracker: TYandexTrackerConfig;
   userId: string | undefined;
+  login: string | undefined;
 };
 
-export const YandexUserSelectConnected = ({ tracker, userId }: TProps) => {
+export const YandexUserSelectConnected = ({ tracker, userId, login }: TProps) => {
   const [isUsersLoad, setIsUsersLoad] = useState(false);
 
-  const { isLoading, data: users } = yandexUserApi.useGetYandexUsersListQuery({ tracker }, { skip: !isUsersLoad });
+  // const { isLoading, data: users } = yandexUserApi.useGetYandexUsersListQuery({ tracker }, { skip: !isUsersLoad });
+  const users = JSON.parse(localStorage.getItem('team') || '[]');
 
-  const { user } = useYandexUser(tracker, userId);
+  const { user } = useYandexUser(tracker, userId, login);
 
   const userOptions: DefaultOptionType[] = useMemo(() => {
     if (users?.length) {
@@ -28,9 +30,9 @@ export const YandexUserSelectConnected = ({ tracker, userId }: TProps) => {
     <UserSelect
       allowClear={!!userId}
       userOptions={userOptions}
-      isLoading={isLoading}
+      isLoading={isUsersLoad}
       setShouldLoad={setIsUsersLoad}
-      value={user?.uid}
+      value={user?.display}
     />
   );
 };

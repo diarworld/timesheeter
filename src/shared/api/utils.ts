@@ -37,25 +37,28 @@ export async function fetchAllPages<TPage, TResult>(
   fetcher: (page: number) => TFetchAllPagesBaseQueryResult<TPage>,
   accessor: TListAccessor<TPage, TResult[]>,
   getTotalPagesCount: TPagesCountAccessor<TPage> = getTotalPagesYandex,
+  maxItems?: number,
 ) {
   const reqFetch = async (
     page: number,
+    accumulated: TResult[] = []
   ): Promise<QueryReturnValue<TResult[], FetchBaseQueryError, FetchBaseQueryMeta>> => {
+    if (maxItems !== undefined && accumulated.length >= maxItems) {
+      return { data: accumulated.slice(0, maxItems) };
+    }
     const result = await fetcher(page);
     if (result.error) return { error: result.error };
     const totalPages = getTotalPagesCount(result);
-
-    if (page >= totalPages) {
-      return { data: accessor(result.data) };
+    const currentData = accessor(result.data);
+    const newAccumulated = accumulated.concat(currentData);
+    if (maxItems !== undefined && newAccumulated.length >= maxItems) {
+      return { data: newAccumulated.slice(0, maxItems) };
     }
-
-    const reqResult = await reqFetch(page + 1);
-
-    if (reqResult.error) return { error: reqResult.error };
-
-    return { data: accessor(result.data).concat(reqResult.data) };
+    if (page >= totalPages) {
+      return { data: newAccumulated };
+    }
+    return reqFetch(page + 1, newAccumulated);
   };
-
   const res = await reqFetch(1);
   return res;
 }

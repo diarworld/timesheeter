@@ -8,8 +8,8 @@ const emptyObject: Record<string, TTrack[]> = {};
 const emptyArray: TTrack[] = [];
 
 export const useCurrentYandexTracksByIssue = (issueKey: string, tracker: TYandexTrackerConfig) => {
-  const { from, to, userId, utcOffsetInMinutes } = useFilterValues();
-  const { uId } = useYandexUser(tracker, userId);
+  const { from, to, userId, login, utcOffsetInMinutes } = useFilterValues();
+  const { uId } = useYandexUser(tracker, userId, login);
 
   const { currentData } = yandexTrackApi.useGetYandexTracksQuery(
     { from, to, createdBy: uId, utcOffsetInMinutes, tracker },

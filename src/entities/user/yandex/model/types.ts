@@ -14,4 +14,5 @@ export type TYandexUser = {
   uid: number;
   useNewFilters: boolean;
   welcomeMailSent: boolean;
+  position: string;
 };

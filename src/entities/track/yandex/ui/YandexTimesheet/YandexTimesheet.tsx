@@ -44,6 +44,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
     queue,
     utcOffsetInMinutes,
     userId: userIdFromFilter,
+    login: loginFromFilter,
     updateIssueStatus,
     updateSummary,
     updateQueue,
@@ -94,7 +95,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
         }
         filters={
           <>
-            <YandexUserSelectConnected tracker={tracker} userId={userIdFromFilter} />
+            <YandexUserSelectConnected tracker={tracker} userId={userIdFromFilter} login={loginFromFilter} />
             <YandexIssueStatusSelectConnected
               tracker={tracker}
               value={issueStatus}

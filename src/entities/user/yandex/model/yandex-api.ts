@@ -5,7 +5,7 @@ import { getTrackerHeaders } from 'entities/tracker/lib/getTrackerHeaders';
 import { yandexUserEndpoints } from 'entities/user/yandex/model/endpoints';
 import { YA_ROBOTS_IDS } from 'entities/user/yandex/model/constants';
 import { TYandexUser } from 'entities/user/yandex/model/types';
-import { TGetMyselfParams, TGetUserParams, TGetUsersParams } from 'entities/user/common/model/types';
+import { TGetMyselfParams, TGetUserParams, TGetUserByLoginParams, TGetUsersParams } from 'entities/user/common/model/types';
 
 export const yandexUserApi = api.injectEndpoints({
   overrideExisting: true,
@@ -13,6 +13,12 @@ export const yandexUserApi = api.injectEndpoints({
     getYandexUserById: builder.query<TYandexUser, TGetUserParams>({
       query: ({ userId, tracker }) => ({
         url: yandexUserEndpoints.user(userId),
+        headers: getTrackerHeaders(tracker),
+      }),
+    }),
+    getYandexUserByLogin: builder.query<TYandexUser, TGetUserByLoginParams>({
+      query: ({ login, tracker }) => ({
+        url: yandexUserEndpoints.login(login),
         headers: getTrackerHeaders(tracker),
       }),
     }),
@@ -28,10 +34,12 @@ export const yandexUserApi = api.injectEndpoints({
           (page) =>
             fetchWithBQ({
               url: yandexUserEndpoints.users,
-              params: { page, perPage: 999 },
+              params: { page, perPage: 50 },
               headers: getTrackerHeaders(tracker),
             }) as TFetchAllPagesBaseQueryResult<TYandexUser[]>,
           identity,
+          undefined,
+          50
         );
 
         if (res.data) {

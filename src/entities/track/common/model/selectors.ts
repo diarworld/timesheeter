@@ -6,3 +6,5 @@ const selectTrack = (state: TAppState): TTrackStore => state[track.name] as TTra
 
 export const selectTrackInputCreate = (state: TAppState) => selectTrack(state).inputCreate;
 export const selectTrackInputDelete = (state: TAppState) => selectTrack(state).inputDelete;
+export const selectTeamManageCreate = (state: TAppState) => selectTrack(state).manageCreate;
+export const selectTeamManageDelete = (state: TAppState) => selectTrack(state).manageDelete;

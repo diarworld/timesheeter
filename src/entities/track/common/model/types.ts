@@ -15,6 +15,7 @@ export type TISODuration = `P${TNominal}${TAccurate}`;
 export type TTrackStore = {
   inputCreate?: TTrackInputCreate;
   inputDelete?: TTrackInputDelete;
+  manageCreate?: TTeamManageCreate;
 };
 
 export type TTrack = {
@@ -57,6 +58,11 @@ export type TTrackInputCreate = {
 export type TTrackInputDelete = {
   issueIdOrKey: string;
   trackId: number | string;
+};
+
+export type TTeamManageCreate = {
+  ldap?: string;
+  team?: string;
 };
 
 export type TDeleteTrackParams = TTrackInputDelete & {

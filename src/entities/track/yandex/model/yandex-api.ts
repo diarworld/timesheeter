@@ -60,10 +60,12 @@ export const yandexTrackApi = api.injectEndpoints({
                 start: { from, to },
                 createdBy,
               },
-              params: { page, perPage: 999 },
+              params: { page, perPage: 100 },
               headers: getTrackerHeaders(tracker),
             }) as TFetchAllPagesBaseQueryResult<TYandexTrack[]>,
           identity,
+          undefined,
+          500
         );
 
         if (allTracks.error) {

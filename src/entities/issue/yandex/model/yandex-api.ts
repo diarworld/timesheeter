@@ -28,26 +28,35 @@ export const yandexIssueApi = api.injectEndpoints({
               url: yandexIssueEndpoints.issues,
               method: 'POST',
               body: createYandexIssueRequest(arg),
-              params: { page, perPage: 999 },
+              params: { page, perPage: 10 },
               headers: getTrackerHeaders(arg.tracker, {
                 // if we don't send this header, Yandex Tracker will always respond with russian status names
                 'Accept-language': arg.language ?? undefined,
               }),
             }) as TFetchAllPagesBaseQueryResult<TYandexIssue[]>,
           identity,
+          undefined,
+          50
         );
       },
     }),
     getYandexStatuses: build.query<TIssueStatusDescription[], TGetIssuesStatusesQuery>({
-      query: ({ language, tracker }) => ({
-        // this API is undocumented it Yandex Tracker docs
-        // it sends English titles only if Accept-language header is provided
-        url: yandexIssueEndpoints.statuses,
-        params: {perPage: 300},
-        headers: getTrackerHeaders(tracker, {
-          'Accept-language': language,
-        }),
-      }),
+      async queryFn(arg, _, __, fetchWithBQ) {
+        return fetchAllPages(
+          (page) =>
+            fetchWithBQ({
+              url: yandexIssueEndpoints.statuses,
+              params: { page, perPage: 100 },
+              headers: getTrackerHeaders(arg.tracker, {
+                // if we don't send this header, Yandex Tracker will always respond with russian status names
+                'Accept-language': arg.language ?? undefined,
+              }),
+            }) as TFetchAllPagesBaseQueryResult<TYandexIssue[]>,
+          identity,
+          undefined,
+          300
+        );
+      },
     }),
   }),
 });

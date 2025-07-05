@@ -8,6 +8,7 @@ import { UserLoadFail } from 'entities/auth/ui/UserLoadFail/UserLoadFail';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useSetTrackerUsername } from 'entities/tracker/lib/useSetTrackerUsername';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
+import { TYandexUser } from 'entities/user/yandex/model/types';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -17,9 +18,17 @@ type TProps = {
 };
 
 export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedErrorShouldAppearAsOrgChange }: TProps) => {
-  const { userId } = useFilterValues();
+  const { userId, login } = useFilterValues();
 
-  const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId);
+  const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
+  
+  const team: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
+
+  if (self && !team.some(e => e?.login === self?.login)) {
+    localStorage.setItem('team', JSON.stringify([...team, self]))
+  }
+  
+  
 
   const logout = useLogoutTracker(tracker);
 
