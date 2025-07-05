@@ -15,7 +15,13 @@ interface IQueueSelectProps {
 export const QueueSelect = ({ onChange, value, queueList, isFetchingQueueList }: IQueueSelectProps) => {
   const message = useMessage();
 
-  const options = useMemo(() => queueList?.map((queue) => ({ label: queue.key, value: queue.key })) ?? [], [queueList]);
+  const options = useMemo(
+    () =>
+      queueList
+        ? [...queueList].sort((a, b) => a.key.localeCompare(b.key)).map((queue) => ({ label: queue.key, value: queue.key }))
+        : [],
+    [queueList],
+  );
 
   return (
     <Select

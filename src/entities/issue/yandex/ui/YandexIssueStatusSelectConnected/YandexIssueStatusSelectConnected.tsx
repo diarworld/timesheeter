@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { yandexIssueApi } from 'entities/issue/yandex/model/yandex-api';
 import { defaultLocale } from 'entities/locale/model/constants';
 import { TCurrentLocale } from 'entities/locale/model/types';
@@ -18,5 +19,13 @@ export const YandexIssueStatusSelectConnected = ({ language, tracker, ...props }
     { skip: !language },
   );
 
-  return <IssueStatusSelect {...props} statusList={statusList} isFetchingStatusList={isFetchingStatusList} />;
+  const sortedStatusList = useMemo(
+    () =>
+      statusList
+        ? [...statusList].sort((a, b) => a.name.localeCompare(b.name))
+        : undefined,
+    [statusList],
+  );
+
+  return <IssueStatusSelect {...props} statusList={sortedStatusList} isFetchingStatusList={isFetchingStatusList} />;
 };
