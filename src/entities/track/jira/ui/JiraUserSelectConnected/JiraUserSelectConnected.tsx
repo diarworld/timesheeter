@@ -2,6 +2,7 @@ import { TJiraTrackerConfig } from 'entities/tracker/model/types';
 import { UserSelect } from 'entities/track/common/ui/TrackCalendarHeader/UserSelect';
 import type { DefaultOptionType } from 'rc-select/lib/Select';
 import { useMemo, useState } from 'react';
+import { TJiraUser } from 'entities/user/jira/model/types';
 import { useJiraUser } from 'entities/user/jira/hooks/use-jira-user';
 import { jiraUserApi } from 'entities/user/jira/model/jira-api';
 
@@ -19,7 +20,7 @@ export const JiraUserSelectConnected = ({ tracker, userId }: TProps) => {
 
   const userOptions: DefaultOptionType[] = useMemo(() => {
     if (users?.length) {
-      return users.map((u) => ({ value: String(u.accountId), label: u.displayName }));
+      return users.map((u: TJiraUser) => ({ value: String(u.accountId), label: u.displayName }));
     }
     return [{ value: String(user?.accountId), label: user?.displayName }];
   }, [user, users]);

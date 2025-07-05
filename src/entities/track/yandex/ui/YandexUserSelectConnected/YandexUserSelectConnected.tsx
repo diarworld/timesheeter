@@ -1,6 +1,7 @@
 import { TYandexTrackerConfig } from 'entities/tracker/model/types';
 import { UserSelect } from 'entities/track/common/ui/TrackCalendarHeader/UserSelect';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
+import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import type { DefaultOptionType } from 'rc-select/lib/Select';
 import { useMemo, useState } from 'react';
@@ -21,7 +22,7 @@ export const YandexUserSelectConnected = ({ tracker, userId, login }: TProps) =>
 
   const userOptions: DefaultOptionType[] = useMemo(() => {
     if (users?.length) {
-      return users.map((u) => ({ value: String(u.uid), label: u.display }));
+      return users.map((u: TYandexUser) => ({ value: String(u.uid), label: u.display }));
     }
     return [{ value: String(user?.uid), label: user?.display }];
   }, [user, users]);
