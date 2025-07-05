@@ -51,7 +51,7 @@ export const yandexIssueApi = api.injectEndpoints({
                 // if we don't send this header, Yandex Tracker will always respond with russian status names
                 'Accept-language': arg.language ?? undefined,
               }),
-            }) as TFetchAllPagesBaseQueryResult<TYandexIssue[]>,
+            }) as TFetchAllPagesBaseQueryResult<TIssueStatusDescription[]>,
           identity,
           undefined,
           300
