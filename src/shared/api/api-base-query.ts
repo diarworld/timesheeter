@@ -16,7 +16,7 @@ export const createApiBaseQuery = ({ baseUrl }: { baseUrl: string } = { baseUrl:
           return false;
         }
 
-        return !isQueryErrorStatusInSet(error, RETRY_BLACKLIST);
+        return !isQueryErrorStatusInSet(error as any, RETRY_BLACKLIST);
       },
     },
   );

@@ -88,6 +88,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
     <div>
       <TrackCalendarHeader
         isEdit={isEdit}
+        tracker={tracker}
         upperRowControls={
           <Button onClick={logout} type="link">
             <Message id="home.logout" />

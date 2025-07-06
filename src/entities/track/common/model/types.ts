@@ -16,6 +16,7 @@ export type TTrackStore = {
   inputCreate?: TTrackInputCreate;
   inputDelete?: TTrackInputDelete;
   manageCreate?: TTeamManageCreate;
+  ldapLogin?: TTeamLdapLogin;
 };
 
 export type TTrack = {
@@ -63,6 +64,10 @@ export type TTrackInputDelete = {
 export type TTeamManageCreate = {
   ldap?: string;
   team?: string;
+};
+
+export type TTeamLdapLogin = {
+  ldap?: string;
 };
 
 export type TDeleteTrackParams = TTrackInputDelete & {

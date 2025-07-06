@@ -30,7 +30,6 @@ export const IssueStatusSelect = ({ onChange, value, statusList, isFetchingStatu
       mode="multiple"
       onChange={onChange}
       value={value}
-      bordered={false}
       filterOption={filterOption}
       allowClear
       placeholder={message('filter.status.placeholder')}
