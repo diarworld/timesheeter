@@ -30,7 +30,6 @@ export const QueueSelect = ({ onChange, value, queueList, isFetchingQueueList }:
       mode="multiple"
       onChange={onChange}
       value={value}
-      bordered={false}
       allowClear
       placeholder={message('filter.queue.placeholder')}
       loading={isFetchingQueueList}

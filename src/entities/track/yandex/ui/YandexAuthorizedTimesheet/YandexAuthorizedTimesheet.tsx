@@ -23,9 +23,18 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
   const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
   
   const team: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
+  const ldapCredentials = localStorage.getItem('ldapCredentials');
 
   if (self && !team.some(e => e?.login === self?.login)) {
     localStorage.setItem('team', JSON.stringify([...team, self]))
+  }
+
+  if (self && !ldapCredentials) {
+    const credentials = {
+      username: self.email,
+      type: 'ldap'
+    };
+    localStorage.setItem('ldapCredentials', JSON.stringify(credentials));
   }
   
   

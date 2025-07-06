@@ -1,29 +1,29 @@
 import { track } from 'entities/track/common/model/reducers';
-import { TeamFormManage } from 'entities/track/common/ui/TeamFormManage';
+import { LdapLoginFormManage } from 'entities/track/common/ui/LdapLoginFormManage';
 import React, { useCallback } from 'react';
 import { Modal } from 'antd';
 import { useAppDispatch, useAppSelector } from 'shared/lib/hooks';
 import { useMessage } from 'entities/locale/lib/hooks';
 
-import { selectTeamManageCreate } from 'entities/track/common/model/selectors';
+import { selectLdapLoginManage } from 'entities/track/common/model/selectors';
 import { TTrackerConfig } from 'entities/tracker/model/types';
-import styles from './TeamModalCreate.module.scss';
+import styles from './LdapLoginModalCreate.module.scss';
 
 type TProps = {
   tracker: TTrackerConfig;
   isTrackCreateLoading: boolean;
 };
 
-export const TeamModalCreate = ({
+export const LdapLoginModalCreate = ({
   tracker,
   isTrackCreateLoading,
 }: TProps) => {
   const message = useMessage();
   const dispatch = useAppDispatch();
-  const trackInput = useAppSelector(selectTeamManageCreate);
+  const trackInput = useAppSelector(selectLdapLoginManage);
 
   const onTrackModalClose = useCallback(() => {
-    dispatch(track.actions.setTeamManageCreate());
+    dispatch(track.actions.setLdapLoginCreate());
   }, [dispatch]);
 
   if (!trackInput) return null;
@@ -32,12 +32,12 @@ export const TeamModalCreate = ({
     <Modal
       className={styles.modal}
       open={!!trackInput}
-      title={message('manage.team.title')}
+      title={message('ldap.auth.title')}
       onCancel={onTrackModalClose}
       footer={null}
       width="fit-content"
     >
-      <TeamFormManage
+      <LdapLoginFormManage
         tracker={tracker}
         initialValues={trackInput}
         isTrackCreateLoading={isTrackCreateLoading}
