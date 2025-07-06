@@ -1,4 +1,4 @@
-import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input } from 'antd';
+import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
@@ -125,8 +125,9 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
           comment: "Meeting: " + row.subject
         });
       }
-      
+      // Show notification after successful import
       // Close modal after successful import
+      antMessage.success(message('calendar.import.success') + ' ' + message('calendar.import.success.description'));
       onHidden();
     } catch (error) {
       console.error('Error importing tracks:', error);
@@ -258,6 +259,7 @@ const handleRowClick = (record: DataType) => {
       destroyOnHidden
     >
       <Table
+        bordered
         rowSelection={{ type: "checkbox", ...rowSelection }}
         columns={columns}
         dataSource={tableData}
@@ -269,7 +271,8 @@ const handleRowClick = (record: DataType) => {
         pagination={{
           showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} meetings`,
         }}
-        scroll={{ x: 800 }}
+        // scroll={{ x: 800 }}
+        scroll={{ x: 'max-content' }}
         size="middle"
       />
       <Flex gap="middle" justify="space-evenly" vertical>

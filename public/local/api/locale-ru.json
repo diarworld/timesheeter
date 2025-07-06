@@ -106,6 +106,8 @@
   "calendar.export.table.cancelled": "Отменено",  
   "calendar.import": "Загрузить треки",
   "calendar.import.issue.key": "Ключ по умолчанию",
+  "calendar.import.success": "Успех!",
+  "calendar.import.success.description": "Загрузка треков завершена успешно",
   "unauthorizedTracker.noAccess.message": "Похоже, что у вас нет доступа к указанной организации",
   "unauthorizedTracker.notExist.message": "Похоже, что организации c указанным ID не существует",
   "unauthorizedTracker.changeAccount": "Сменить аккаунт",

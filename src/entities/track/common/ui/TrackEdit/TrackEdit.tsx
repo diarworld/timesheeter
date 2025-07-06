@@ -1,8 +1,9 @@
-import { Spin } from 'antd';
+import { Popconfirm, Spin } from 'antd';
 import React from 'react';
 import { Form } from 'react-final-form';
 import { FormApi } from 'final-form';
-import { TTrack, TTrackInputEditForm } from 'entities/track/common/model/types';
+import { TTrack, TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/model/types';
+import { DeleteRowOutlined } from '@ant-design/icons';
 import { InputField } from 'features/form/ui/InputField';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { useISOToHumanReadableDuration } from 'entities/track/common/lib/hooks/use-iso-to-human-readable-duration';
@@ -19,6 +20,7 @@ export interface ITrackEditProps {
   className?: string;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   spinnerClassName?(isLoading: boolean): string;
+  deleteTrack(form: TTrackInputDelete): void;
 }
 
 export const TrackEdit = ({
@@ -27,6 +29,7 @@ export const TrackEdit = ({
   className,
   spinnerClassName,
   updateTrack,
+  deleteTrack,
   isTrackUpdateLoading,
   isEditTrackComment,
 }: ITrackEditProps) => {
@@ -89,7 +92,9 @@ export const TrackEdit = ({
             onPressEnter={handleSubmit}
             placeholder={isEditTrackComment ? message('track.comment.placeholder') : undefined}
           />
-          <TrackDeleteButton issueIdOrKey={issueKey} trackId={trackId} />
+          <Popconfirm icon={<DeleteRowOutlined />} title={message('track.delete.title')+ "?"} onConfirm={() => deleteTrack({ issueIdOrKey: issueKey, trackId })}>
+            <TrackDeleteButton />
+          </Popconfirm>
           <Spin size="small" spinning className={spinnerClassName?.(isTrackUpdateLoading)} />
         </form>
       )}

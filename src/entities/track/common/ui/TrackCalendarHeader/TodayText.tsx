@@ -11,7 +11,7 @@ export function TodayText() {
     <Text fs={14} lh={16} fw={700}>
       <span>{message('track.calendar.today')}</span>{' '}
       <span style={{ textTransform: 'capitalize' }}>
-        {DateWrapper.getDateFormat(DateWrapper.getDate({ utcOffsetInMinutes }), 'MMMM DD')}
+        {DateWrapper.getDateFormat(DateWrapper.getDate({ utcOffsetInMinutes }), 'DD MMMM — dddd')}
       </span>
     </Text>
   );

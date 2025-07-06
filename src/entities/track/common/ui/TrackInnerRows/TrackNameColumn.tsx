@@ -1,8 +1,10 @@
-import { Form, Typography } from 'antd';
+import { Form, Typography, Popconfirm } from 'antd';
 import { TextArea } from 'components';
 import { FocusEventHandler, memo, useEffect } from 'react';
-import { TTrackInputEditForm } from 'entities/track/common/model/types';
+import { useMessage } from 'entities/locale/lib/hooks';
+import { TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { TrackDeleteButton } from './TrackDeleteButton';
+import { DeleteRowOutlined } from '@ant-design/icons';
 import styles from './TrackNameColumn.module.scss';
 
 interface ITrackNameColumnProps {
@@ -13,6 +15,7 @@ interface ITrackNameColumnProps {
   isEditTrackComment?: boolean;
   trackCommentEditDisabledReason?: string;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
+  deleteTrack(form: TTrackInputDelete): void;
 }
 
 export const TrackNameColumn = memo(
@@ -23,8 +26,11 @@ export const TrackNameColumn = memo(
     trackId,
     trackComment,
     updateTrack,
+    deleteTrack,
     trackCommentEditDisabledReason,
   }: ITrackNameColumnProps) => {
+    
+    const message = useMessage();
     const initialValues = {
       comment: trackComment ?? '',
     } as const;
@@ -55,8 +61,12 @@ export const TrackNameColumn = memo(
         <div>
           {isEdit ? (
             <>
-              <TrackDeleteButton trackId={trackId} issueIdOrKey={issueId} />
-
+              <Popconfirm icon={<DeleteRowOutlined />} title={message('track.delete.title')+ "?"} onConfirm={() => {
+                // console.log('Popconfirm confirm clicked', { issueId, trackId });
+                deleteTrack({ issueIdOrKey: issueId, trackId })
+                }}>
+                <TrackDeleteButton />
+              </Popconfirm>
               {isEditTrackComment ? (
                 <Form noValidate className={styles.form} form={form} initialValues={initialValues}>
                   <Form.Item name="comment" noStyle>

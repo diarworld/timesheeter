@@ -106,6 +106,8 @@
   "calendar.export.table.cancelled": "Cancelled",
   "calendar.import": "Import tracks",
   "calendar.import.issue.key": "Default Issue Key",
+  "calendar.import.success": "Success!",
+  "calendar.import.success.description": "Worklogs upload finished successfully",
   "unauthorizedTracker.noAccess.message": "It looks like you don't have access to the specified organization",
   "unauthorizedTracker.notExist.message": "It looks like the organization with the specified ID does not exist",
   "unauthorizedTracker.changeAccount": "Change account",

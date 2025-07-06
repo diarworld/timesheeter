@@ -3,7 +3,6 @@ import React, { FC, ReactNode } from 'react';
 import { Loading } from 'shared/ui/Loading';
 import { ITrackCalendarFootProps } from 'entities/track/common/ui/TrackCalendarFoot/TrackCalendarFoot';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate';
-import { TrackModalDelete } from 'entities/track/common/ui/TrackModalDelete';
 import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
 import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
 import { TIssue } from 'entities/issue/common/model/types';
@@ -85,6 +84,7 @@ export const TrackCalendar: FC<TProps> = ({
                   pinnedIssues,
                   pinIssue,
                   unpinIssue,
+                  deleteTrack,
                 })}
               </React.Fragment>
             ))}
@@ -100,7 +100,6 @@ export const TrackCalendar: FC<TProps> = ({
               renderIssueTracksConnected={renderIssueTracksConnected}
               renderIssuesSearchConnected={renderIssuesSearchConnected}
             />
-            <TrackModalDelete isTrackDeleteLoading={isTrackDeleteLoading} deleteTrack={deleteTrack} />
             <TeamModalCreate
               tracker={tracker}
               isTrackCreateLoading={isTrackCreateLoading}

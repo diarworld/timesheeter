@@ -27,6 +27,7 @@ export type TTrackCalendarRowProps = {
   unpinIssue?(issueKey: string): void;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   getIssueUrl(issueKey: string): string;
+  deleteTrack(form: { issueIdOrKey: string; trackId: number | string }): void;
 };
 
 const fixedColumnsCount = 3; // 3 = issueKey + status + summary columns
@@ -46,6 +47,7 @@ export const TrackCalendarRow = memo(
     updateTrack,
     getIssueUrl,
     trackCommentEditDisabledReason,
+    deleteTrack,
   }: TTrackCalendarRowProps) => {
     const message = useMessage();
     const [isExpanded, setIsExpanded] = useState(false);
@@ -141,6 +143,7 @@ export const TrackCalendarRow = memo(
               isEditTrackComment={isEditTrackComment}
               trackCommentEditDisabledReason={trackCommentEditDisabledReason}
               updateTrack={updateTrack}
+              deleteTrack={deleteTrack}
             />
           </>
         )}
