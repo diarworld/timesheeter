@@ -1,9 +1,16 @@
-import { Modal, Table, Space, Typography } from 'antd';
+import { Modal, Table, Space, Typography, TableProps } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 import dayjs from 'dayjs';
 
 const { Text, Title } = Typography;
+
+interface DataType {
+  subject: React.Key;
+  start: string;
+  end: string;
+  duration: number;
+}
 
 interface CalendarExportModalProps {
   visible: boolean;
@@ -74,6 +81,18 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
     ...meeting,
   })) || [];
 
+
+  // rowSelection object indicates the need for row selection
+const rowSelection: TableProps<DataType>['rowSelection'] = {
+  onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
+    console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+  },
+  getCheckboxProps: (record: DataType) => ({
+    disabled: false, // Column configuration not to be checked
+    name: String(record.subject),
+  }),
+};
+
   return (
     <Modal
       title={
@@ -93,13 +112,12 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       destroyOnHidden
     >
       <Table
+        rowSelection={{ type: "checkbox", ...rowSelection }}
         columns={columns}
         dataSource={tableData}
         loading={loading}
         pagination={{
           pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
           showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} meetings`,
         }}
         scroll={{ x: 800 }}
