@@ -22,7 +22,6 @@ import { IssueSummarySearch } from 'entities/issue/common/ui/IssueSummarySearch/
 import { JIRA_ISSUE_SORTING_KEY } from 'entities/issue/jira/model/constants';
 import { sortWithPinedIssues } from 'entities/issue/common/lib/sortWithPinedIssues';
 import { TTrackFormCreateFields } from 'entities/track/common/ui/TrackFormCreate/types';
-import { TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -36,20 +35,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
   // otherwise in case user creates track for an issue that hasn't been loaded yet, it wouldn't be loaded
   const [createdTrackIssueKeys, setCreatedTrackIssueKeys] = useState<string[]>([]);
 
-  // Calendar export state
-  const [calendarData, setCalendarData] = useState<TEwsCalendarResponse | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-
-  // Function to handle calendar export
-  const handleCalendarExport = useCallback((data: TEwsCalendarResponse) => {
-    setCalendarData(data);
-    setModalVisible(true);
-  }, []);
-
-  // Function to close modal
-  const handleCloseModal = useCallback(() => {
-    setModalVisible(false);
-  }, []);
 
   const {
     from,
@@ -189,6 +174,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
             updateTrack={updateTrack}
             isTrackUpdateLoading={isTrackUpdateLoading}
             uId={uId}
+            deleteTrack={deleteTrack}
           />
         )}
         renderIssuesSearchConnected={(props) => <JiraIssuesSearchConnected {...props} tracker={tracker} />}

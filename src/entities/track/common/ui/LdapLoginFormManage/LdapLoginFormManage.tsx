@@ -1,16 +1,11 @@
 import { Button, Form, Input, Flex } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
-import { validateLDAP } from 'entities/track/common/lib/validate-ldap';
 import { TTrackerConfig } from 'entities/tracker/model/types';
-import { TLdapLoginFormManageFields } from 'entities/track/common/ui/LdapLoginFormManage/types';
-import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useAuthenticateEwsMutation } from 'entities/track/common/model/ews-api';
-
-import styles from './LdapLoginFormManage.module.scss';
 
 type TProps = {
   tracker: TTrackerConfig;
@@ -19,9 +14,6 @@ type TProps = {
 };
 
 export const LdapLoginFormManage: FC<TProps> = ({
-  initialValues,
-  tracker,
-  isTrackCreateLoading,
 }) => {
   const message = useMessage();
   const dispatch = useAppDispatch();

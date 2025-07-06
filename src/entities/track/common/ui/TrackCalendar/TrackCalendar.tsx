@@ -61,7 +61,6 @@ export const TrackCalendar: FC<TProps> = ({
   isTrackCreateLoading,
   createTrack,
   deleteTrack,
-  isTrackDeleteLoading,
   renderIssueTracksConnected,
   issueSortingKey,
 }) => {

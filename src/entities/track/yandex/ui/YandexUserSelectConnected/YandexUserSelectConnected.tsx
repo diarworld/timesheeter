@@ -1,6 +1,5 @@
 import { TYandexTrackerConfig } from 'entities/tracker/model/types';
 import { UserSelect } from 'entities/track/common/ui/TrackCalendarHeader/UserSelect';
-import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import type { DefaultOptionType } from 'rc-select/lib/Select';

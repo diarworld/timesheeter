@@ -41,7 +41,7 @@ export const TeamFormManage: FC<TProps> = ({
     { login: ldapValue ?? '', tracker }, 
     { skip: !ldapValue || ldapValue.length != 8 } // Only query when ldap is valid
   );
-  const getUser = (ldap: string) => {
+  const getUser = () => {
     return user;
   };
   
@@ -51,7 +51,7 @@ export const TeamFormManage: FC<TProps> = ({
       setError('Юзер уже в списке');
       return;
     }
-    getUser(ldap);
+    getUser();
 
     if (!user) {
       setError('Юзер не найден');
@@ -75,7 +75,7 @@ export const TeamFormManage: FC<TProps> = ({
   return (
     <>
     <Form initialValues={initialValues} onSubmit={() => {}} validate={validate}>
-      {({ handleSubmit, invalid, form }) => (
+      {({ handleSubmit, invalid }) => (
         <>
           <form onSubmit={handleSubmit} className={styles.form}>
             <InputField

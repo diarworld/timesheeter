@@ -1,7 +1,6 @@
 import { Checkbox, Space, Typography } from 'antd';
 import { Text } from 'components';
 import { RangePicker } from 'components/RangePicker';
-import { Dayjs } from 'dayjs';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 
@@ -17,7 +16,7 @@ export const TrackCalendarHeaderControlBar = memo(({ children }: PropsWithChildr
   const fromDate = useMemo(() => DateWrapper.getDate({ date: from, utcOffsetInMinutes }), [from, utcOffsetInMinutes]);
   const toDate = useMemo(() => DateWrapper.getDate({ date: to, utcOffsetInMinutes }), [to, utcOffsetInMinutes]);
 
-  const handleDateChange = (dates: any, dateStrings: [string, string]) =>
+  const handleDateChange = (dates: any) =>
     updateRangeFilter({
       from: dates?.[0] ? DateWrapper.getDateFormat(dates[0].startOf('day')) : undefined,
       to: dates?.[1] ? DateWrapper.getDateFormat(dates[1].endOf('day')) : undefined,

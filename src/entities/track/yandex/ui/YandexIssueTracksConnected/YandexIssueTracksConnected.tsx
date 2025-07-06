@@ -1,6 +1,6 @@
 import { IIssueTracksProps, IssueTracks } from 'entities/track/common/ui/IssueTracks/IssueTracks';
 import { TYandexTrackerConfig } from 'entities/tracker/model/types';
-import { TTrackInputEditForm } from 'entities/track/common/model/types';
+import { TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { useMemo } from 'react';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { yandexTrackApi } from 'entities/track/yandex/model/yandex-api';
@@ -11,6 +11,7 @@ type TProps = Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'> & {
   isTrackUpdateLoading: boolean;
   isEditTrackComment: boolean;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
+  deleteTrack(form: TTrackInputDelete): void;
 };
 
 export const YandexIssueTracksConnected = (props: TProps) => {
@@ -27,5 +28,5 @@ export const YandexIssueTracksConnected = (props: TProps) => {
     { skip: !issueKey || !date || !uId },
   );
 
-  return <IssueTracks {...props} issueTracksForDate={tracks} />;
+  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={props.deleteTrack} />;
 };

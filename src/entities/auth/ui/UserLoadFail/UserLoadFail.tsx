@@ -1,4 +1,4 @@
-import { Button, Row, Space } from 'antd';
+import { Button, Row } from 'antd';
 import { Message } from 'entities/locale/ui/Message';
 import { DeleteOutlined } from '@ant-design/icons';
 import Cookies from 'js-cookie';
