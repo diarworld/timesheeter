@@ -4,7 +4,7 @@ import { RangePicker } from 'components/RangePicker';
 import { Dayjs } from 'dayjs';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
-import type { RangeValue } from 'rc-picker/lib/interface';
+
 import { memo, PropsWithChildren, useMemo } from 'react';
 import { useFilters } from 'features/filters/lib/useFilters';
 import { DATE_FORMAT_DATE } from 'features/date/lib/constants';
@@ -17,7 +17,7 @@ export const TrackCalendarHeaderControlBar = memo(({ children }: PropsWithChildr
   const fromDate = useMemo(() => DateWrapper.getDate({ date: from, utcOffsetInMinutes }), [from, utcOffsetInMinutes]);
   const toDate = useMemo(() => DateWrapper.getDate({ date: to, utcOffsetInMinutes }), [to, utcOffsetInMinutes]);
 
-  const handleDateChange = (dates: RangeValue<Dayjs>) =>
+  const handleDateChange = (dates: [Dayjs, Dayjs] | null) =>
     updateRangeFilter({
       from: dates?.[0] ? DateWrapper.getDateFormat(dates[0].startOf('day')) : undefined,
       to: dates?.[1] ? DateWrapper.getDateFormat(dates[1].endOf('day')) : undefined,

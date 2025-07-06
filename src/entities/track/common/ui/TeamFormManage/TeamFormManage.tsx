@@ -1,15 +1,14 @@
-import { AutoCompleteProps, Button } from 'antd';
+import { Button } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
-import React, { FC, ReactNode, useState } from 'react';
-import { FieldInputProps, Form } from 'react-final-form';
+import React, { FC, useState } from 'react';
+import { Form } from 'react-final-form';
 
 import { InputField } from 'features/form/ui/InputField';
 import { validateLDAP } from 'entities/track/common/lib/validate-ldap';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { TTeamFormManageFields } from 'entities/track/common/ui/TeamFormManage/types';
-import { IIssueTracksProps } from 'entities/track/common/ui/IssueTracks/IssueTracks';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
 
