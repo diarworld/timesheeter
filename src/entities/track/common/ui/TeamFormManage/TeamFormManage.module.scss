@@ -6,10 +6,11 @@
   row-gap: 16px;
 }
 
-.inputItem {
+.input {
   display: flex;
   flex-direction: column;
-  row-gap: 6px;
+  width: 100%;
+  margin-bottom: 5px;
 }
 
 .tracks {

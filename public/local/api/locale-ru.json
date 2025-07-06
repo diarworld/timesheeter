@@ -18,6 +18,7 @@
   "manage.team.title": "Управление командой",
   "manage.team.ldap": "Введите LDAP (напр. 60073101)",
   "manage.team.add.error":"Неверный LDAP",
+  "manage.team.add.duplicate":"Юзер уже в списке",  
   "manage.team.add": "Добавить",
   "manage.team.remove": "Удалить",
   "organiztions.description": "Форма сохранения ID организации в Yandex Tracker",

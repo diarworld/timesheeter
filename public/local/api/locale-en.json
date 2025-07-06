@@ -18,6 +18,7 @@
   "manage.team.title": "Team management",
   "manage.team.ldap": "Enter LDAP (e.g. 60073101)",
   "manage.team.add.error":"Invalid LDAP",
+  "manage.team.add.duplicate":"User already in list",  
   "manage.team.add": "Add",
   "manage.team.remove": "Remove",
   "organiztions.description": "Form for saving organization ID in Yandex Tracker",
