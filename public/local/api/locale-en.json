@@ -145,5 +145,6 @@
   "tracker.jira.token": "API Token",
   "tracker.jira.token.hint": "API Token can be generated",
   "tracker.jira.token.hint.link": "here",
-  "tracker.jira.comment.edit.notSupported": "Jira comments edit is not currently supported"
+  "tracker.jira.comment.edit.notSupported": "Jira comments edit is not currently supported",
+  "footer.copyright": "2025, Timesheeter helper Ya.Tracker, feel free to use and change"
 }
