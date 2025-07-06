@@ -23,13 +23,11 @@ export const Layout: FC<TProps> = ({ children, head }) => (
           <Text fs={13} fw={700} lh={14} style={{ height: '32px', alignItems: 'center', display: 'flex' }}>
             <Message id="footer.copyright" />
           </Text>
-          {/* <a href="https://github.com/diarworld/timesheeter" target="_blank" rel="nofollow noopener noreferrer"> <GithubOutlined /> GitHub</a> */}
           <Button 
           type="link"
           icon={<GithubOutlined />}
           target="_blank"
           href="https://github.com/diarworld/timesheeter"
-          // onClick={}
           >GitHub</Button>
         </Row>
       </Flex>
