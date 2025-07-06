@@ -8,7 +8,7 @@ import { clsx } from 'clsx';
 import { useISODurationsToTotalDurationData } from 'entities/track/common/lib/hooks/use-iso-dirations-to-total-duration-data';
 import { DurationFormat } from 'features/date/ui/DurationFormat';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
-import { TTrackInputEditForm, TTransformedTracks } from 'entities/track/common/model/types';
+import { TTrackInputEditForm, TTrackInputDelete, TTransformedTracks } from 'entities/track/common/model/types';
 
 export interface IIssueTracksProps {
   issueKey: string | undefined;
@@ -18,6 +18,7 @@ export interface IIssueTracksProps {
   isEditTrackComment: boolean;
   className?: string;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
+  deleteTrack(form: TTrackInputDelete): void;
 }
 
 export const IssueTracks = ({
@@ -26,6 +27,7 @@ export const IssueTracks = ({
   className,
   isTrackUpdateLoading,
   updateTrack,
+  deleteTrack,
   isEditTrackComment,
   issueTracksForDate,
 }: IIssueTracksProps) => {
@@ -68,6 +70,7 @@ export const IssueTracks = ({
             isTrackUpdateLoading={isTrackUpdateLoading}
             updateTrack={updateTrack}
             isEditTrackComment={isEditTrackComment}
+            deleteTrack={deleteTrack}
           />
         ))}
       </div>
