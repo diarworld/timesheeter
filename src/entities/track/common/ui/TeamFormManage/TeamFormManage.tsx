@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button, InputNumber } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
@@ -13,6 +13,7 @@ import { TYandexUser } from 'entities/user/yandex/model/types';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
 
 import styles from './TeamFormManage.module.scss';
+import { constants } from 'buffer';
 
 type TProps = {
   tracker: TTrackerConfig;
@@ -29,42 +30,46 @@ export const TeamFormManage: FC<TProps> = ({
   
   const teamLdap: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
   
-  const validate = (fields: TTeamFormManageFields) => ({
-    ldap: validateLDAP(fields.ldap) ? undefined : message('manage.team.add.error'),
-  });
-
   const [team, setTeam] = useState<TYandexUser[]>(teamLdap);
-  const [ldapValue, setLdapValue] = useState('');
+  const [ldapValue, setLdapValue] = useState<string>('');
   const [error, setError] = useState('');
-  
-  let { data: user, isLoading } = yandexUserApi.useGetYandexUserByLoginQuery(
-    { login: ldapValue ?? '', tracker }, 
-    { skip: !ldapValue || ldapValue.length != 8 } // Only query when ldap is valid
-  );
-  const getUser = () => {
-    return user;
-  };
-  
-  const handleAdd = (ldap: string) => {    
-    setError('');
-    if (team.some(e => e.login === ldap)) {
-      setError('Юзер уже в списке');
-      return;
-    }
-    getUser();
+  const [userData, setUserData] = useState<TYandexUser | undefined>(undefined);
 
-    if (!user) {
-      setError('Юзер не найден');
-      return;
+  const { data: user, isLoading, error: queryError } = yandexUserApi.useGetYandexUserByLoginQuery(
+    { login: ldapValue ?? '', tracker }, 
+    { skip: !ldapValue || ldapValue.length != 8 }
+  );
+
+  React.useEffect(() => {
+    if (queryError && 'status' in queryError && queryError.status === 404) {
+      setUserData(undefined);
+      // console.log("User set to undefined");
+      setError(
+        queryError.data &&
+        typeof queryError.data === 'object' &&
+        'errorMessages' in queryError.data &&
+        Array.isArray((queryError.data as any).errorMessages)
+          ? (queryError.data as any).errorMessages.join(', ')
+          : JSON.stringify(queryError.data)
+      );
+    } else if (user) {
+      // console.log("User set to " + user)
+      setUserData(user);
     }
-    if (team.some(e => e.login === user!.login)) {
-      // setError('Юзер уже в командном списке');
-      return;
-    }
-    setTeam([...team, user]);
-    localStorage.setItem('team', JSON.stringify([...team, user]))
+  }, [user, queryError]);
+  
+  
+  const handleAdd = () => {
+    if (userData) {
+    setTeam([...team, userData]);
+    localStorage.setItem('team', JSON.stringify([...team, userData]))
     setError('');
-    user = undefined
+    setUserData(undefined);
+    // form.change('ldap', '');
+    setLdapValue('');
+    setLdapNumber(null);
+    // console.log(userData)
+    }
   };
 
   const handleRemove = (ldap: string) => {
@@ -72,53 +77,72 @@ export const TeamFormManage: FC<TProps> = ({
     setTeam(team.filter(member => member.login !== ldap));
     localStorage.setItem('team', JSON.stringify(team.filter(member => member.login !== ldap)));
   };
+
+  const validate = (ldap: string, team: TYandexUser[]) => {
+    if (ldap && !validateLDAP(ldap)) {
+      setUserData(undefined)
+      return { error: message('manage.team.add.error') };      
+    }
+    if (team.some(e => e.login === ldap)) {
+      setUserData(undefined)
+      return { error: message('manage.team.add.duplicate') };
+    }    
+    return { error: ''};
+  };
+
+
+  const [ldapNumber, setLdapNumber] = useState<string | number | null>('');
+  
+  const handleLdapNumber = (ldap: string | number | null) => {
+    const es = validate(String(ldap), team)
+    setError(es.error);
+    if (!es.error) {
+      // console.log('Ready to search: ', ldap);
+      setLdapValue(String(ldap))
+    }    
+  };
+
   return (
     <>
-    <Form initialValues={initialValues} onSubmit={() => {}} validate={validate}>
-      {({ handleSubmit, invalid }) => (
-        <>
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <InputField
-              name="ldap"
-              autoComplete="off"
-              displayError="onlyDirty"
-              displayErrorStatus="onlyDirty"
-              placeholder={message('manage.team.ldap')}
-              onBlur={(e) => setLdapValue(e.target.value)}
-            />
-            {error && <div style={{ color: 'red' }}>{error}</div>}
-            <Button
-                // disabled={isTrackCreateLoading || invalid}
-                disabled={isTrackCreateLoading || invalid || isLoading || !user}
-                type="primary"
-                name="addLdap"
-                htmlType="button"
-                onClick={() => handleAdd(ldapValue)}
-                loading={isTrackCreateLoading || isLoading }
-              >
-                <Message id="manage.team.add" />
-              </Button>
-            <ul>
-              {team.map(user => (
-                <li key={user.login} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ flex: 1 }}>{user.login} - {user.display} - {user.position}</span>
-                  <Button
-                    type="primary"
-                    name="addLdap"
-                    htmlType="button"
-                    onClick={() => handleRemove(user.login)} 
-                    style={{ marginLeft: 8 }}
-                    loading={isTrackCreateLoading}
-                  >
-                    <Message id="manage.team.remove" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </form>
-        </>
-      )}
-    </Form>
+    <InputNumber 
+      name="ldap" 
+      className={styles.input}
+      placeholder={message('manage.team.ldap')}
+      onChange={value => {
+        handleLdapNumber(value);
+      }}
+      value={ldapNumber}
+      status={error ? 'error' : undefined}
+    />
+    {error && <div className={styles.input} style={{ color: 'red' }}>{error}</div>}
+    <Button
+      className={styles.input}
+      disabled={isTrackCreateLoading || !!error || isLoading || !userData}
+      type="primary"
+      name="addLdap"
+      htmlType="button"
+      onClick={handleAdd}
+      loading={isTrackCreateLoading || isLoading }
+      >
+      <Message id="manage.team.add" />
+      </Button>
+    <ul>
+      {team.map(user => (
+        <li key={user.login} style={{ display: 'flex', alignItems: 'center', marginBottom: 5 }}>
+          <span style={{ flex: 1 }}>{user.login} - {user.display} - {user.position}</span>
+          <Button
+            type="primary"
+            name="addLdap"
+            htmlType="button"
+            onClick={() => handleRemove(user.login)} 
+            style={{ marginLeft: 8 }}
+            loading={isTrackCreateLoading}
+          >
+            <Message id="manage.team.remove" />
+          </Button>
+        </li>
+      ))}
+    </ul>
     </>
   );
 };
