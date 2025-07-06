@@ -14,6 +14,7 @@ import { CalendarExportModal } from 'entities/track/common/ui/CalendarExportModa
 import { TimePeriodStepper } from './TimePeriodStepper';
 import { TodayText } from './TodayText';
 import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
+import { TTrackerConfig } from 'entities/tracker/model/types';
 
 import styles from './TrackCalendarHeader.module.scss';
 
@@ -21,9 +22,10 @@ interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
   upperRowControls?: ReactNode;
   filters?: ReactNode;
+  tracker: TTrackerConfig;
 }
 
-export function TrackCalendarHeader({ isEdit, filters, upperRowControls }: ITrackCalendarHeaderProps) {
+export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker }: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
   const { from, to } = useFilters();
@@ -162,6 +164,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls }: ITrac
         onHidden={() => setModalVisible(false)}
         data={calendarData}
         loading={isCalendarLoading}
+        tracker={tracker}
       />
     </div>
   );
