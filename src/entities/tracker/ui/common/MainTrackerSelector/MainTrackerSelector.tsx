@@ -33,7 +33,7 @@ export const MainTrackerSelector = () => {
     return res;
   }, [trackersState]);
 
-  const onChange = (value: string, option?: TOption | TOption[]) => {
+  const onChange = (option?: TOption | TOption[]) => {
     if (option && !Array.isArray(option)) {
       dispatch(
         trackers.actions.setMainTracker({
@@ -48,7 +48,12 @@ export const MainTrackerSelector = () => {
       <Typography.Title level={2}>
         <Message id="trackers.configuration.main.title" />
       </Typography.Title>
-      <Select options={options} onChange={onChange} value={mainTrackerId} className={styles.selector} />
+      <Select
+        options={options}
+        onChange={onChange}
+        value={options.find(opt => opt.value === mainTrackerId) || null}
+        className={styles.selector}
+      />
     </section>
   );
 };

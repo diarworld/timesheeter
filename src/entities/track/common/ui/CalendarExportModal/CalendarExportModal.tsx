@@ -8,7 +8,7 @@ import { ScheduleFilled } from '@ant-design/icons';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { useCreateJiraTrack } from 'entities/track/jira/lib/hooks/use-create-jira-track';
 import { useCreateYandexTrack } from 'entities/track/yandex/lib/hooks/use-create-yandex-track';
-import { isJiraTrackerCfg, isYandexTrackerCfg } from 'entities/tracker/model/types';
+import { isJiraTrackerCfg } from 'entities/tracker/model/types';
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
 
 const { Text, Title } = Typography;
@@ -58,7 +58,6 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
   const yandexTrackHook = useCreateYandexTrack(tracker);
   
   const createTrack = isJiraTrackerCfg(tracker) ? jiraTrackHook.createTrack : yandexTrackHook.createTrack;
-  const isTrackCreateLoading = isJiraTrackerCfg(tracker) ? jiraTrackHook.isTrackCreateLoading : yandexTrackHook.isTrackCreateLoading;
 
   const handleIssueKeyChange = (key: string, value: string) => {
     setIssueKeys(prev => ({
