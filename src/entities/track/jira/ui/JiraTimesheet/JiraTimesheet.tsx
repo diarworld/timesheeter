@@ -23,7 +23,6 @@ import { JIRA_ISSUE_SORTING_KEY } from 'entities/issue/jira/model/constants';
 import { sortWithPinedIssues } from 'entities/issue/common/lib/sortWithPinedIssues';
 import { TTrackFormCreateFields } from 'entities/track/common/ui/TrackFormCreate/types';
 import { TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
-import { CalendarExportModal } from 'entities/track/common/ui/CalendarExportModal';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -135,7 +134,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
     <div>
       <TrackCalendarHeader
         isEdit={isEdit}
-        onCalendarExport={handleCalendarExport}
         filters={
           <>
             <JiraUserSelectConnected tracker={tracker} userId={userIdFromFilter} />
@@ -194,15 +192,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
         )}
         renderIssuesSearchConnected={(props) => <JiraIssuesSearchConnected {...props} tracker={tracker} />}
       />
-      
-      {isEdit && (
-        <CalendarExportModal
-          visible={modalVisible}
-          onHidden={handleCloseModal}
-          data={calendarData}
-          loading={false}
-        />
-      )}
     </div>
   );
 };

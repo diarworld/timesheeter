@@ -17,7 +17,7 @@ export const TrackCalendarHeaderControlBar = memo(({ children }: PropsWithChildr
   const fromDate = useMemo(() => DateWrapper.getDate({ date: from, utcOffsetInMinutes }), [from, utcOffsetInMinutes]);
   const toDate = useMemo(() => DateWrapper.getDate({ date: to, utcOffsetInMinutes }), [to, utcOffsetInMinutes]);
 
-  const handleDateChange = (dates: [Dayjs, Dayjs] | null) =>
+  const handleDateChange = (dates: any, dateStrings: [string, string]) =>
     updateRangeFilter({
       from: dates?.[0] ? DateWrapper.getDateFormat(dates[0].startOf('day')) : undefined,
       to: dates?.[1] ? DateWrapper.getDateFormat(dates[1].endOf('day')) : undefined,
@@ -31,7 +31,6 @@ export const TrackCalendarHeaderControlBar = memo(({ children }: PropsWithChildr
     <Space direction="vertical" size={5} style={{ width: '100%' }}>
       <div className={styles.bar}>
         <RangePicker
-          bordered={false}
           allowClear={false}
           value={[fromDate, toDate]}
           onChange={handleDateChange}
