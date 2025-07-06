@@ -133,6 +133,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
   return (
     <div>
       <TrackCalendarHeader
+        tracker={tracker}
         isEdit={isEdit}
         filters={
           <>
