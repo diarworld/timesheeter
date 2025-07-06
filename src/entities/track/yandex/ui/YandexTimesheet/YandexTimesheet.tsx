@@ -136,6 +136,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
             tracker={tracker}
             updateTrack={updateTrack}
             getIssueUrl={getIssueUrl}
+            deleteTrack={deleteTrack}
           />
         )}
         renderTrackCalendarFootConnected={(props) => <YandexTrackCalendarFootConnected {...props} tracker={tracker} />}
