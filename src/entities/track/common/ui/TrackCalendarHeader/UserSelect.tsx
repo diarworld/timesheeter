@@ -22,8 +22,7 @@ export const UserSelect = memo(({ allowClear, userOptions, isLoading, setShouldL
 
   return (
     <Select
-      onDropdownVisibleChange={setShouldLoad}
-      bordered={false}
+      onOpenChange={setShouldLoad}
       allowClear={allowClear}
       options={userOptions}
       value={value ? String(value) : undefined}
