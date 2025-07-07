@@ -81,7 +81,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
   const getIssueUrl = useCallback((issueKey: string) => new URL(issueKey, tracker.url).href, [tracker]);
 
   const viewingAnotherUser = !!userIdFromFilter;
-  const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined;
+  const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined; // TODO Offset critically affect us, need to refactor and check
   const isLoading = isLoadingIssues || isLoadingTracks;
 
   return (
