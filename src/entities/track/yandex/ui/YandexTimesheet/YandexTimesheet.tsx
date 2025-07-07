@@ -1,6 +1,7 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useState, useEffect } from 'react';
 import { useIssuesList } from 'entities/issue/yandex/lib/use-issues-list';
 import { usePinnedIssues } from 'entities/issue/common/lib/use-pinned-issues';
+import { ReportsTable } from './ReportsTable';
 
 import { yandexTrackApi } from 'entities/track/yandex/model/yandex-api';
 import { TCurrentLocale } from 'entities/locale/model/types';
@@ -24,6 +25,12 @@ import { Message } from 'entities/locale/ui/Message';
 import { Button } from 'antd';
 import { YANDEX_ISSUE_SORTING_KEY } from 'entities/issue/yandex/model/constants';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
+import { TYandexUser } from 'entities/user/yandex/model/types';
+import { useDispatch } from 'react-redux';
+import { TTransformedTracksByUser } from 'entities/track/common/model/types';
+import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
+import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
+
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -32,6 +39,7 @@ type TProps = {
 };
 
 export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
+  const [currentMenuKey, setCurrentMenuKey] = useState('tracks');
   const logout = useLogoutTracker(tracker);
 
   const {
@@ -56,6 +64,75 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
     { from, to, createdBy: uId, utcOffsetInMinutes, tracker },
     { skip: !uId },
   );
+
+  const [team, setTeam] = useState<TYandexUser[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('team') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  // Track changes in localStorage for 'team'
+  useEffect(() => {
+    const updateTeam = () => {
+      try {
+        setTeam(JSON.parse(localStorage.getItem('team') || '[]'));
+      } catch {
+        setTeam([]);
+      }
+    };
+
+    // Listen for storage changes (other tabs)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'team') updateTeam();
+    });
+
+    // Optionally, poll for changes in the same tab (if your app updates localStorage directly)
+    const interval = setInterval(updateTeam, 1000);
+
+    return () => {
+      window.removeEventListener('storage', updateTeam);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const [userTracks, setUserTracks] = useState<TTransformedTracksByUser[]>([]);
+  const [loadingUserTracks, setLoadingUserTracks] = useState(false);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (currentMenuKey === 'reports' && team.length > 0) {
+      setLoadingUserTracks(true);
+      Promise.all(
+        team.map(user =>
+          (dispatch as any)(
+            yandexTrackApi.endpoints.getYandexTracks.initiate({
+              from,
+              to,
+              createdBy: user.uid,
+              utcOffsetInMinutes,
+              tracker,
+            })
+          ).unwrap()
+        )
+      ).then(results => {
+        setUserTracks(
+          results.flatMap((r, i) =>
+            (r?.list ?? []).map((track: TTransformedTracksByUser) => ({
+              ...track,
+              display: team[i].display,
+              uid: team[i].uid
+            }))
+          )
+        );
+      }).finally(() => setLoadingUserTracks(false));
+    } else if (currentMenuKey === 'reports') {
+      setUserTracks([]);
+    }
+  }, [currentMenuKey, team, from, to, utcOffsetInMinutes, tracker, dispatch]);
+
   const { isLoadingIssues, issues } = useIssuesList({
     from,
     to,
@@ -81,7 +158,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
   const getIssueUrl = useCallback((issueKey: string) => new URL(issueKey, tracker.url).href, [tracker]);
 
   const viewingAnotherUser = !!userIdFromFilter;
-  const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined;
+  const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined && currentMenuKey === 'tracks'; // TODO Offset critically affect us, need to refactor and check
   const isLoading = isLoadingIssues || isLoadingTracks;
 
   return (
@@ -112,47 +189,66 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
             <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
           </>
         }
+        currentMenuKey={currentMenuKey}
+        onMenuChange={setCurrentMenuKey}
       />
-      <TrackCalendar
-        tracker={tracker}
-        isEdit={isEdit}
-        from={from}
-        to={to}
-        showWeekends={showWeekends}
-        utcOffsetInMinutes={utcOffsetInMinutes}
-        issueSortingKey={YANDEX_ISSUE_SORTING_KEY}
-        isLoading={isLoading}
-        issues={issues}
-        pinnedIssues={pinnedIssues}
-        pinIssue={pinIssue}
-        unpinIssue={unpinIssue}
-        isTrackCreateLoading={isTrackCreateLoading}
-        createTrack={createTrack}
-        isTrackDeleteLoading={isTrackDeleteLoading}
-        deleteTrack={deleteTrack}
-        renderTrackCalendarRowConnected={(props) => (
-          <YandexTrackCalendarRowConnected
-            {...props}
-            tracker={tracker}
-            updateTrack={updateTrack}
-            getIssueUrl={getIssueUrl}
-            deleteTrack={deleteTrack}
-          />
-        )}
-        renderTrackCalendarFootConnected={(props) => <YandexTrackCalendarFootConnected {...props} tracker={tracker} />}
-        renderIssueTracksConnected={(props) => (
-          <YandexIssueTracksConnected
-            {...props}
-            isEditTrackComment
-            tracker={tracker}
-            updateTrack={updateTrack}
-            isTrackUpdateLoading={isTrackUpdateLoading}
-            uId={uId}
-            deleteTrack={deleteTrack}
-          />
-        )}
-        renderIssuesSearchConnected={(props) => <YandexIssuesSearchConnected {...props} tracker={tracker} />}
-      />
+      {currentMenuKey === 'tracks' ? (
+        <TrackCalendar
+          tracker={tracker}
+          isEdit={isEdit}
+          from={from}
+          to={to}
+          showWeekends={showWeekends}
+          utcOffsetInMinutes={utcOffsetInMinutes}
+          issueSortingKey={YANDEX_ISSUE_SORTING_KEY}
+          isLoading={isLoading}
+          issues={issues}
+          pinnedIssues={pinnedIssues}
+          pinIssue={pinIssue}
+          unpinIssue={unpinIssue}
+          isTrackCreateLoading={isTrackCreateLoading}
+          createTrack={createTrack}
+          isTrackDeleteLoading={isTrackDeleteLoading}
+          deleteTrack={deleteTrack}
+          renderTrackCalendarRowConnected={(props) => (
+            <YandexTrackCalendarRowConnected
+              {...props}
+              tracker={tracker}
+              updateTrack={updateTrack}
+              getIssueUrl={getIssueUrl}
+              deleteTrack={deleteTrack}
+            />
+          )}
+          renderTrackCalendarFootConnected={(props) => <YandexTrackCalendarFootConnected {...props} tracker={tracker} />}
+          renderIssueTracksConnected={(props) => (
+            <YandexIssueTracksConnected
+              {...props}
+              isEditTrackComment
+              tracker={tracker}
+              updateTrack={updateTrack}
+              isTrackUpdateLoading={isTrackUpdateLoading}
+              uId={uId}
+              deleteTrack={deleteTrack}
+            />
+          )}
+          renderIssuesSearchConnected={(props) => <YandexIssuesSearchConnected {...props} tracker={tracker} />}
+        />
+      ) : (
+        <div style={{ padding: 32, textAlign: 'center' }}>
+        <ReportsTable
+          team={team}
+          tracks={userTracks}
+          from={from}
+          to={to}
+          utcOffsetInMinutes={utcOffsetInMinutes}
+          showWeekends={showWeekends}
+          // loading={loadingUserTracks}
+        />
+        </div>
+      )}
+      {/* Always render modals here, outside the tab conditional */}
+      <TeamModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
+      <LdapLoginModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
     </div>
   );
 };

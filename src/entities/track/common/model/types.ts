@@ -51,6 +51,11 @@ export type TTransformedTracks = TTransformedTracksByDateRange & {
   issueKey2Tracks: Record<string, TTransformedTracksByDateRange>;
 };
 
+export type TTransformedTracksByUser = TTrack & {
+  uid: number;
+  display?: string;
+};
+
 export type TTrackInputCreate = {
   issueKey?: string;
   start: string;
