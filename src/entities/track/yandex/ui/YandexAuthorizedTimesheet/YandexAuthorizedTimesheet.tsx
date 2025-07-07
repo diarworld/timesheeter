@@ -22,11 +22,13 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
 
   const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
   
-  const team: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
+  let team: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
+  // Sort by display field (case-insensitive)
+  team = team.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
   const ldapCredentials = localStorage.getItem('ldapCredentials');
 
   if (self && !team.some(e => e?.login === self?.login)) {
-    localStorage.setItem('team', JSON.stringify([...team, self]))
+    localStorage.setItem('team', JSON.stringify([...team, self].slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }))));
   }
 
   if (self && !ldapCredentials) {
