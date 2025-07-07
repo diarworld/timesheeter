@@ -21,6 +21,7 @@
   "manage.team.add.duplicate":"Юзер уже в списке",  
   "manage.team.add": "Добавить",
   "manage.team.remove": "Удалить",
+  "manage.team.queue.placeholder": "Очередь команды",
   "organiztions.description": "Форма сохранения ID организации в Yandex Tracker",
   "organiztions.title": "Выбор организации",
   "organiztions.emptyOrganization.message": "Укажите ID вашей организации в Yandex Tracker.\nВы можете узнать его на",
