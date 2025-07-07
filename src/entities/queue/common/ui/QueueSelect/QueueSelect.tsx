@@ -10,9 +10,11 @@ interface IQueueSelectProps {
   isFetchingQueueList: boolean;
   value: string[];
   onChange(value: string[]): void;
+  className?: string;
+  placeholder?: string;
 }
 
-export const QueueSelect = ({ onChange, value, queueList, isFetchingQueueList }: IQueueSelectProps) => {
+export const QueueSelect = ({ onChange, value, queueList, isFetchingQueueList, className, placeholder }: IQueueSelectProps) => {
   const message = useMessage();
 
   const options = useMemo(
@@ -25,13 +27,13 @@ export const QueueSelect = ({ onChange, value, queueList, isFetchingQueueList }:
 
   return (
     <Select
-      className={styles.select}
+      className={`${styles.select} ${className || ''}`}
       options={options}
       mode="multiple"
       onChange={onChange}
       value={value}
       allowClear
-      placeholder={message('filter.queue.placeholder')}
+      placeholder={placeholder || message('filter.queue.placeholder')}
       loading={isFetchingQueueList}
       maxTagCount="responsive"
     />

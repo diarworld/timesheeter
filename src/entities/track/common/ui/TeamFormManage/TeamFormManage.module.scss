@@ -6,11 +6,14 @@
   row-gap: 16px;
 }
 
-.input {
-  display: flex;
-  flex-direction: column;
+// .input {
+//   display: flex;
+//   flex-direction: column;
+//   width: 100%;
+//   margin-bottom: 5px;
+// }
+.select {
   width: 100%;
-  margin-bottom: 5px;
 }
 
 .tracks {

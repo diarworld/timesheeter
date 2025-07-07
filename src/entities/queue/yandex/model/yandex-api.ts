@@ -1,7 +1,7 @@
 import { fetchAllPages, TFetchAllPagesBaseQueryResult } from 'shared/api';
 import { api } from 'shared/api';
 import { identity } from 'shared/lib/utils';
-import { TGetQueuesParams, TQueue } from 'entities/queue/common/model/types';
+import { TGetQueuesParams, TQueue, TGetQueueParams } from 'entities/queue/common/model/types';
 import { getTrackerHeaders } from 'entities/tracker/lib/getTrackerHeaders';
 import { yandexQueueEndpoints } from 'entities/queue/yandex/model/endpoints';
 
@@ -20,6 +20,21 @@ export const yandexQueueApi = api.injectEndpoints({
           identity,
         );
         return res;
+      },
+    }),
+    getQueueByKeys: build.query<TQueue[], TGetQueueParams>({
+      async queryFn({ keys, tracker }, __, ___, fetchWithBQ) {
+        const results = await Promise.all(
+          keys.map(async (key) => {
+            const response = await fetchWithBQ({
+              url: yandexQueueEndpoints.queue(key),
+              headers: getTrackerHeaders(tracker),
+            });
+            return response.data as TQueue;
+          })
+        );
+        console.log(results)
+        return { data: results }
       },
     }),
   }),

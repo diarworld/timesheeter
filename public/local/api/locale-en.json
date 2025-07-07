@@ -21,6 +21,7 @@
   "manage.team.add.duplicate":"User already in list",  
   "manage.team.add": "Add",
   "manage.team.remove": "Remove",
+  "manage.team.queue.placeholder": "Team queue",
   "organiztions.description": "Form for saving organization ID in Yandex Tracker",
   "organiztions.title": "Organization selection",
   "organiztions.emptyOrganization.message": "Specify the ID of your organization in Yandex Tracker.\nYou can find it on",
