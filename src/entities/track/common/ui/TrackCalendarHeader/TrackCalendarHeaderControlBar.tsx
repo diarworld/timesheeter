@@ -36,16 +36,14 @@ export const TrackCalendarHeaderControlBar = memo(({ children }: PropsWithChildr
           format={DATE_FORMAT_DATE}
         />
 
-        <div className={styles.divider} />
-
+        {/* <div className={styles.divider} /> */}
         {children}
       </div>
-
-      <Text fs={13}>
-        <Checkbox checked={showWeekends} onChange={handleWeekendsVisibilityChange}>
-          <Typography.Text type="secondary">{message('track.calendar.showWeekends')}</Typography.Text>
-        </Checkbox>
-      </Text>
+        <Text fs={13} style={{padding: '0 10px'}}>
+          <Checkbox checked={showWeekends} onChange={handleWeekendsVisibilityChange}>
+            <Typography.Text type="secondary">{message('track.calendar.showWeekends')}</Typography.Text>
+          </Checkbox>
+        </Text>
     </Space>
   );
 });

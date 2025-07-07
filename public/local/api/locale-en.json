@@ -68,6 +68,7 @@
   "track.item.createdBy": "createdBy",
   "track.item.duration": "Duration",
   "track.item.start": "Start",
+  "track.total.logged": "Total logged",
   "issue.issueKey.placeholder": "Enter the key or the name of the task",
   "issue.issueKey.title": "Task",
   "issue.tracksForDate.title": "Issue {issueKey} worklogs for {date}",
@@ -148,5 +149,12 @@
   "tracker.jira.token.hint": "API Token can be generated",
   "tracker.jira.token.hint.link": "here",
   "tracker.jira.comment.edit.notSupported": "Jira comments edit is not currently supported",
-  "footer.copyright": "2025, Timesheeter helper Ya.Tracker, feel free to use and change"
+  "footer.copyright": "{year}, Timesheeter helper Ya.Tracker, feel free to use and change",
+  "menu.settings": "Settings",
+  "menu.user.custom": "User",
+  "menu.user.interface": "Interface",
+  "menu.locale.english": "English",
+  "menu.locale.russian": "Русский",
+  "menu.tracks": "Timesheets",
+  "menu.reports": "Reports"
 }

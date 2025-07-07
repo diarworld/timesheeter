@@ -1,4 +1,4 @@
-import { Button, Col, Row, Space } from 'antd';
+import { Button, Col, Row, Space, Menu, MenuProps } from 'antd';
 import { LocaleSelector } from 'entities/locale/ui/LocaleSelector';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import { ManageTeamButton } from 'entities/track/common/ui/TrackCalendarHeader/ManageTeamButton';
@@ -15,6 +15,15 @@ import { TimePeriodStepper } from './TimePeriodStepper';
 import { TodayText } from './TodayText';
 import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TTrackerConfig } from 'entities/tracker/model/types';
+import { AppstoreOutlined, MailOutlined, SettingOutlined, LoginOutlined, UsergroupAddOutlined, LogoutOutlined, FieldTimeOutlined } from '@ant-design/icons';
+import { useLdapLoginAction } from 'entities/track/common/lib/hooks/use-ldap-login-action';
+import { useManageTeamAction } from 'entities/track/common/lib/hooks/use-manage-team-action';
+import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
+import { useAppDispatch, useAppSelector } from 'shared/lib/hooks';
+import { actionLocaleSetCurrent } from 'entities/locale/model/actions';
+import { selectLocaleCurrent } from 'entities/locale/model/selectors';
+import { localeApi } from 'entities/locale/model/api';
+import { timezoneTimeOffsetOptions } from 'features/date/ui/TimeOffsetSelect/TimeOffsetSelect';
 
 import styles from './TrackCalendarHeader.module.scss';
 
@@ -23,12 +32,14 @@ interface ITrackCalendarHeaderProps {
   upperRowControls?: ReactNode;
   filters?: ReactNode;
   tracker: TTrackerConfig;
+  currentMenuKey: string;
+  onMenuChange: (key: string) => void;
 }
 
-export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker }: ITrackCalendarHeaderProps) {
+export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker, currentMenuKey, onMenuChange }: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
-  const { from, to } = useFilters();
+  const { from, to, utcOffsetInMinutes, updateTimeOffset } = useFilters();
   
   const [loadings, setLoadings] = useState<boolean[]>([]);
   const [hasLdapCredentials, setHasLdapCredentials] = useState(false);
@@ -121,51 +132,152 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
       });
     }
   }, [getCalendarMeetings, from, to]);
-  
+
+  type MenuItem = Required<MenuProps>['items'][number];
+
+  const dispatch = useAppDispatch();
+  const localeCurrent = useAppSelector(selectLocaleCurrent);
+  const { data: localeList } = localeApi.useGetLocalesQuery();
+
+  const handleClickLocaleSwitch = () => {
+    if (!localeList || localeList.length === 0 || !localeCurrent) return;
+    const currentIdx = localeList.indexOf(localeCurrent);
+    const nextIdx = (currentIdx + 1) % localeList.length;
+    dispatch(actionLocaleSetCurrent(localeList[nextIdx]));
+  };
+
+  // Doesn't use for now
+  // const currentTzIdx = timezoneTimeOffsetOptions.findIndex(opt => opt.value === utcOffsetInMinutes);
+  // const nextTzIdx = (currentTzIdx + 1) % timezoneTimeOffsetOptions.length;
+  // const currentTzLabel = timezoneTimeOffsetOptions[currentTzIdx]?.label ?? message('timeOffset.placeholder');
+
+  // const handleClickTimezoneSwitch = () => {
+  //   updateTimeOffset(timezoneTimeOffsetOptions[nextTzIdx].value);
+  // };
+
+  // const timezoneMenuItems: MenuItem[] = [
+  //   // Current timezone on top, highlighted
+  //   {
+  //     label: (
+  //       <span>
+  //         {currentTzLabel} <strong>({message('timeOffset.placeholder')})</strong>
+  //       </span>
+  //     ),
+  //     key: `timezone-current`,
+  //     icon: <FieldTimeOutlined style={{ color: '#1890ff' }} />,
+  //     disabled: true,
+  //   },
+  //   // Divider (optional)
+  //   { type: 'divider' as const },
+  //   // All timezones
+  //   ...timezoneTimeOffsetOptions.map((tz) => ({
+  //     label: tz.label,
+  //     key: `timezone-${tz.value}`,
+  //     icon: tz.value === utcOffsetInMinutes ? <FieldTimeOutlined style={{ color: '#1890ff' }} /> : undefined,
+  //     onClick: () => updateTimeOffset(tz.value),
+  //   })),
+  // ];
+
+  const items: MenuItem[] = [
+    {
+      label: message('menu.settings'),
+      key: 'SubMenu',
+      icon: <SettingOutlined />,
+      children: [
+        {
+          type: 'group',
+          label: message('menu.user.custom'),
+          children: [
+            { label: message('ldap.auth'), icon: <LoginOutlined />, key: 'ldap-login', onClick: useLdapLoginAction() },
+            { label: message('manage.team'), icon: <UsergroupAddOutlined />, key: 'manage-team', onClick: useManageTeamAction() },
+          ],
+        },
+        {
+          type: 'group',
+          label: message('menu.user.interface'),
+          children: [
+            {
+              label: message(localeCurrent === 'ru' ? 'menu.locale.english' : 'menu.locale.russian'),
+              icon: <span style={{ fontSize: 18 }}>{localeCurrent === 'ru' ? '🇬🇧' : '🇷🇺'}</span>,
+              key: 'locale-selector',
+              onClick: handleClickLocaleSwitch
+            },
+            // Remove tz edit, because it breacs time logging
+            // {
+            //   label: currentTzLabel,
+            //   icon: <FieldTimeOutlined />,
+            //   key: 'timezone-selector',
+            //   children: timezoneMenuItems
+            // }
+          ]
+        }
+      ],
+    },
+    {
+      label: message('menu.tracks'),
+      key: 'tracks',
+      icon: <MailOutlined />,
+    },
+    {
+      label: message('menu.reports'),
+      key: 'reports',
+      icon: <AppstoreOutlined />,
+      // disabled: true,
+    },
+    {
+      key: 'logout',
+      label: message('home.logout'),
+      icon: <LogoutOutlined />,
+      onClick: tracker ? useLogoutTracker(tracker) : undefined,
+      disabled: !tracker,
+    },
+  ];
+
+  const onClick: MenuProps['onClick'] = (e) => {
+    if (e.key === 'tracks' || e.key === 'reports') {
+      onMenuChange(e.key);
+    }
+  };
   return (
-    <div className={styles.header}>
-      <Row justify="space-between">
-        <Col>
-        <LdapLoginButton className={styles.addTrackBtn} isEdit={isEdit} />
-        <ManageTeamButton className={styles.addTrackBtn} isEdit={isEdit} />
-        <Button 
-          type="link"
-          disabled={!isEdit || !hasLdapCredentials}
-          icon={<ScheduleFilled />}
-          loading={loadings[1] || isCalendarLoading}
-          onClick={() => handleExportCalendar(1)}
-          title={!hasLdapCredentials ? message('calendar.export.no.credentials') : message('calendar.export')}
-          >{message('calendar.export')}</Button>
-
-        <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
-
-        <TodayText />
-        </Col>
-
-        <Col>
-          <Space>
-            {upperRowControls}
-            <LocaleSelector />
-            <TimeOffsetSelect />
-          </Space>
-        </Col>
-      </Row>
-
-      <Row className={styles.durationRow}>
+    <>
+      <Row className={styles.menu} justify="space-between">
         <Col flex="auto">
-          <TimePeriodStepper loader={<GlobalFetching />} />
+          <Menu
+            onClick={onClick}
+            selectedKeys={[currentMenuKey]}
+            mode="horizontal"
+            items={items}
+            theme="light"
+          />
         </Col>
       </Row>
+      <div className={styles.header}>
+        <Row className={styles.durationRow}>
+          <Button
+            type="link"
+            disabled={!isEdit || !hasLdapCredentials}
+            icon={<ScheduleFilled />}
+            loading={loadings[1] || isCalendarLoading}
+            onClick={() => handleExportCalendar(1)}
+            title={!hasLdapCredentials ? message('calendar.export.no.credentials') : message('calendar.export')}
+          >{message('calendar.export')}</Button>
+          <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
+          {/* <TodayText /> */}
+          <Col flex="auto">
+            <TimePeriodStepper loader={<GlobalFetching />} />
+          </Col>
+        </Row>
+        <Row className={styles.durationRow}>
+        <TrackCalendarHeaderControlBar>{filters}</TrackCalendarHeaderControlBar>
 
-      <TrackCalendarHeaderControlBar>{filters}</TrackCalendarHeaderControlBar>
-      
-      <CalendarExportModal
-        visible={modalVisible}
-        onHidden={() => setModalVisible(false)}
-        data={calendarData}
-        loading={isCalendarLoading}
-        tracker={tracker}
-      />
-    </div>
+        <CalendarExportModal
+          visible={modalVisible}
+          onHidden={() => setModalVisible(false)}
+          data={calendarData}
+          loading={isCalendarLoading}
+          tracker={tracker} />
+          </Row>
+      </div>
+    </>
   );
 }

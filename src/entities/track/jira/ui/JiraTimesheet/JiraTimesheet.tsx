@@ -120,25 +120,22 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
       <TrackCalendarHeader
         tracker={tracker}
         isEdit={isEdit}
-        filters={
-          <>
-            <JiraUserSelectConnected tracker={tracker} userId={userIdFromFilter} />
-            <JiraIssueStatusSelectConnected
-              tracker={tracker}
-              value={issueStatus}
-              language={language}
-              onChange={updateIssueStatus}
-            />
-            <QueueSelect
-              value={queue}
-              onChange={updateQueue}
-              queueList={queueList}
-              isFetchingQueueList={isFetchingQueueList}
-            />
-            <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
-          </>
-        }
-      />
+        filters={<>
+          <JiraUserSelectConnected tracker={tracker} userId={userIdFromFilter} />
+          <JiraIssueStatusSelectConnected
+            tracker={tracker}
+            value={issueStatus}
+            language={language}
+            onChange={updateIssueStatus} />
+          <QueueSelect
+            value={queue}
+            onChange={updateQueue}
+            queueList={queueList}
+            isFetchingQueueList={isFetchingQueueList} />
+          <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
+        </>} currentMenuKey={''} onMenuChange={function (key: string): void {
+          throw new Error('Function not implemented.');
+        } }      />
       <TrackCalendar
         tracker={tracker}
         isEdit={isEdit}

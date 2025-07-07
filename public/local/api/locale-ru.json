@@ -75,6 +75,7 @@
   "track.list.title": "Список треков",
   "track.start.placeholder": "Укажите дату начала работы",
   "track.start.title": "Старт",
+  "track.total.logged": "Всего залогированно",
   "user.item.description": "Описание пользователя",
   "user.item.display": "Имя",
   "user.item.email": "Эл. почта",
@@ -148,5 +149,12 @@
   "tracker.jira.token.hint": "API токен можно сгенерировать",
   "tracker.jira.token.hint.link": "здесь",
   "tracker.jira.comment.edit.notSupported": "Редактирование комментариев Jira не поддерживается",
-  "footer.copyright": "2025, Помощник тайм трекинга в Ya.Tracker, используйте и изменяйте свободно"
+  "footer.copyright": "{year}, Помощник тайм трекинга в Ya.Tracker, используйте и изменяйте свободно",
+  "menu.settings": "Настройки",
+  "menu.user.custom": "Пользовательские",
+  "menu.user.interface": "Интерфейс",
+  "menu.locale.english": "English",
+  "menu.locale.russian": "Русский",
+  "menu.tracks": "Таймшиты",
+  "menu.reports": "Отчеты"
 }
