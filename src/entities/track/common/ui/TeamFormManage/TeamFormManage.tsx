@@ -69,7 +69,7 @@ export const TeamFormManage: FC<TProps> = ({
     { skip: !teamQueueYT || teamQueueYT.length == 0 }
   );
 
-  const [triggerGetUserById] = yandexUserApi.useLazyGetYandexUserByIdQuery();
+  const [triggerGetUserById, { isLoading: isLoadingUsersFromTeam }] = yandexUserApi.useLazyGetYandexUserByIdQuery();
 
   React.useEffect(() => {
     if (teamYT) {
@@ -113,11 +113,7 @@ export const TeamFormManage: FC<TProps> = ({
       position: user.position,
     }));
     localStorage.setItem('team', JSON.stringify(minimalUsers));
-    setError('');
-    setUserData(undefined);
-    setLdapValue('');
-    setLdapNumber(null);
-    // console.log(userData)
+    setTeam(newTeam)
     }
   };
 
@@ -184,7 +180,7 @@ export const TeamFormManage: FC<TProps> = ({
       name="addLdap"
       htmlType="button"
       onClick={handleAddFromTeam}
-      // loading={isTrackCreateLoading || isLoading }
+      loading={isLoadingUsersFromTeam}
       >
       <Message id="manage.team.add" />
     </Button>
