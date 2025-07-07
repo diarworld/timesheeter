@@ -88,7 +88,9 @@ export const TeamFormManage: FC<TProps> = ({
         const deduped = Array.from(
           new Map(merged.map(user => [user.login, user])).values()
         );
-        const minimalUsers = deduped.map(user => ({
+        // Sort by display field (case-insensitive)
+        const sorted = deduped.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+        const minimalUsers = sorted.map(user => ({
           uid: user.uid,
           login: user.login,
           display: user.display,
@@ -96,7 +98,7 @@ export const TeamFormManage: FC<TProps> = ({
           position: user.position,
         }));
         localStorage.setItem('team', JSON.stringify(minimalUsers));
-        setTeam(deduped);
+        setTeam(sorted);
       });
     }
   }, [teamYT]);
@@ -105,7 +107,9 @@ export const TeamFormManage: FC<TProps> = ({
   const handleAdd = () => {
     if (userData) {
     const newTeam = [...team, userData];
-    const minimalUsers = newTeam.map(user => ({
+    // Sort by display field (case-insensitive)
+    const sorted = newTeam.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+    const minimalUsers = sorted.map(user => ({
       uid: user.uid,
       login: user.login,
       display: user.display,
@@ -113,14 +117,17 @@ export const TeamFormManage: FC<TProps> = ({
       position: user.position,
     }));
     localStorage.setItem('team', JSON.stringify(minimalUsers));
-    setTeam(newTeam)
+    setTeam(sorted)
     }
   };
 
   const handleRemove = (ldap: string) => {
     setError('');
-    setTeam(team.filter(member => member.login !== ldap));
-    localStorage.setItem('team', JSON.stringify(team.filter(member => member.login !== ldap)));
+    const filtered = team.filter(member => member.login !== ldap);
+    // Sort by display field (case-insensitive)
+    const sorted = filtered.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+    setTeam(sorted);
+    localStorage.setItem('team', JSON.stringify(sorted));
   };
 
   const validate = (ldap: string, team: TYandexUser[]) => {
