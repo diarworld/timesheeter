@@ -32,9 +32,11 @@ interface ITrackCalendarHeaderProps {
   upperRowControls?: ReactNode;
   filters?: ReactNode;
   tracker: TTrackerConfig;
+  currentMenuKey: string;
+  onMenuChange: (key: string) => void;
 }
 
-export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker }: ITrackCalendarHeaderProps) {
+export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker, currentMenuKey, onMenuChange }: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
   const { from, to, utcOffsetInMinutes, updateTimeOffset } = useFilters();
@@ -186,8 +188,8 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
           type: 'group',
           label: message('menu.user.custom'),
           children: [
-            { label: message('ldap.auth'), icon: <LoginOutlined />, key: 'setting:1', onClick: useLdapLoginAction() },
-            { label: message('manage.team'), icon: <UsergroupAddOutlined />, key: 'setting:2', onClick: useManageTeamAction() },
+            { label: message('ldap.auth'), icon: <LoginOutlined />, key: 'ldap-login', onClick: useLdapLoginAction() },
+            { label: message('manage.team'), icon: <UsergroupAddOutlined />, key: 'manage-team', onClick: useManageTeamAction() },
           ],
         },
         {
@@ -231,26 +233,25 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
     },
   ];
 
-  const [current, setCurrent] = useState('tracks');
-  
   const onClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'tracks' || e.key === 'reports') {
-      setCurrent(e.key);
+      onMenuChange(e.key);
     }
   };
   return (
-    
-      
-      <><Row className={styles.menu} justify="space-between">
-      <Col flex="auto">
-        <Menu
-          onClick={onClick}
-          selectedKeys={[current]}
-          mode="horizontal"
-          items={items}
-          theme="light" />
-      </Col>
-    </Row><div className={styles.header}>
+    <>
+      <Row className={styles.menu} justify="space-between">
+        <Col flex="auto">
+          <Menu
+            onClick={onClick}
+            selectedKeys={[currentMenuKey]}
+            mode="horizontal"
+            items={items}
+            theme="light"
+          />
+        </Col>
+      </Row>
+      <div className={styles.header}>
         <Row className={styles.durationRow}>
           <Button
             type="link"
@@ -276,6 +277,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
           loading={isCalendarLoading}
           tracker={tracker} />
           </Row>
-      </div></>
+      </div>
+    </>
   );
 }
