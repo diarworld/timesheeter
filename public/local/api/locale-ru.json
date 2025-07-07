@@ -148,5 +148,5 @@
   "tracker.jira.token.hint": "API токен можно сгенерировать",
   "tracker.jira.token.hint.link": "здесь",
   "tracker.jira.comment.edit.notSupported": "Редактирование комментариев Jira не поддерживается",
-  "footer.copyright": "2025, Помощник тайм трекинга в Ya.Tracker, используйте и изменяйте свободно"
+  "footer.copyright": "{year}, Помощник тайм трекинга в Ya.Tracker, используйте и изменяйте свободно"
 }

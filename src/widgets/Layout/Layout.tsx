@@ -21,7 +21,7 @@ export const Layout: FC<TProps> = ({ children, head }) => (
         <Row>
           
           <Text fs={13} fw={700} lh={14} style={{ height: '32px', alignItems: 'center', display: 'flex' }}>
-            <Message id="footer.copyright" />
+          <Message id="footer.copyright" values={{ year: new Date().getFullYear() }} />
           </Text>
           <Button 
           type="link"
