@@ -33,7 +33,7 @@ export const Layout: FC<TProps> = ({ children, head }) => (
           type="link"
           icon={<QuestionCircleOutlined />}
           target="_blank"
-          href="https://diarworld.github.io/timesheeter"
+          href="https://diarworld.github.io/timesheeter/user_doc"
           >Docs</Button>
         </Row>
       </Flex>
