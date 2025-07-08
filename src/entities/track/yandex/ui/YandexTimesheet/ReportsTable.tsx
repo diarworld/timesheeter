@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Table, Progress } from 'antd';
+import { Table, Progress, Badge } from 'antd';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { TTransformedTracksByUser } from 'entities/track/common/model/types';
@@ -77,7 +77,6 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       ),
     };
   });
-//   console.log(dayHeaders)
 
   const columns = [
     {
@@ -92,7 +91,20 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       dataIndex, // use dataIndex here
       key,
       className: clsx(styles.col, { [styles.col_weekend]: isWeekend }),
-      render: (iso: TBusinessDurationData) => <DurationFormat duration={iso} />,
+      render: (iso: TBusinessDurationData) => {
+        const ms = isoDurationToBusinessMs(businessDurationDataToIso(iso));
+        const loggedHours = ms ? Math.floor(ms / (1000 * 60 * 60)) : 0;
+        const isFullDay = loggedHours >= 8;
+        // const isNoLogs = ms === 0;
+        
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {isFullDay && <Badge status="success" />}
+            {/* {isNoLogs && <Badge status="error" />} */}
+            <DurationFormat duration={iso} />
+          </div>
+        );
+      },
     })),
     {
       title: message('track.total.logged'),
@@ -163,10 +175,10 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       scroll={{ x: true }}
       summary={() => (
         <Table.Summary.Row className={styles.sticky}>
-          <Table.Summary.Cell index={0}><b>Итого</b></Table.Summary.Cell>
+          <Table.Summary.Cell index={0}><b>{message('track.total.daily')}</b></Table.Summary.Cell>
           {days.map((day, idx) => (
             <Table.Summary.Cell index={idx + 1} key={day}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
                 <DurationFormat duration={totalByDay[day]} />
                 <Progress
                   percent={Math.min(
@@ -183,7 +195,7 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
             </Table.Summary.Cell>
           ))}
           <Table.Summary.Cell index={days.length + 1}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
               <DurationFormat duration={grandTotalUpToToday} />
               <Progress
                 percent={Math.min(

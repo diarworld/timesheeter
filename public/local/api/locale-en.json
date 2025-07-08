@@ -69,6 +69,7 @@
   "track.item.duration": "Duration",
   "track.item.start": "Start",
   "track.total.logged": "Total logged",
+  "track.total.daily": "Total",
   "issue.issueKey.placeholder": "Enter the key or the name of the task",
   "issue.issueKey.title": "Task",
   "issue.tracksForDate.title": "Issue {issueKey} worklogs for {date}",
