@@ -62,6 +62,7 @@ export const yandexTrackApi = api.injectEndpoints({
               },
               params: { page, perPage: 100 },
               headers: getTrackerHeaders(tracker),
+              credentials: 'omit',
             }) as TFetchAllPagesBaseQueryResult<TYandexTrack[]>,
           identity,
           undefined,
@@ -80,6 +81,7 @@ export const yandexTrackApi = api.injectEndpoints({
         method: 'POST',
         body: JSON.stringify(rest),
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled, getState }) {
         try {
@@ -115,6 +117,7 @@ export const yandexTrackApi = api.injectEndpoints({
         url: yandexTrackEndpoints.track(issueIdOrKey, trackId),
         method: 'DELETE',
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
       async onQueryStarted({ trackId }, { dispatch, queryFulfilled, getState }) {
         const invalidatedEntries = yandexTrackApi.util.selectInvalidatedBy(getState(), [
@@ -155,6 +158,7 @@ export const yandexTrackApi = api.injectEndpoints({
         method: 'PATCH',
         body: JSON.stringify(form),
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
       async onQueryStarted({ param: { trackId }, form }, { dispatch, queryFulfilled, getState }) {
         const invalidatedTags = [{ type: 'Track' as const, id: trackId.toString() }];

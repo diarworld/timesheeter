@@ -14,12 +14,14 @@ export const yandexUserApi = api.injectEndpoints({
       query: ({ userId, tracker }) => ({
         url: yandexUserEndpoints.user(userId),
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
     }),
     getYandexUserByLogin: builder.query<TYandexUser, TGetUserByLoginParams>({
       query: ({ login, tracker }) => ({
         url: yandexUserEndpoints.login(login),
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
     }),
     getMyselfYandex: builder.query<TYandexUser, TGetMyselfParams>({
@@ -36,6 +38,7 @@ export const yandexUserApi = api.injectEndpoints({
               url: yandexUserEndpoints.users,
               params: { page, perPage: 50 },
               headers: getTrackerHeaders(tracker),
+              credentials: 'omit',
             }) as TFetchAllPagesBaseQueryResult<TYandexUser[]>,
           identity,
           undefined,
