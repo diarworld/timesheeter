@@ -35,7 +35,7 @@ export const yandexQueueApi = api.injectEndpoints({
             return response.data as TQueue;
           })
         );
-        console.log(results)
+        // console.log(results)
         return { data: results }
       },
     }),

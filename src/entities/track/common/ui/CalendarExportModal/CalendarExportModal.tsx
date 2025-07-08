@@ -10,6 +10,7 @@ import { useCreateJiraTrack } from 'entities/track/jira/lib/hooks/use-create-jir
 import { useCreateYandexTrack } from 'entities/track/yandex/lib/hooks/use-create-yandex-track';
 import { isJiraTrackerCfg } from 'entities/tracker/model/types';
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
+import './CalendarExportModal.scss';
 
 const { Text, Title } = Typography;
 
@@ -53,6 +54,15 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
   
   const [isImporting, setIsImporting] = useState(false);
 
+  // Add state for editing subject
+  const [editingSubjectKey, setEditingSubjectKey] = useState<string | null>(null);
+  const [editingSubjectValue, setEditingSubjectValue] = useState<string>('');
+  const [subjects, setSubjects] = useState<Record<string, string>>({});
+
+  // Add state for editing issueKey
+  const [editingIssueKey, setEditingIssueKey] = useState<string | null>(null);
+  const [editingIssueKeyValue, setEditingIssueKeyValue] = useState<string>('');
+
   // Get the appropriate track creation hook based on tracker type
   const jiraTrackHook = useCreateJiraTrack(tracker);
   const yandexTrackHook = useCreateYandexTrack(tracker);
@@ -89,6 +99,48 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
     }
   };
 
+  // Handler to start editing
+  const handleEditSubject = (key: string, currentValue: string) => {
+    setEditingSubjectKey(key);
+    setEditingSubjectValue(currentValue);
+  };
+  // Handler for input change
+  const handleSubjectInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingSubjectValue(e.target.value);
+  };
+  // Handler to save edit
+  const saveSubjectEdit = (key: string) => {
+    setSubjects(prev => ({ ...prev, [key]: editingSubjectValue }));
+    setEditingSubjectKey(null);
+    setEditingSubjectValue('');
+  };
+  // Handler to cancel edit
+  const cancelSubjectEdit = () => {
+    setEditingSubjectKey(null);
+    setEditingSubjectValue('');
+  };
+
+  // Handler to start editing issueKey
+  const handleEditIssueKey = (key: string, currentValue: string) => {
+    setEditingIssueKey(key);
+    setEditingIssueKeyValue(currentValue);
+  };
+  // Handler for input change
+  const handleIssueKeyInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingIssueKeyValue(e.target.value);
+  };
+  // Handler to save edit
+  const saveIssueKeyEdit = (key: string) => {
+    setIssueKeys(prev => ({ ...prev, [key]: editingIssueKeyValue }));
+    setEditingIssueKey(null);
+    setEditingIssueKeyValue('');
+  };
+  // Handler to cancel edit
+  const cancelIssueKeyEdit = () => {
+    setEditingIssueKey(null);
+    setEditingIssueKeyValue('');
+  };
+
   const handleImportTracks = async () => {
     if (selectedRowKeys.length === 0) return;
 
@@ -98,9 +150,10 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       
       for (const row of selectedRows) {
         const issueKey = issueKeys[String(row.key)] || defaultIssueKey;
+        const subject = subjects[String(row.key)] ?? row.subject;
         
         if (!validateIssueKey(issueKey)) {
-          console.warn(`Invalid issue key for meeting: ${row.subject}`);
+          console.warn(`Invalid issue key for meeting: ${subject}`);
           continue;
         }
 
@@ -112,7 +165,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
         // Convert to ISO duration
         const isoDuration = humanReadableDurationToISO(durationString);
         if (!isoDuration) {
-          console.warn(`Invalid duration for meeting: ${row.subject}`);
+          console.warn(`Invalid duration for meeting: ${subject}`);
           continue;
         }
 
@@ -121,7 +174,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
           issueKey,
           start: row.start,
           duration: durationString,
-          comment: "Meeting: " + row.subject
+          comment: "Meeting: " + subject
         });
       }
       // Show notification after successful import
@@ -141,21 +194,82 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       dataIndex: 'issueKey',
       key: 'issueKey',
       width: 160,
-      render: (text: string, record: DataType) => (
-        <Input
-          value={issueKeys[String(record.key)] || defaultIssueKey}
-          onChange={(e) => handleIssueKeyChange(String(record.key), e.target.value)}
-          onFocus={(e) => e.target.select()}
-          status={issueKeys[String(record.key)] && !validateIssueKey(issueKeys[String(record.key)]) ? 'error' : ''}
-          placeholder="PM-4"
-        />
-      ),
+      render: (text: string, record: DataType) => {
+        const key = String(record.key);
+        const value = issueKeys[key] || defaultIssueKey;
+        if (editingIssueKey === key) {
+          return (
+            <div className="editable-cell">
+              <Input
+                value={editingIssueKeyValue}
+                autoFocus
+                onChange={handleIssueKeyInputChange}
+                onBlur={() => saveIssueKeyEdit(key)}
+                onPressEnter={() => saveIssueKeyEdit(key)}
+                onKeyDown={e => { if (e.key === 'Escape') cancelIssueKeyEdit(); }}
+                onFocus={e => e.target.select()}
+                size="small"
+                status={value && !validateIssueKey(value) ? 'error' : ''}
+                placeholder="PM-4"
+                style={{ minWidth: 120 }}
+              />
+            </div>
+          );
+        }
+        return (
+          <div className="editable-cell editable-row">
+            <div
+              className="editable-cell-value-wrap"
+              onClick={() => handleEditIssueKey(key, value)}
+            >
+              <Text
+                strong
+                style={{ cursor: 'pointer' }}
+                type={value && !validateIssueKey(value) ? 'danger' : undefined}
+              >
+                {value}
+              </Text>
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: message('calendar.export.table.subject'),
       dataIndex: 'subject',
       key: 'subject',
-      render: (text: string) => <Text strong>{text}</Text>,
+      render: (text: string, record: DataType) => {
+        const key = String(record.key);
+        if (editingSubjectKey === key) {
+          return (
+            <div className="editable-cell">
+              <Input
+                value={editingSubjectValue}
+                autoFocus
+                onChange={handleSubjectInputChange}
+                onBlur={() => saveSubjectEdit(key)}
+                onPressEnter={() => saveSubjectEdit(key)}
+                onKeyDown={e => { if (e.key === 'Escape') cancelSubjectEdit(); }}
+                onFocus={e => e.target.select()}
+                size="small"
+                style={{ minWidth: 120 }}
+              />
+            </div>
+          );
+        }
+        return (
+          <div className="editable-cell editable-row">
+            <div
+              className="editable-cell-value-wrap"
+              onClick={() => handleEditSubject(key, subjects[key] ?? text)}
+            >
+              <Text strong style={{ cursor: 'pointer' }}>
+                {subjects[key] ?? text}
+              </Text>
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: message('calendar.export.table.start'),
@@ -209,7 +323,7 @@ const rowSelection: TableProps<DataType>['rowSelection'] = {
   selectedRowKeys: selectedRowKeys,
   onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
     setSelectedRowKeys(selectedRowKeys);
-    console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+    // console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
   },
   getCheckboxProps: (record: DataType) => ({
     disabled: false, // Column configuration not to be checked
@@ -264,7 +378,19 @@ const handleRowClick = (record: DataType) => {
         dataSource={tableData}
         loading={loading}
         onRow={(record) => ({
-          onClick: () => handleRowClick(record),
+          onClick: (event) => {
+            // Prevent row selection if clicking inside an input or textarea
+            if (
+              event.target instanceof HTMLElement &&
+              (
+                event.target.tagName === 'INPUT' ||
+                event.target.closest('.editable-cell-value-wrap')
+              )
+            ) {
+              return;
+            }
+            handleRowClick(record);
+          },
           style: { cursor: 'pointer' }
         })}
         pagination={{

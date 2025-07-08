@@ -80,7 +80,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
   }, [checkLdapCredentials]);
 
   const handleExportCalendar = useCallback(async (index: number) => {
-    console.log('Export calendar clicked!');
+    // console.log('Export calendar clicked!');
     
     setLoadings((prevLoadings) => {
       const newLoadings = [...prevLoadings];
@@ -101,7 +101,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
       const currentFrom = from;
       const currentTo = to;
       
-      console.log('Exporting calendar for date range:', { from: currentFrom, to: currentTo });
+      // console.log('Exporting calendar for date range:', { from: currentFrom, to: currentTo });
 
       // Call the calendar API with current date range from filters
       const result = await getCalendarMeetings({
@@ -112,9 +112,9 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
       }).unwrap();
 
       if (result.success) {
-        console.log('Calendar meetings:', result.meetings);
-        console.log('Total meetings:', result.totalMeetings);
-        console.log('Date range used:', result.dateRange);
+        // console.log('Calendar meetings:', result.meetings);
+        // console.log('Total meetings:', result.totalMeetings);
+        // console.log('Date range used:', result.dateRange);
         
         // Show modal with the calendar data
         setCalendarData(result);
