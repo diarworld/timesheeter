@@ -85,6 +85,7 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       key: 'display',
       fixed: 'left' as const,
       onHeaderCell: () => ({ style: { minWidth: 200 } }),
+      sorter: (a: any, b: any) => a.display.localeCompare(b.display),
     },
     ...dayHeaders.map(({ key, title, dataIndex, isWeekend }) => ({
       title,
@@ -112,6 +113,11 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       key: 'total',
       fixed: 'right' as const,
       onHeaderCell: () => ({ style: { minWidth: 200 } }),
+      sorter: (a: any, b: any) => {
+        const aMs = isoDurationToBusinessMs(businessDurationDataToIso(a.total));
+        const bMs = isoDurationToBusinessMs(businessDurationDataToIso(b.total));
+        return (aMs || 0) - (bMs || 0);
+      },
       render: (duration: TBusinessDurationData, row: any) => {
         const iso = businessDurationDataToIso(duration);
         const ms = isoDurationToBusinessMs(iso);
