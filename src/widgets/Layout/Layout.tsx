@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import './Layout.scss';
 import { Message } from 'entities/locale/ui/Message';
-import { GithubOutlined } from '@ant-design/icons';
+import { GithubOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Row, Flex, Button } from 'antd';
 import { Text } from 'components';
 
@@ -29,6 +29,12 @@ export const Layout: FC<TProps> = ({ children, head }) => (
           target="_blank"
           href="https://github.com/diarworld/timesheeter"
           >GitHub</Button>
+          <Button 
+          type="link"
+          icon={<QuestionCircleOutlined />}
+          target="_blank"
+          href="https://diarworld.github.io/timesheeter"
+          >Docs</Button>
         </Row>
       </Flex>
     </footer>

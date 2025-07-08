@@ -16,6 +16,7 @@ export const yandexQueueApi = api.injectEndpoints({
               url: yandexQueueEndpoints.queues,
               params: { page, perPage: 100 },
               headers: getTrackerHeaders(tracker),
+              credentials: 'omit',
             }) as TFetchAllPagesBaseQueryResult<TQueue[]>,
           identity,
         );
@@ -29,6 +30,7 @@ export const yandexQueueApi = api.injectEndpoints({
             const response = await fetchWithBQ({
               url: yandexQueueEndpoints.queue(key),
               headers: getTrackerHeaders(tracker),
+              credentials: 'omit',
             });
             return response.data as TQueue;
           })

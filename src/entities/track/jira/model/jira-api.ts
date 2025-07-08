@@ -68,6 +68,7 @@ export const jiraTrackApi = api.injectEndpoints({
                   startedBefore: toTimestamp,
                 },
                 headers: getTrackerHeaders(tracker),
+                credentials: 'omit',
               }) as TFetchAllPagesBaseQueryResult<TJiraTracksResponse>,
             ({ worklogs }) => worklogs,
             getTotalPagesJira,
@@ -94,6 +95,7 @@ export const jiraTrackApi = api.injectEndpoints({
           comment,
         }),
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
       async onQueryStarted({ issueKey }, { dispatch, queryFulfilled, getState }) {
         try {
@@ -130,6 +132,7 @@ export const jiraTrackApi = api.injectEndpoints({
         url: jiraTrackEndpoints.track(issueIdOrKey, trackId),
         method: 'DELETE',
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
       async onQueryStarted({ trackId }, { dispatch, queryFulfilled, getState }) {
         const invalidatedEntries = jiraTrackApi.util.selectInvalidatedBy(getState(), [
@@ -174,6 +177,7 @@ export const jiraTrackApi = api.injectEndpoints({
           comment,
         }),
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
       async onQueryStarted({ param: { trackId }, form }, { dispatch, queryFulfilled, getState }) {
         const invalidatedTags = [{ type: 'JiraTrack' as const, id: trackId.toString() }];

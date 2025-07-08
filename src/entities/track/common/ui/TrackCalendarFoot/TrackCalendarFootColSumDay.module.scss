@@ -18,6 +18,10 @@
   background: var(--color-snowy-mint);
 }
 
+.col[data-is-over-tracked='true'] {
+  background: var(--color-soft-peach);
+}
+
 .col_weekend {
   background: var(--color-pale-yellow);
 }
