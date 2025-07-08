@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Table, Progress, Badge } from 'antd';
+import { Table, Progress, Badge, Popover, Row, Flex, Button } from 'antd';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { TTransformedTracksByUser } from 'entities/track/common/model/types';
@@ -15,6 +15,10 @@ import { isRuLocale } from 'entities/locale/lib/helpers';
 import { useCurrentLocale } from 'entities/locale/lib/hooks';
 import { DATE_FORMAT_MONTH } from 'features/date/lib/constants';
 import clsx from 'clsx';
+import { Message } from 'entities/locale/ui/Message';
+import { ExportOutlined } from '@ant-design/icons';
+
+
 import { useMessage } from 'entities/locale/lib/hooks';
 
 
@@ -95,14 +99,25 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       render: (iso: TBusinessDurationData) => {
         const ms = isoDurationToBusinessMs(businessDurationDataToIso(iso));
         const loggedHours = ms ? Math.floor(ms / (1000 * 60 * 60)) : 0;
-        const isFullDay = loggedHours >= 8;
+        const isFullDay = loggedHours == 8;
+        const isInvalid = loggedHours > 8;
         // const isNoLogs = ms === 0;
         
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {isFullDay && <Badge status="success" />}
-            {/* {isNoLogs && <Badge status="error" />} */}
-            <DurationFormat duration={iso} />
+            {isInvalid ? (
+              <Popover content={message('track.log.message')}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Badge status="error" />
+                  <DurationFormat duration={iso} />
+                </div>
+              </Popover>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {isFullDay && <Badge status="success" />}
+                <DurationFormat duration={iso} />
+              </div>
+            )}
           </div>
         );
       },
@@ -174,50 +189,65 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
 //   console.log(grandTotal)
 
   return (
-    <Table
-      columns={columns}
-      dataSource={dataSource}
-      pagination={false}
-      scroll={{ x: true }}
-      summary={() => (
-        <Table.Summary.Row className={styles.sticky}>
-          <Table.Summary.Cell index={0}><b>{message('track.total.daily')}</b></Table.Summary.Cell>
-          {days.map((day, idx) => (
-            <Table.Summary.Cell index={idx + 1} key={day}>
+    <>
+    <Flex justify="flex-start" vertical>
+        <Row>
+            <Text style={{ alignItems: 'center', display: 'flex' }}>
+                <Message id="track.powerbi.message" />
+            </Text>
+            <Button 
+            type="link"
+            icon={<ExportOutlined />}
+            target="_blank"
+            href="https://powerbi.data.lmru.tech/reports/powerbi/Отчеты Power BI/HR Analytics/Учет трудозатрат ЛМЦТ"
+            >{message('track.powerbi.link')}</Button>
+        </Row>
+    </Flex>
+      <Table
+        columns={columns}
+        dataSource={dataSource}
+        pagination={false}
+        scroll={{ x: true }}
+        summary={() => (
+          <Table.Summary.Row className={styles.sticky}>
+            <Table.Summary.Cell index={0}><b>{message('track.total.daily')}</b></Table.Summary.Cell>
+            {days.map((day, idx) => (
+              <Table.Summary.Cell index={idx + 1} key={day}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                  <DurationFormat duration={totalByDay[day]} />
+                  <Progress
+                    percent={Math.min(
+                      100,
+                      Math.round(
+                        ((isoDurationToBusinessMs(businessDurationDataToIso(totalByDay[day])) ?? 0) / (team.length * 8 * 60 * 1000 * 60)) * 100
+                      )
+                    )}
+                    size="small"
+                    showInfo={false}
+                    style={{ width: 100 }}
+                  />
+                </div>
+              </Table.Summary.Cell>
+            ))}
+            <Table.Summary.Cell index={days.length + 1}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-                <DurationFormat duration={totalByDay[day]} />
+                <DurationFormat duration={grandTotalUpToToday} />
                 <Progress
                   percent={Math.min(
                     100,
                     Math.round(
-                      ((isoDurationToBusinessMs(businessDurationDataToIso(totalByDay[day])) ?? 0) / (team.length * 8 * 60 * 1000 * 60)) * 100
+                      ((isoDurationToBusinessMs(businessDurationDataToIso(grandTotalUpToToday)) ?? 0) / (team.length * daysUpToToday.length * 8 * 60 * 1000 * 60)) * 100
                     )
                   )}
                   size="small"
-                  showInfo={false}
+                  showInfo={true}
                   style={{ width: 100 }}
                 />
               </div>
             </Table.Summary.Cell>
-          ))}
-          <Table.Summary.Cell index={days.length + 1}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-              <DurationFormat duration={grandTotalUpToToday} />
-              <Progress
-                percent={Math.min(
-                  100,
-                  Math.round(
-                    ((isoDurationToBusinessMs(businessDurationDataToIso(grandTotalUpToToday)) ?? 0) / (team.length * daysUpToToday.length * 8 * 60 * 1000 * 60)) * 100
-                  )
-                )}
-                size="small"
-                showInfo={true}
-                style={{ width: 100 }}
-              />
-            </div>
-          </Table.Summary.Cell>
-        </Table.Summary.Row>
-      )}
-    />
+          </Table.Summary.Row>
+        )}
+      />
+    </>
   );
 } 
