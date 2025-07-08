@@ -57,7 +57,6 @@ export const LdapLoginFormManage: FC<TProps> = ({
     if (savedCredentials.username || savedCredentials.token) {
       form.setFieldsValue({
         username: savedCredentials.username || '',
-        token: savedCredentials.token || '',
         type: savedCredentials.type || 'ldap'
       });
     }
