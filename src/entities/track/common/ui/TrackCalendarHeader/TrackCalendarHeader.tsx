@@ -15,7 +15,7 @@ import { TimePeriodStepper } from './TimePeriodStepper';
 import { TodayText } from './TodayText';
 import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TTrackerConfig } from 'entities/tracker/model/types';
-import { AppstoreOutlined, MailOutlined, SettingOutlined, LoginOutlined, UsergroupAddOutlined, LogoutOutlined, FieldTimeOutlined } from '@ant-design/icons';
+import { DashboardOutlined, SettingOutlined, LoginOutlined, UsergroupAddOutlined, LogoutOutlined, FieldTimeOutlined } from '@ant-design/icons';
 import { useLdapLoginAction } from 'entities/track/common/lib/hooks/use-ldap-login-action';
 import { useManageTeamAction } from 'entities/track/common/lib/hooks/use-manage-team-action';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
@@ -216,12 +216,12 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
     {
       label: message('menu.tracks'),
       key: 'tracks',
-      icon: <MailOutlined />,
+      icon: <FieldTimeOutlined />,
     },
     {
       label: message('menu.reports'),
       key: 'reports',
-      icon: <AppstoreOutlined />,
+      icon: <DashboardOutlined />,
       // disabled: true,
     },
     {
@@ -240,14 +240,23 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
   };
   return (
     <>
-      <Row className={styles.menu} justify="space-between">
+      <Row className={styles.menu} justify="space-between" align="middle">
         <Col flex="auto">
           <Menu
             onClick={onClick}
             selectedKeys={[currentMenuKey]}
             mode="horizontal"
-            items={items}
+            items={items.filter(item => item?.key !== 'logout')}
             theme="light"
+          />
+        </Col>
+        <Col style={{ marginLeft: 'auto' }}>
+          <Menu
+            onClick={onClick}
+            mode="horizontal"
+            items={items.filter(item => item?.key === 'logout')}
+            theme="light"
+            style={{ minWidth: 'fit-content' }}
           />
         </Col>
       </Row>

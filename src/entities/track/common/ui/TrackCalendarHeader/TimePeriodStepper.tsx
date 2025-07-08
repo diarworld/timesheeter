@@ -8,6 +8,7 @@ import { ArrowRight } from 'components/Icons/ArrowRight';
 import { useCalculateSelectedPeriod } from 'entities/track/common/ui/TrackCalendarHeader/hooks/useCalculateSelectedPeriod';
 import { useFilters } from 'features/filters/lib/useFilters';
 import styles from './TimePeriodStepper.module.scss';
+import { CalendarOutlined } from '@ant-design/icons';
 
 export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
   const message = useMessage();
@@ -64,7 +65,8 @@ export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
   return (
     <div className={styles.stepper}>
       <Space direction="horizontal" size="small">
-        <Text fw={500} fs={28} lh={34}>
+        <CalendarOutlined />
+        <Text>
           {message(`track.calendar.unit.${unit}`)}
         </Text>
 
@@ -73,7 +75,7 @@ export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
             <ArrowLeft />
           </Button>
 
-          <Text fw={400} fs={28} lh={34} style={{ whiteSpace: 'nowrap' }}>
+          <Text fw={800} fs={20} lh={34} style={{ whiteSpace: 'nowrap' }}>
             {DateWrapper.getDateFormat(fromDate, 'DD MMMM')}
             {' – '}
             {DateWrapper.getDateFormat(toDate, 'DD MMMM')}

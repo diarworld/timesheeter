@@ -234,7 +234,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
           renderIssuesSearchConnected={(props) => <YandexIssuesSearchConnected {...props} tracker={tracker} />}
         />
       ) : (
-        <div style={{ padding: 32, textAlign: 'center' }}>
+        <div style={{ padding: '0 32px', textAlign: 'center' }}>
         <ReportsTable
           team={team}
           tracks={userTracks}

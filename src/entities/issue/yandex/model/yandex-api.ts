@@ -18,6 +18,7 @@ export const yandexIssueApi = api.injectEndpoints({
       query: ({ issueIdOrKey, tracker }) => ({
         url: yandexIssueEndpoints.issue(issueIdOrKey),
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
     }),
     getYandexIssues: build.query<TYandexIssue[], TGetIssuesParams>({
@@ -33,6 +34,7 @@ export const yandexIssueApi = api.injectEndpoints({
                 // if we don't send this header, Yandex Tracker will always respond with russian status names
                 'Accept-language': arg.language ?? undefined,
               }),
+              credentials: 'omit',
             }) as TFetchAllPagesBaseQueryResult<TYandexIssue[]>,
           identity,
           undefined,
@@ -51,6 +53,7 @@ export const yandexIssueApi = api.injectEndpoints({
                 // if we don't send this header, Yandex Tracker will always respond with russian status names
                 'Accept-language': arg.language ?? undefined,
               }),
+              credentials: 'omit',
             }) as TFetchAllPagesBaseQueryResult<TIssueStatusDescription[]>,
           identity,
           undefined,

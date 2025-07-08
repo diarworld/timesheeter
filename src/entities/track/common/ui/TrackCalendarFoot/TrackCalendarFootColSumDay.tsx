@@ -22,6 +22,7 @@ export const TrackCalendarFootColSumDay = memo(({ tracks = [], date, utcOffsetIn
 
   const isExactTracked = trackedHours === HOUR_A_BUSINESS_DAY;
   const isUndertracked = Boolean(tracks.length) && trackedHours < HOUR_A_BUSINESS_DAY;
+  const isOvertracked = Boolean(tracks.length) && trackedHours > HOUR_A_BUSINESS_DAY;
 
   const dateObj = useMemo(() => DateWrapper.getDate({ date, utcOffsetInMinutes }), [date, utcOffsetInMinutes]);
   const isWeekend = useMemo(() => DateWrapper.isWeekend(dateObj), [dateObj]);
@@ -31,6 +32,7 @@ export const TrackCalendarFootColSumDay = memo(({ tracks = [], date, utcOffsetIn
       className={clsx(styles.col, { [styles.col_weekend]: isWeekend })}
       data-is-undertracked={isUndertracked}
       data-is-exact-tracked={isExactTracked}
+      data-is-over-tracked={isOvertracked}
     >
       <span aria-label="total day sum">{tracks.length ? <DurationFormat duration={durationTotal} /> : '—'}</span>
     </td>

@@ -3,8 +3,8 @@ import React, { FC, ReactNode } from 'react';
 import { Loading } from 'shared/ui/Loading';
 import { ITrackCalendarFootProps } from 'entities/track/common/ui/TrackCalendarFoot/TrackCalendarFoot';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate';
-import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
-import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
+// import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
+// import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
 import { TIssue } from 'entities/issue/common/model/types';
 import { TTrackCalendarRowProps } from 'entities/track/common/ui/TrackCalendarRow/TrackCalendarRow';
 import { TTrackerConfig } from 'entities/tracker/model/types';
@@ -102,7 +102,8 @@ export const TrackCalendar: FC<TProps> = ({
         )}
       </div>
     </Loading>
-      <TeamModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
-      <LdapLoginModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} /></>
+      {/* <TeamModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
+      <LdapLoginModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} /> */}
+      </>
   );
 };
