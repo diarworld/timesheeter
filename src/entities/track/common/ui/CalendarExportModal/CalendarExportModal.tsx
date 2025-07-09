@@ -405,7 +405,6 @@ const handleRowClick = (record: DataType) => {
               maxItems={50}
               perPage={50}
               onBlur={() => saveIssueKeyEdit(defaultIssueKey)}
-              onPressEnter={() => saveIssueKeyEdit(defaultIssueKey)}
               autoFocus
               name={`issueKey-${defaultIssueKey}`}
               onFocus={() => {}}
