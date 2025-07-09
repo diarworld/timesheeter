@@ -6,6 +6,11 @@
     padding: 1px 8px;
     border-radius: 2px;
     cursor: pointer;
+    min-height: 25px;
+  }
+
+  .editable-row {
+    max-width: 600px;
   }
   
   .editable-row:hover .editable-cell-value-wrap {
