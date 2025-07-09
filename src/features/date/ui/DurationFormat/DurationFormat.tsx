@@ -7,6 +7,7 @@ type TProps = {
 };
 
 export const DurationFormat: FC<TProps> = ({ duration }: TProps) => {
+  // console.log(duration)
   const durationFormat = useFormatDuration(duration);
   return <>{durationFormat}</>;
 };
