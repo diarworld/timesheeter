@@ -9,8 +9,11 @@ import {
   CalendarView,
   DateTime,
   AppointmentSchema,
-  PropertySet
+  PropertySet,
+  CalendarEventDetails
 } from 'ews-javascript-api';
+
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -45,9 +48,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Find appointments
     const appointments = await calendar.FindAppointments(calendarView);
-    
-    // Convert to JSON format
+
+    // Load details for each appointment (all needed properties)
+    const fullPropertySet = new PropertySet(
+      AppointmentSchema.Subject,
+      AppointmentSchema.Start,
+      AppointmentSchema.End,
+      AppointmentSchema.Location,
+      AppointmentSchema.Duration,
+      AppointmentSchema.IsAllDayEvent,
+      AppointmentSchema.Body,
+      AppointmentSchema.Organizer
+    );
+    await Promise.all(
+      appointments.Items.map(appt => appt.Load(fullPropertySet))
+    );
+
+    // Convert to JSON format with body and organizer
     const meetings = appointments.Items.map(appointment => ({
+      
       id: appointment.Id.UniqueId,
       subject: appointment.Subject,
       start: appointment.Start.ToISOString(),
@@ -56,8 +75,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       duration: appointment.Duration.TotalMinutes,
       isAllDay: appointment.IsAllDayEvent,
       isCancelled: false, // Default value since property not available
-      organizer: '', // Default value since property not available
-      body: '', // Default value since property not available
+      organizer: appointment.Organizer ? appointment.Organizer.Name : '',
+      // body: DOMPurify.sanitize(appointment.Body?.Text || ''),
+      body:
+        appointment.Body && appointment.Body.Text
+          ? appointment.Body.Text
+            // .replace(
+            //   /<hr[^>]*>[\s\S]*?(<hr[^>]*>)/,
+            //   '$1'
+            // ).replace(
+            //   /http[s]?:\/\/[^\/]*\.zoom\.us\/[^\s]*/g,
+            //   ''
+            // ).replace(
+            //   /Подключиться как организатор[\s\S]*?собрания для организатора и участника\./,
+            //   ''
+            // ).replace(
+            //   /Подключиться как организатор[\s\S]*?Подключиться как участник/,
+            //   ''
+            // )
+          : '',
       categories: [] // Simplified for now
     }));
 

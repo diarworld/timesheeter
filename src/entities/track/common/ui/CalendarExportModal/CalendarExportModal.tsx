@@ -1,4 +1,4 @@
-import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, AutoCompleteProps, Popover, Alert } from 'antd';
+import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, AutoCompleteProps, Popover, Alert, Popconfirm } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
@@ -13,6 +13,8 @@ import { humanReadableDurationToISO } from 'entities/track/common/lib/human-read
 import './CalendarExportModal.scss';
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
 const { Text, Title } = Typography;
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 
 interface DataType {
   key: React.Key;
@@ -188,6 +190,53 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
     }
   };
 
+  const EmailContentDisplay = (htmlContent: string) => {
+    // console.log(htmlContent);
+    const sanitizedHTML = DOMPurify.sanitize(htmlContent, {
+      ALLOWED_TAGS: ['div', 'span', 'a', 'img'],
+      ALLOWED_ATTR: ['class', 'dir'],
+      KEEP_CONTENT: true,
+    });
+    // console.log(sanitizedHTML);
+    // Remove empty divs (divs with only whitespace)
+    // const options = {
+    //   replace: (domNode: any) => {
+    //     if (domNode.type === 'tag' && domNode.name === 'img') {
+    //       const { src, alt, width, height } = domNode.attribs;
+    //       return <img src={src} alt={alt} width={width} height={height} />;
+    //     }
+    //     if (domNode.type === 'tag' && domNode.name === 'a') {
+    //       const { href } = domNode.attribs;
+    //       return <Link href={href}>{domNode.children[0].data}</Link>;
+    //     }
+    //   },
+    // };
+
+    const cleanedHTML = sanitizedHTML
+      .replace(/<div[^>]*>\s*<\/div>/g, '')
+      .replace(/<div dir="ltr"><\/div>/g, '')
+      .replace(
+        /http[s]?:\/\/[^\/]*\.zoom\.us\/[^\s]*/g,
+        ''
+      ).replace(
+        /Подключиться как организатор[\s\S]*?собрания для организатора и участника\./g,
+        ''
+      ).replace(
+        /Подключиться как организатор[\s\S]*?Подключиться как участник/g,
+        ''
+      ).replace(
+        /is inviting you to a scheduled meeting[\s\S]*?Password/g,
+        ''
+      ).replace(
+        /приглашает вас на запланированную конференцию[\s\S]*?Присоединиться к конференции/g,
+        ''
+      )
+      .replace(/\n\n/g, '') // Remove newlines
+      .trim();
+      // console.log(cleanedHTML);
+    return <div>{parse(cleanedHTML)}</div>;
+  };
+
   const columns = [
     {
       title: (
@@ -331,6 +380,22 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
         <Text>{message('date.hours.short', { value: Math.floor(minutes / 60) })} {message('date.minutes.short', { value: Math.floor(minutes % 60) })}</Text>
       ),
     },
+    {
+      title: 'Текст',
+      dataIndex: 'body',
+      key: 'body',
+      render: (body: string) => (
+        <Popover placement="right"
+          title="Message body"
+          content={
+            EmailContentDisplay(body)
+          // <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }} />
+        }
+        >
+          <Button type="link">Show</Button>
+        </Popover>
+      ),
+    },
     //   title: message('calendar.export.table.location'),
     //   dataIndex: 'location',
     //   key: 'location',
@@ -451,7 +516,8 @@ const handleRowClick = (record: DataType) => {
               (
                 event.target.tagName === 'INPUT' ||
                 event.target.closest('.editable-cell-value-wrap') ||
-                event.target.closest('.editable-cell')
+                event.target.closest('.editable-cell')||
+                event.target.closest('.ant-popover')
               )
             ) {
               return;
