@@ -1,4 +1,4 @@
-import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage } from 'antd';
+import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, AutoCompleteProps, Popover, Alert } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
@@ -8,10 +8,10 @@ import { ScheduleFilled } from '@ant-design/icons';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { useCreateJiraTrack } from 'entities/track/jira/lib/hooks/use-create-jira-track';
 import { useCreateYandexTrack } from 'entities/track/yandex/lib/hooks/use-create-yandex-track';
-import { isJiraTrackerCfg } from 'entities/tracker/model/types';
+import { isJiraTrackerCfg, isYandexTrackerCfg } from 'entities/tracker/model/types';
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
 import './CalendarExportModal.scss';
-
+import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
 const { Text, Title } = Typography;
 
 interface DataType {
@@ -190,7 +190,26 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
 
   const columns = [
     {
-      title: message('calendar.export.table.issue'),
+      title: (
+        <Popover
+          content={
+            <>
+            {/* <CloseCircleFilled style={{ color: 'red' }}/> */}
+            <span>{message('calendar.export.table.issue.help')}</span></>
+            // <Alert
+            //   type="error"
+            //   showIcon
+            //   description={message('calendar.export.table.issue.help')}
+            // />
+          }
+          arrow={false}
+        >
+          <span>
+            {message('calendar.export.table.issue')}
+            <span style={{ color: 'red' }}> *</span>
+          </span>
+        </Popover>
+      ),
       dataIndex: 'issueKey',
       key: 'issueKey',
       width: 160,
@@ -200,19 +219,36 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
         if (editingIssueKey === key) {
           return (
             <div className="editable-cell">
-              <Input
-                value={editingIssueKeyValue}
-                autoFocus
-                onChange={handleIssueKeyInputChange}
-                onBlur={() => saveIssueKeyEdit(key)}
-                onPressEnter={() => saveIssueKeyEdit(key)}
-                onKeyDown={e => { if (e.key === 'Escape') cancelIssueKeyEdit(); }}
-                onFocus={e => e.target.select()}
-                size="small"
-                status={value && !validateIssueKey(value) ? 'error' : ''}
-                placeholder="PM-4"
-                style={{ minWidth: 120 }}
-              />
+              {isYandexTrackerCfg(tracker) ? (
+                <YandexIssuesSearchConnected
+                  value={editingIssueKeyValue}
+                  onChange={(newValue: string) => setEditingIssueKeyValue(newValue)}
+                  tracker={tracker}
+                  status={editingIssueKeyValue && !validateIssueKey(editingIssueKeyValue) ? 'error' : undefined}
+                  placeholder="PM-4"
+                  maxItems={50}
+                  perPage={50}
+                  onBlur={() => saveIssueKeyEdit(key)}
+                  autoFocus
+                  name={`issueKey-${key}`}
+                  onFocus={() => {}}
+                />
+              ) : (
+                // Fallback: plain Input or JiraIssuesSearchConnected for Jira
+                <Input
+                  value={editingIssueKeyValue}
+                  autoFocus
+                  onChange={handleIssueKeyInputChange}
+                  onBlur={() => saveIssueKeyEdit(key)}
+                  onPressEnter={() => saveIssueKeyEdit(key)}
+                  onKeyDown={e => { if (e.key === 'Escape') cancelIssueKeyEdit(); }}
+                  onFocus={e => e.target.select()}
+                  size="small"
+                  status={value && !validateIssueKey(value) ? 'error' : ''}
+                  placeholder="PM-4"
+                  style={{ minWidth: 120 }}
+                />
+              )}
             </div>
           );
         }
@@ -346,21 +382,52 @@ const handleRowClick = (record: DataType) => {
           <Title level={4}>{message('calendar.export.results')}</Title>
           {data && (
             <Text type="secondary">
-              {data.totalMeetings} {message('calendar.export.results.top')} {DateWrapper.getDateFormat(dayjs(data.dateRange.start_date), 'DD MMMM YYYY')} {message('calendar.export.results.top.to')} {DateWrapper.getDateFormat(dayjs(data.dateRange.end_date), 'DD MMMM YYYY')}
+              {data.totalMeetings} {message('calendar.export.results.top')} {message('calendar.export.results.top.from')} {DateWrapper.getDateFormat(dayjs(data.dateRange.start_date), 'DD MMMM YYYY')} {message('calendar.export.results.top.to')} {DateWrapper.getDateFormat(dayjs(data.dateRange.end_date), 'DD MMMM YYYY')}
             </Text>
           )}
         <Space>
           <Text>{message('calendar.import.issue.key')}</Text>
-          <Input
+          {/* <Input
             value={defaultIssueKey}
             onChange={(e) => handleDefaultIssueKeyChange(e.target.value)}
             placeholder="PM-4"
             style={{ width: 160 }}
             onFocus={(e) => e.target.select()}
             status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : ''}
-          />
+          /> */}
+          {isYandexTrackerCfg(tracker) ? (
+            <YandexIssuesSearchConnected
+              value={defaultIssueKey}
+              onChange={handleDefaultIssueKeyChange}
+              tracker={tracker}
+              status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : undefined}
+              placeholder="PM-4"
+              maxItems={50}
+              perPage={50}
+              onBlur={() => saveIssueKeyEdit(defaultIssueKey)}
+              onPressEnter={() => saveIssueKeyEdit(defaultIssueKey)}
+              autoFocus
+              name={`issueKey-${defaultIssueKey}`}
+              onFocus={() => {}}
+            />
+          ) : (
+            // Fallback: plain Input or JiraIssuesSearchConnected for Jira
+            <Input
+              value={defaultIssueKey}
+              autoFocus
+              onChange={handleIssueKeyInputChange}
+              onBlur={() => saveIssueKeyEdit(defaultIssueKey)}
+              onPressEnter={() => saveIssueKeyEdit(defaultIssueKey)}
+              onKeyDown={e => { if (e.key === 'Escape') cancelIssueKeyEdit(); }}
+              onFocus={e => e.target.select()}
+              size="small"
+              status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : ''}
+              placeholder="PM-4"
+              style={{ minWidth: 120 }}
+            />
+          )}
           <Button onClick={applyDefaultToAll}>
-          {message('organiztions.emptyOrganization.save')}
+          {message('calendar.export.default.set')}
           </Button>
         </Space>
         </Space>
@@ -384,7 +451,8 @@ const handleRowClick = (record: DataType) => {
               event.target instanceof HTMLElement &&
               (
                 event.target.tagName === 'INPUT' ||
-                event.target.closest('.editable-cell-value-wrap')
+                event.target.closest('.editable-cell-value-wrap') ||
+                event.target.closest('.editable-cell')
               )
             ) {
               return;
@@ -394,7 +462,8 @@ const handleRowClick = (record: DataType) => {
           style: { cursor: 'pointer' }
         })}
         pagination={{
-          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} meetings`,
+          showTotal: (total, range) => `${range[0]}-${range[1]} ${message('calendar.export.results.top.of')} ${total}`,
+          showSizeChanger: true
         }}
         // scroll={{ x: 800 }}
         scroll={{ x: 'max-content' }}
