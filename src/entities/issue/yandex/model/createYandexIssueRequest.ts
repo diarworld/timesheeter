@@ -44,7 +44,9 @@ const getUserIssuesQuery = ({
     new YandexQParam('Updated', formattedTo, '<='),
   );
 
-  const userIssuesForPeriodParam = new QLogic.AND(assigneeParam, createdParam, updatedParam);
+  const periodParam = new QLogic.OR(createdParam, updatedParam);
+
+  const userIssuesForPeriodParam = new QLogic.AND(assigneeParam, periodParam);
 
   const keysParam = new YandexQParam('Key', includeIssues);
 

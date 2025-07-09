@@ -7,8 +7,8 @@ export const useDateRangeFilter = (utcOffsetInMinutes: number | undefined) => {
 
   const { defaultFrom, defaultTo } = useMemo(
     () => ({
-      defaultFrom: DateWrapper.getDate({ utcOffsetInMinutes }).startOf('month').format(),
-      defaultTo: DateWrapper.getDate({ utcOffsetInMinutes }).endOf('month').format(),
+      defaultFrom: DateWrapper.getDate({ utcOffsetInMinutes }).startOf('week').format(),
+      defaultTo: DateWrapper.getDate({ utcOffsetInMinutes }).endOf('week').format(),
     }),
     [utcOffsetInMinutes],
   );
