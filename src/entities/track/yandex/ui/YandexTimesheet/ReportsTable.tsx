@@ -17,6 +17,7 @@ import { DATE_FORMAT_MONTH } from 'features/date/lib/constants';
 import clsx from 'clsx';
 import { Message } from 'entities/locale/ui/Message';
 import { ExportOutlined } from '@ant-design/icons';
+import calendar from './calendar.json';
 
 
 import { useMessage } from 'entities/locale/lib/hooks';
@@ -35,6 +36,14 @@ function getDaysArray(from: string, to: string, utcOffsetInMinutes: number | und
     current = current.add(1, 'day');
   }
   return days;
+}
+
+function getExpectedHoursForDay(day: string): number {
+  // const today = DateWrapper.getDate({ utcOffsetInMinutes: undefined }).format('YYYY-MM-DD');
+  // if (day > today) return 0;
+  if (calendar.holidays.includes(day) || calendar.nowork.includes(day)) return 0;
+  if (calendar.preholidays.includes(day)) return 7;
+  return 8;
 }
 
 type ReportsTableProps = {
@@ -67,16 +76,47 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
     const dateFormat = DateWrapper.getDateFormat(dateObj, DATE_FORMAT_MONTH);
     const dayFormat = DateWrapper.getDateFormat(dateObj, isRuLocale(currentLocale) ? 'dd' : 'ddd');
     const isWeekend = DateWrapper.isWeekend(dateObj);
+    const isHoliday = !isWeekend && calendar.holidays.includes(day);
+    const isPreholiday = calendar.preholidays.includes(day);
+    const expectedHours = getExpectedHoursForDay(day);
+
+    let popoverContent = '';
+    let marker = '';
+    if (isHoliday) {
+      popoverContent = message('calendar.holiday') || 'Holiday: non-working day';
+      marker = ' *';
+    } else if (isPreholiday) {
+      popoverContent = message('calendar.preholiday') || 'Preholiday: shortened workday';
+      marker = ' *';
+    }
+
     return {
       key: day,
-      dataIndex: day, // <-- add this
-      isWeekend: isWeekend,
+      dataIndex: day,
+      isWeekend,
+      isHoliday,
+      expectedHours,
       title: (
         <div>
-          <Text fs={13} fw={700} style={{ textTransform: 'capitalize' }}>
-            {dayFormat}
-          </Text>
-          <Text fs={13}> {dateFormat}</Text>
+          {(isHoliday || isPreholiday) ? (
+            <Popover content={popoverContent}>
+              <span>
+                <Text fs={13} fw={800} style={{ textTransform: 'capitalize', color: isHoliday ? '#d00' : undefined }}>
+                  {dayFormat}
+                </Text>
+                <Text fs={13} style={{ color: isHoliday ? '#d00' : undefined }}>
+                  {' '}{dateFormat}{marker}
+                </Text>
+              </span>
+            </Popover>
+          ) : (
+            <>
+              <Text fs={13} fw={800} style={{ textTransform: 'capitalize' }}>
+                {dayFormat}
+              </Text>
+              <Text fs={13}> {dateFormat}</Text>
+            </>
+          )}
         </div>
       ),
     };
@@ -88,21 +128,22 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       dataIndex: 'display',
       key: 'display',
       fixed: 'left' as const,
-      onHeaderCell: () => ({ style: { minWidth: 200 } }),
+      // onHeaderCell: () => ({ style: { width: 250 } }),
       sorter: (a: any, b: any) => a.display.localeCompare(b.display),
+      render: (display: string) => (
+        <Text style={{ minWidth: 200, display: 'inline-block' }}>{display}</Text>
+      )
     },
-    ...dayHeaders.map(({ key, title, dataIndex, isWeekend }) => ({
+    ...dayHeaders.map(({ key, title, dataIndex, isWeekend, isHoliday, expectedHours }) => ({
       title,
       dataIndex, // use dataIndex here
       key,
-      className: clsx(styles.col, { [styles.col_weekend]: isWeekend }),
+      className: clsx(styles.col, { [styles.col_weekend]: isWeekend || isHoliday }),
       render: (iso: TBusinessDurationData) => {
         const ms = isoDurationToBusinessMs(businessDurationDataToIso(iso));
         const loggedHours = ms ? Math.floor(ms / (1000 * 60 * 60)) : 0;
-        const isFullDay = loggedHours == 8;
-        const isInvalid = loggedHours > 8;
-        // const isNoLogs = ms === 0;
-        
+        const isFullDay = loggedHours > 0 && loggedHours == expectedHours;
+        const isInvalid = loggedHours > expectedHours;
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {isInvalid ? (
@@ -127,7 +168,7 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       dataIndex: 'total',
       key: 'total',
       fixed: 'right' as const,
-      onHeaderCell: () => ({ style: { minWidth: 200 } }),
+      // onHeaderCell: () => ({ style: { minWidth: 250 } }),
       sorter: (a: any, b: any) => {
         const aMs = isoDurationToBusinessMs(businessDurationDataToIso(a.total));
         const bMs = isoDurationToBusinessMs(businessDurationDataToIso(b.total));
@@ -137,16 +178,21 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
         const iso = businessDurationDataToIso(duration);
         const ms = isoDurationToBusinessMs(iso);
         const loggedMinutes = ms ? Math.floor(ms / (1000 * 60)) : 0;
-        const expectedMinutes = days.length * 8 * 60;
+        const expectedMinutes = days.reduce((sum, day) => sum + getExpectedHoursForDay(day) * 60, 0);
         const percent = expectedMinutes > 0 ? Math.min(100, Math.round((loggedMinutes / expectedMinutes) * 100)) : 0;
         return (
-            // <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 200 }}>
+              <Text fs={13} fw={800} style={{ textTransform: 'capitalize', minWidth: 55 }}>
                 <DurationFormat duration={duration} />
-                <Progress percent={percent} 
-                    size="small"
-                    showInfo={true}
-                    style={{ width: 100 }} />
+              </Text>
+              <span style={{ color: '#888', fontSize: 10 }}>
+                <DurationFormat duration={msToBusinessDurationData(expectedMinutes * 60 * 1000)} />
+              </span>
+              <Progress percent={percent} 
+                  size="small"
+                  showInfo={true}
+                  // style={{ width: 100 }} 
+                  />
             </div>
         );
       },
@@ -207,19 +253,24 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
         columns={columns}
         dataSource={dataSource}
         pagination={false}
-        scroll={{ x: true }}
+        scroll={{ x: true, y: `calc(100vh - 302px)` }}
         summary={() => (
           <Table.Summary.Row className={styles.sticky}>
             <Table.Summary.Cell index={0}><b>{message('track.total.daily')}</b></Table.Summary.Cell>
             {days.map((day, idx) => (
               <Table.Summary.Cell index={idx + 1} key={day}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                <Text fs={13} fw={800} style={{ textTransform: 'capitalize' }}>
                   <DurationFormat duration={totalByDay[day]} />
+                </Text>
+                  <span style={{ color: '#888', fontSize: 10 }}>
+                      <DurationFormat duration={msToBusinessDurationData(team.length * getExpectedHoursForDay(day) * 60 * 60 * 1000)} />
+                  </span>
                   <Progress
                     percent={Math.min(
                       100,
                       Math.round(
-                        ((isoDurationToBusinessMs(businessDurationDataToIso(totalByDay[day])) ?? 0) / (team.length * 8 * 60 * 1000 * 60)) * 100
+                        ((isoDurationToBusinessMs(businessDurationDataToIso(totalByDay[day])) ?? 0) / (team.length * getExpectedHoursForDay(day) * 60 * 60 * 1000) * 100)
                       )
                     )}
                     size="small"
@@ -231,17 +282,22 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
             ))}
             <Table.Summary.Cell index={days.length + 1}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-                <DurationFormat duration={grandTotalUpToToday} />
+                <Text fs={13} fw={800} style={{ textTransform: 'capitalize' }}>
+                  <DurationFormat duration={grandTotalUpToToday} />
+                </Text>
+                <span style={{ color: '#888', fontSize: 10 }}>
+                  <DurationFormat duration={msToBusinessDurationData(team.length * daysUpToToday.reduce((sum, day) => sum + getExpectedHoursForDay(day) * 60, 0) * 60 * 1000)} />
+                </span>
                 <Progress
                   percent={Math.min(
                     100,
                     Math.round(
-                      ((isoDurationToBusinessMs(businessDurationDataToIso(grandTotalUpToToday)) ?? 0) / (team.length * daysUpToToday.length * 8 * 60 * 1000 * 60)) * 100
+                      ((isoDurationToBusinessMs(businessDurationDataToIso(grandTotalUpToToday)) ?? 0) / (team.length * daysUpToToday.reduce((sum, day) => sum + getExpectedHoursForDay(day) * 60, 0) * 60 * 1000)) * 100
                     )
                   )}
                   size="small"
                   showInfo={true}
-                  style={{ width: 100 }}
+                  // style={{ width: 100 }}
                 />
               </div>
             </Table.Summary.Cell>
