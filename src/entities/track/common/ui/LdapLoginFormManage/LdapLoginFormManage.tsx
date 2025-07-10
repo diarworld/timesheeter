@@ -1,7 +1,7 @@
 import { Button, Form, Input, Flex } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
 import { TTrackerConfig } from 'entities/tracker/model/types';
@@ -41,6 +41,8 @@ export const LdapLoginFormManage: FC<TProps> = ({
       
       if (result.success) {
         localStorage.setItem('ldapCredentials', JSON.stringify(credentials));
+        // Set LDAP credentials status in Redux store
+        dispatch(track.actions.setHasLdapCredentials(true));
         // Close the modal after successful authentication
         dispatch(track.actions.setLdapLoginCreate());
       } else {

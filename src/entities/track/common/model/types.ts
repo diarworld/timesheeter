@@ -1,4 +1,5 @@
 import { TTrackerConfig } from 'entities/tracker/model/types';
+import { TYandexUser } from 'entities/user/yandex/model/types';
 
 type TWeek = `${number}W` | '';
 type TDay = `${number}D` | '';
@@ -17,6 +18,8 @@ export type TTrackStore = {
   inputDelete?: TTrackInputDelete;
   manageCreate?: TTeamManageCreate;
   ldapLogin?: TTeamLdapLogin;
+  hasLdapCredentials?: boolean;
+  team?: TYandexUser[];
 };
 
 export type TTrack = {

@@ -1,16 +1,16 @@
-import { Button, Flex, InputNumber, Row, Divider, Col } from 'antd';
+import { Button, InputNumber } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
 import React, { FC, useState } from 'react';
-
-import { validateLDAP } from 'entities/track/common/lib/validate-ldap';
 import { TTrackerConfig } from 'entities/tracker/model/types';
-import { TYandexUser } from 'entities/user/yandex/model/types';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
+import { TYandexUser } from 'entities/user/yandex/model/types';
 import { yandexQueueApi } from 'entities/queue/yandex/model/yandex-api';
-
 import { QueueSelect } from 'entities/queue/common/ui/QueueSelect/QueueSelect';
+import { validateLDAP } from 'entities/track/common/lib/validate-ldap';
+import { useAppDispatch } from 'shared/lib/hooks';
+import { track } from 'entities/track/common/model/reducers';
 
 import styles from './TeamFormManage.module.scss';
 
@@ -33,10 +33,14 @@ export const TeamFormManage: FC<TProps> = ({
   const { currentData: queueList, isFetching: isFetchingQueueList } = yandexQueueApi.useGetQueuesQuery({ tracker });
 
   const message = useMessage();
-  
-  const teamLdap: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
-  
-  const [team, setTeam] = useState<TYandexUser[]>(teamLdap);
+  const dispatch = useAppDispatch();
+  const [team, setTeam] = useState<TYandexUser[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('team') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [ldapValue, setLdapValue] = useState<string>('');
   const [error, setError] = useState('');
   const [userData, setUserData] = useState<TYandexUser | undefined>(undefined);
@@ -99,6 +103,7 @@ export const TeamFormManage: FC<TProps> = ({
         }));
         localStorage.setItem('team', JSON.stringify(minimalUsers));
         setTeam(sorted);
+        dispatch(track.actions.setTeam(sorted));
       });
     }
   }, [teamYT]);
@@ -117,7 +122,8 @@ export const TeamFormManage: FC<TProps> = ({
       position: user.position,
     }));
     localStorage.setItem('team', JSON.stringify(minimalUsers));
-    setTeam(sorted)
+    setTeam(sorted);
+    dispatch(track.actions.setTeam(sorted));
     }
   };
 
@@ -128,6 +134,7 @@ export const TeamFormManage: FC<TProps> = ({
     const sorted = filtered.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
     setTeam(sorted);
     localStorage.setItem('team', JSON.stringify(sorted));
+    dispatch(track.actions.setTeam(sorted));
   };
 
   const validate = (ldap: string, team: TYandexUser[]) => {
