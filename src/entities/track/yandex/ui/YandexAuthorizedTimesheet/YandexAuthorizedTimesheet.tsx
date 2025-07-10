@@ -9,6 +9,9 @@ import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useSetTrackerUsername } from 'entities/tracker/lib/useSetTrackerUsername';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
 import { TYandexUser } from 'entities/user/yandex/model/types';
+import { useAppDispatch } from 'shared/lib/hooks';
+import { track } from 'entities/track/common/model/reducers';
+import { useEffect } from 'react';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -19,6 +22,7 @@ type TProps = {
 
 export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedErrorShouldAppearAsOrgChange }: TProps) => {
   const { userId, login } = useFilterValues();
+  const dispatch = useAppDispatch();
 
   const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
   
@@ -27,9 +31,14 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
   team = team.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
   const ldapCredentials = localStorage.getItem('ldapCredentials');
 
-  if (self && !team.some(e => e?.login === self?.login)) {
-    localStorage.setItem('team', JSON.stringify([...team, self].slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }))));
-  }
+  // Update team in Redux when self is available and not in team
+  useEffect(() => {
+    if (self && !team.some(e => e?.login === self?.login)) {
+      const updatedTeam = [...team, self].slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+      localStorage.setItem('team', JSON.stringify(updatedTeam));
+      dispatch(track.actions.setTeam(updatedTeam));
+    }
+  }, [self, team, dispatch]);
 
   if (self && !ldapCredentials) {
     const credentials = {
@@ -37,6 +46,8 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
       type: 'ldap'
     };
     localStorage.setItem('ldapCredentials', JSON.stringify(credentials));
+    // Note: This only sets username, not token, so hasLdapCredentials should remain false
+    // until user enters password in LdapLoginFormManage
   }
   
   

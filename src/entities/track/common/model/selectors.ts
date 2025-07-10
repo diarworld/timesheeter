@@ -8,3 +8,5 @@ export const selectTrackInputCreate = (state: TAppState) => selectTrack(state).i
 export const selectTrackInputDelete = (state: TAppState) => selectTrack(state).inputDelete;
 export const selectTeamManageCreate = (state: TAppState) => selectTrack(state).manageCreate;
 export const selectLdapLoginManage = (state: TAppState) => selectTrack(state).ldapLogin;
+export const selectHasLdapCredentials = (state: TAppState) => selectTrack(state).hasLdapCredentials;
+export const selectTeam = (state: TAppState) => selectTrack(state).team;

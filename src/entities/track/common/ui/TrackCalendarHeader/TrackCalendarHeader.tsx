@@ -24,6 +24,8 @@ import { actionLocaleSetCurrent } from 'entities/locale/model/actions';
 import { selectLocaleCurrent } from 'entities/locale/model/selectors';
 import { localeApi } from 'entities/locale/model/api';
 import { timezoneTimeOffsetOptions } from 'features/date/ui/TimeOffsetSelect/TimeOffsetSelect';
+import { selectHasLdapCredentials } from 'entities/track/common/model/selectors';
+import { track } from 'entities/track/common/model/reducers';
 
 import styles from './TrackCalendarHeader.module.scss';
 
@@ -42,42 +44,23 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
   const { from, to, utcOffsetInMinutes, updateTimeOffset } = useFilters();
   
   const [loadings, setLoadings] = useState<boolean[]>([]);
-  const [hasLdapCredentials, setHasLdapCredentials] = useState(false);
+  const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
   const [calendarData, setCalendarData] = useState<TEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   
-  // Check if LDAP credentials are saved
-  const checkLdapCredentials = useCallback(() => {
+  const dispatch = useAppDispatch();
+  
+  // Initialize LDAP credentials status from localStorage on mount
+  useEffect(() => {
     try {
       const savedCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
       const hasCredentials = !!(savedCredentials.username && savedCredentials.token);
-      setHasLdapCredentials(hasCredentials);
+      dispatch(track.actions.setHasLdapCredentials(hasCredentials));
     } catch {
-      setHasLdapCredentials(false);
+      dispatch(track.actions.setHasLdapCredentials(false));
     }
-  }, []);
+  }, [dispatch]);
   
-  // Check credentials on mount and set up storage listener
-  useEffect(() => {
-    checkLdapCredentials();
-    
-    // Listen for storage changes (when credentials are saved)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'ldapCredentials') {
-        checkLdapCredentials();
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also check periodically for local changes
-    const interval = setInterval(checkLdapCredentials, 1000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, [checkLdapCredentials]);
 
   const handleExportCalendar = useCallback(async (index: number) => {
     // console.log('Export calendar clicked!');
@@ -135,7 +118,6 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
 
   type MenuItem = Required<MenuProps>['items'][number];
 
-  const dispatch = useAppDispatch();
   const localeCurrent = useAppSelector(selectLocaleCurrent);
   const { data: localeList } = localeApi.useGetLocalesQuery();
 
