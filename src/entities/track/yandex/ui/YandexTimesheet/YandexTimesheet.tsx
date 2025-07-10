@@ -30,6 +30,10 @@ import { useDispatch } from 'react-redux';
 import { TTransformedTracksByUser } from 'entities/track/common/model/types';
 import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
 import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
+import { Spin } from 'antd';
+import { useAppSelector } from 'shared/lib/hooks';
+import { selectTeam } from 'entities/track/common/model/selectors';
+import { track } from 'entities/track/common/model/reducers';
 
 
 type TProps = {
@@ -65,42 +69,24 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
     { skip: !uId },
   );
 
-  const [team, setTeam] = useState<TYandexUser[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('team') || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const team = useAppSelector(selectTeam) || [];
 
-  // Track changes in localStorage for 'team'
+  const dispatch = useDispatch();
+
+  // Initialize team from localStorage on mount
   useEffect(() => {
-    const updateTeam = () => {
-      try {
-        setTeam(JSON.parse(localStorage.getItem('team') || '[]'));
-      } catch {
-        setTeam([]);
+    try {
+      const savedTeam = JSON.parse(localStorage.getItem('team') || '[]');
+      if (savedTeam.length > 0) {
+        dispatch(track.actions.setTeam(savedTeam));
       }
-    };
-
-    // Listen for storage changes (other tabs)
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'team') updateTeam();
-    });
-
-    // Optionally, poll for changes in the same tab (if your app updates localStorage directly)
-    const interval = setInterval(updateTeam, 1000);
-
-    return () => {
-      window.removeEventListener('storage', updateTeam);
-      clearInterval(interval);
-    };
-  }, []);
+    } catch {
+      // Handle parse error silently
+    }
+  }, [dispatch]);
 
   const [userTracks, setUserTracks] = useState<TTransformedTracksByUser[]>([]);
   const [loadingUserTracks, setLoadingUserTracks] = useState(false);
-
-  const dispatch = useDispatch();
 
   useEffect(() => {
     if (currentMenuKey === 'reports' && team.length > 0) {
@@ -235,15 +221,16 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
         />
       ) : (
         <div style={{ padding: '0 32px', textAlign: 'center' }}>
-        <ReportsTable
-          team={team}
-          tracks={userTracks}
-          from={from}
-          to={to}
-          utcOffsetInMinutes={utcOffsetInMinutes}
-          showWeekends={showWeekends}
-          // loading={loadingUserTracks}
-        />
+          <Spin spinning={loadingUserTracks}>
+            <ReportsTable
+              team={team}
+              tracks={userTracks}
+              from={from}
+              to={to}
+              utcOffsetInMinutes={utcOffsetInMinutes}
+              showWeekends={showWeekends}
+            />
+          </Spin>
         </div>
       )}
       {/* Always render modals here, outside the tab conditional */}
