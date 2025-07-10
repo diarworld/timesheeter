@@ -10,15 +10,16 @@ export const useLogoutTracker = (tracker: TTrackerConfig) => {
   const dispatch = useAppDispatch();
 
   const logout = useCallback(() => {
-    dispatch(trackers.actions.logoutTracker(tracker));
-
-    if (!hasCreatedTrackers) {
-      dispatch(trackers.actions.resetMainTracker());
-      localStorage.removeItem(CURRENT_ORG_ID_STORAGE_KEY);
-    }
-
-    window.location.reload();
-  }, [dispatch, tracker, hasCreatedTrackers]);
+    // Remove the cookie first, then reload.
+    localStorage.removeItem(CURRENT_ORG_ID_STORAGE_KEY);
+    fetch('/api/set-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clear: true }),
+    }).then(() => {
+      window.location.reload();
+    });
+  }, []);
 
   return logout;
 };

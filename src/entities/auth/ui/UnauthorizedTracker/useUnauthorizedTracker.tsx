@@ -5,8 +5,6 @@ import { trackers } from 'entities/tracker/model/reducers';
 import { isQueryErrorStatusInSet } from 'shared/lib/isQueryErrorStatusInSet';
 import { UnauthorizedTracker } from 'entities/auth/ui/UnauthorizedTracker/UnauthorizedTracker';
 import { getQueryErrorStatus } from 'shared/lib/getQueryErrorStatus';
-import { Button } from 'antd';
-import { Message } from 'entities/locale/ui/Message';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { SerializedError } from '@reduxjs/toolkit';
 import { TTrackerConfig } from 'entities/tracker/model/types';
@@ -26,31 +24,33 @@ export const useUnauthorizedTracker = (
 
   const onBadConfig = () => {
     if (resetMainTracker) {
-      // this will be equivalent to old approach - resetting Org ID
       dispatch(trackers.actions.resetMainTracker());
-      // also just in case delete ID from local storage, like we did prior to changes
       localStorage.removeItem(CURRENT_ORG_ID_STORAGE_KEY);
     } else {
-      // otherwise just redirect to tracker config
       router.push({ pathname: '/trackers', query: { editType: tracker.type, editId: tracker.id } });
     }
   };
 
+  const status = getQueryErrorStatus(errorSelf);
+  let errorMessage;
+  if (status === 401) {
+    errorMessage = message('unauthorizedTracker.error.401');
+  } else if (status === 403) {
+    errorMessage = message('unauthorizedTracker.error.403');
+  } else if (status === 404) {
+    errorMessage = message('unauthorizedTracker.error.404');
+  } else {
+    errorMessage = message('unauthorizedTracker.noAccess.message');
+  }
+
   if (isQueryErrorStatusInSet(errorSelf, unautharizedErrors)) {
     return (
-      <UnauthorizedTracker
-        errorMessage={
-          getQueryErrorStatus(errorSelf) === 401
-            ? message('unauthorizedTracker.noAccess.message')
-            : message('unauthorizedTracker.notExist.message')
-        }
-        logout={logout}
-        actions={
-          <Button onClick={onBadConfig} type="link" size="large">
-            <Message id={resetMainTracker ? 'unauthorizedTracker.changeOrgId' : 'unauthorizedTracker.changeConfig'} />
-          </Button>
-        }
-      />
+      <>
+        <UnauthorizedTracker
+          errorMessage={errorMessage}
+          logout={logout}
+        />
+      </>
     );
   }
 
