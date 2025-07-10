@@ -69,7 +69,8 @@ export const TrackCalendar: FC<TProps> = ({
   const tableRef = useScrollToCurrent();
 
   return (
-    <><Loading isLoading={isLoading}>
+    <>
+    {/* <Loading isLoading={isLoading}> */}
       <div className={styles.wrapper}>
         <table className={styles.table} ref={tableRef}>
           <TrackCalendarHead range={range} sortingKey={issueSortingKey} />
@@ -101,9 +102,9 @@ export const TrackCalendar: FC<TProps> = ({
           </>
         )}
       </div>
-    </Loading>
+    {/* </Loading> */}
       {/* <TeamModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
       <LdapLoginModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} /> */}
-      </>
+    </>
   );
 };

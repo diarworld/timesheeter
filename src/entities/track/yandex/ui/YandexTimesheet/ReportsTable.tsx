@@ -21,6 +21,7 @@ import calendar from './calendar.json';
 
 
 import { useMessage } from 'entities/locale/lib/hooks';
+import type { SortOrder } from 'antd/es/table/interface';
 
 
 function getDaysArray(from: string, to: string, utcOffsetInMinutes: number | undefined, showWeekends: boolean = false) {
@@ -168,6 +169,7 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       dataIndex: 'total',
       key: 'total',
       fixed: 'right' as const,
+      defaultSortOrder: 'descend' as const,
       // onHeaderCell: () => ({ style: { minWidth: 250 } }),
       sorter: (a: any, b: any) => {
         const aMs = isoDurationToBusinessMs(businessDurationDataToIso(a.total));

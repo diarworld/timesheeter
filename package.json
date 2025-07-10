@@ -17,9 +17,11 @@
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
     "@reduxjs/toolkit": "^2.0.1",
+    "@types/cookie": "^0.6.0",
     "@vvo/tzdb": "^6.124.0",
     "antd": "^5.12.5",
     "clsx": "^2.0.0",
+    "cookie": "^1.0.2",
     "dayjs": "^1.11.3",
     "ews-javascript-api": "^0.15.3",
     "final-form": "^4.20.7",

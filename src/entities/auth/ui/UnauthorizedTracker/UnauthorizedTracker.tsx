@@ -6,7 +6,7 @@ import styles from './UnauthorizedTracker.module.scss';
 
 type TUnauthorizedTrackerProps = {
   errorMessage: string;
-  actions: ReactNode;
+  actions?: ReactNode;
   logout?(): void;
 };
 
@@ -14,11 +14,12 @@ export const UnauthorizedTracker: FC<TUnauthorizedTrackerProps> = ({ errorMessag
   <div className={styles.container}>
     <div className={styles.message}>{errorMessage}</div>
     <div>
-      {logout && (
+      {logout 
+        && (
         <Button onClick={logout} type="link" size="large">
           <Message id="unauthorizedTracker.changeAccount" />
-        </Button>
-      )}
+        </Button> )
+        }
       {actions}
     </div>
   </div>
