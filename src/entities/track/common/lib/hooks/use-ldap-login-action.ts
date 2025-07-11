@@ -5,13 +5,7 @@ import { track } from 'entities/track/common/model/reducers';
 export const useLdapLoginAction = () => {
   const dispatch = useAppDispatch();
 
-  return useCallback(
-    () => {
-      dispatch(
-        track.actions.setLdapLoginCreate({
-        }),
-      );
-    },
-    [dispatch],
-  );
+  return useCallback(() => {
+    dispatch(track.actions.setLdapLoginCreate({}));
+  }, [dispatch]);
 };

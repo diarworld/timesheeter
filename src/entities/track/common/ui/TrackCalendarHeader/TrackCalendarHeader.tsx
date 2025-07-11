@@ -1,21 +1,22 @@
-import { Button, Col, Row, Space, Menu, MenuProps } from 'antd';
-import { LocaleSelector } from 'entities/locale/ui/LocaleSelector';
+import { Button, Col, Row, Menu, MenuProps } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
-import { ManageTeamButton } from 'entities/track/common/ui/TrackCalendarHeader/ManageTeamButton';
-import { LdapLoginButton } from 'entities/track/common/ui/TrackCalendarHeader/LdapLoginButton';
-import { ScheduleFilled } from '@ant-design/icons';
-import { TimeOffsetSelect } from 'features/date/ui/TimeOffsetSelect/TimeOffsetSelect';
+import {
+  ScheduleFilled,
+  DashboardOutlined,
+  SettingOutlined,
+  LoginOutlined,
+  UsergroupAddOutlined,
+  LogoutOutlined,
+  FieldTimeOutlined,
+} from '@ant-design/icons';
 import { GlobalFetching } from 'shared/ui/GlobalFetching';
 import { ReactNode, useCallback, useState, useEffect } from 'react';
 import { useMessage } from 'entities/locale/lib/hooks';
-import { useGetCalendarMeetingsMutation, TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
+import { useGetCalendarMeetingsMutation, IEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 import { useFilters } from 'features/filters/lib/useFilters';
 import { CalendarExportModal } from 'entities/track/common/ui/CalendarExportModal';
-import { TimePeriodStepper } from './TimePeriodStepper';
-import { TodayText } from './TodayText';
-import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TTrackerConfig } from 'entities/tracker/model/types';
-import { DashboardOutlined, SettingOutlined, LoginOutlined, UsergroupAddOutlined, LogoutOutlined, FieldTimeOutlined } from '@ant-design/icons';
+
 import { useLdapLoginAction } from 'entities/track/common/lib/hooks/use-ldap-login-action';
 import { useManageTeamAction } from 'entities/track/common/lib/hooks/use-manage-team-action';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
@@ -23,33 +24,41 @@ import { useAppDispatch, useAppSelector } from 'shared/lib/hooks';
 import { actionLocaleSetCurrent } from 'entities/locale/model/actions';
 import { selectLocaleCurrent } from 'entities/locale/model/selectors';
 import { localeApi } from 'entities/locale/model/api';
-import { timezoneTimeOffsetOptions } from 'features/date/ui/TimeOffsetSelect/TimeOffsetSelect';
 import { selectHasLdapCredentials } from 'entities/track/common/model/selectors';
 import { track } from 'entities/track/common/model/reducers';
+import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
+import { TimePeriodStepper } from './TimePeriodStepper';
 
 import styles from './TrackCalendarHeader.module.scss';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
-  upperRowControls?: ReactNode;
+  _upperRowControls?: ReactNode;
   filters?: ReactNode;
   tracker: TTrackerConfig;
   currentMenuKey: string;
   onMenuChange: (key: string) => void;
 }
 
-export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker, currentMenuKey, onMenuChange }: ITrackCalendarHeaderProps) {
+export function TrackCalendarHeader({
+  isEdit,
+  filters,
+  _upperRowControls,
+  tracker,
+  currentMenuKey,
+  onMenuChange,
+}: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
-  const { from, to, utcOffsetInMinutes, updateTimeOffset } = useFilters();
-  
+  const { from, to } = useFilters();
+
   const [loadings, setLoadings] = useState<boolean[]>([]);
   const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
-  const [calendarData, setCalendarData] = useState<TEwsCalendarResponse | null>(null);
+  const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  
+
   const dispatch = useAppDispatch();
-  
+
   // Initialize LDAP credentials status from localStorage on mount
   useEffect(() => {
     try {
@@ -60,63 +69,65 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
       dispatch(track.actions.setHasLdapCredentials(false));
     }
   }, [dispatch]);
-  
 
-  const handleExportCalendar = useCallback(async (index: number) => {
-    // console.log('Export calendar clicked!');
-    
-    setLoadings((prevLoadings) => {
-      const newLoadings = [...prevLoadings];
-      newLoadings[index] = true;
-      return newLoadings;
-    });
+  const handleExportCalendar = useCallback(
+    async (index: number) => {
+      // console.log('Export calendar clicked!');
 
-    try {
-      // Get saved credentials from localStorage
-      const savedCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
-      
-      if (!savedCredentials.username || !savedCredentials.token) {
-        console.error('No saved credentials found');
-        return;
-      }
-
-      // Get current date range from filters (this will be reactive)
-      const currentFrom = from;
-      const currentTo = to;
-      
-      // console.log('Exporting calendar for date range:', { from: currentFrom, to: currentTo });
-
-      // Call the calendar API with current date range from filters
-      const result = await getCalendarMeetings({
-        username: savedCredentials.username,
-        token: savedCredentials.token,
-        start_date: currentFrom,
-        end_date: currentTo
-      }).unwrap();
-
-      if (result.success) {
-        // console.log('Calendar meetings:', result.meetings);
-        // console.log('Total meetings:', result.totalMeetings);
-        // console.log('Date range used:', result.dateRange);
-        
-        // Show modal with the calendar data
-        setCalendarData(result);
-        setModalVisible(true);
-      } else {
-        console.error('Failed to fetch calendar meetings');
-      }
-    } catch (error) {
-      console.error('Error fetching calendar meetings:', error);
-    } finally {
       setLoadings((prevLoadings) => {
         const newLoadings = [...prevLoadings];
-        newLoadings[index] = false;
+        newLoadings[index] = true;
         return newLoadings;
       });
-    }
-  }, [getCalendarMeetings, from, to]);
 
-  type MenuItem = Required<MenuProps>['items'][number];
+      try {
+        // Get saved credentials from localStorage
+        const savedCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
+
+        if (!savedCredentials.username || !savedCredentials.token) {
+          console.error('No saved credentials found');
+          return;
+        }
+
+        // Get current date range from filters (this will be reactive)
+        const currentFrom = from;
+        const currentTo = to;
+
+        // console.log('Exporting calendar for date range:', { from: currentFrom, to: currentTo });
+
+        // Call the calendar API with current date range from filters
+        const result = await getCalendarMeetings({
+          username: savedCredentials.username,
+          token: savedCredentials.token,
+          start_date: currentFrom,
+          end_date: currentTo,
+        }).unwrap();
+
+        if (result.success) {
+          // console.log('Calendar meetings:', result.meetings);
+          // console.log('Total meetings:', result.totalMeetings);
+          // console.log('Date range used:', result.dateRange);
+
+          // Show modal with the calendar data
+          setCalendarData(result);
+          setModalVisible(true);
+        } else {
+          console.error('Failed to fetch calendar meetings');
+        }
+      } catch (error) {
+        console.error('Error fetching calendar meetings:', error);
+      } finally {
+        setLoadings((prevLoadings) => {
+          const newLoadings = [...prevLoadings];
+          newLoadings[index] = false;
+          return newLoadings;
+        });
+      }
+    },
+    [getCalendarMeetings, from, to],
+  );
+
+  type TMenuItem = Required<MenuProps>['items'][number];
 
   const localeCurrent = useAppSelector(selectLocaleCurrent);
   const { data: localeList } = localeApi.useGetLocalesQuery();
@@ -160,7 +171,9 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
   //   })),
   // ];
 
-  const items: MenuItem[] = [
+  const logoutTracker = useLogoutTracker(tracker);
+
+  const items: TMenuItem[] = [
     {
       label: message('menu.settings'),
       key: 'SubMenu',
@@ -171,7 +184,12 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
           label: message('menu.user.custom'),
           children: [
             { label: message('ldap.auth'), icon: <LoginOutlined />, key: 'ldap-login', onClick: useLdapLoginAction() },
-            { label: message('manage.team'), icon: <UsergroupAddOutlined />, key: 'manage-team', onClick: useManageTeamAction() },
+            {
+              label: message('manage.team'),
+              icon: <UsergroupAddOutlined />,
+              key: 'manage-team',
+              onClick: useManageTeamAction(),
+            },
           ],
         },
         {
@@ -182,7 +200,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
               label: message(localeCurrent === 'ru' ? 'menu.locale.english' : 'menu.locale.russian'),
               icon: <span style={{ fontSize: 18 }}>{localeCurrent === 'ru' ? '🇬🇧' : '🇷🇺'}</span>,
               key: 'locale-selector',
-              onClick: handleClickLocaleSwitch
+              onClick: handleClickLocaleSwitch,
             },
             // Remove tz edit, because it breacs time logging
             // {
@@ -191,8 +209,8 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
             //   key: 'timezone-selector',
             //   children: timezoneMenuItems
             // }
-          ]
-        }
+          ],
+        },
       ],
     },
     {
@@ -210,7 +228,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
       key: 'logout',
       label: message('home.logout'),
       icon: <LogoutOutlined />,
-      onClick: tracker ? useLogoutTracker(tracker) : undefined,
+      onClick: tracker ? logoutTracker : undefined,
       disabled: !tracker,
     },
   ];
@@ -228,7 +246,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
             onClick={onClick}
             selectedKeys={[currentMenuKey]}
             mode="horizontal"
-            items={items.filter(item => item?.key !== 'logout')}
+            items={items.filter((item) => item?.key !== 'logout')}
             theme="light"
           />
         </Col>
@@ -236,7 +254,7 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
           <Menu
             onClick={onClick}
             mode="horizontal"
-            items={items.filter(item => item?.key === 'logout')}
+            items={items.filter((item) => item?.key === 'logout')}
             theme="light"
             style={{ minWidth: 'fit-content' }}
           />
@@ -251,7 +269,9 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
             loading={loadings[1] || isCalendarLoading}
             onClick={() => handleExportCalendar(1)}
             title={!hasLdapCredentials ? message('calendar.export.no.credentials') : message('calendar.export')}
-          >{message('calendar.export')}</Button>
+          >
+            {message('calendar.export')}
+          </Button>
           <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
           {/* <TodayText /> */}
           <Col flex="auto">
@@ -259,15 +279,16 @@ export function TrackCalendarHeader({ isEdit, filters, upperRowControls, tracker
           </Col>
         </Row>
         <Row className={styles.durationRow}>
-        <TrackCalendarHeaderControlBar>{filters}</TrackCalendarHeaderControlBar>
+          <TrackCalendarHeaderControlBar>{filters}</TrackCalendarHeaderControlBar>
 
-        <CalendarExportModal
-          visible={modalVisible}
-          onHidden={() => setModalVisible(false)}
-          data={calendarData}
-          loading={isCalendarLoading}
-          tracker={tracker} />
-          </Row>
+          <CalendarExportModal
+            visible={modalVisible}
+            onHidden={() => setModalVisible(false)}
+            data={calendarData}
+            loading={isCalendarLoading}
+            tracker={tracker}
+          />
+        </Row>
       </div>
     </>
   );

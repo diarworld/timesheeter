@@ -1,7 +1,6 @@
-import React, { FC, useCallback, useState, useEffect } from 'react';
+import React, { FC, useCallback, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useIssuesList } from 'entities/issue/yandex/lib/use-issues-list';
 import { usePinnedIssues } from 'entities/issue/common/lib/use-pinned-issues';
-import { ReportsTable } from './ReportsTable';
 
 import { yandexTrackApi } from 'entities/track/yandex/model/yandex-api';
 import { TCurrentLocale } from 'entities/locale/model/types';
@@ -22,19 +21,18 @@ import { YandexIssueStatusSelectConnected } from 'entities/issue/yandex/ui/Yande
 import { QueueSelect } from 'entities/queue/common/ui/QueueSelect/QueueSelect';
 import { IssueSummarySearch } from 'entities/issue/common/ui/IssueSummarySearch/IssueSummarySearch';
 import { Message } from 'entities/locale/ui/Message';
-import { Button } from 'antd';
+import { Button, Spin } from 'antd';
 import { YANDEX_ISSUE_SORTING_KEY } from 'entities/issue/yandex/model/constants';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
-import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useDispatch } from 'react-redux';
-import { TTransformedTracksByUser } from 'entities/track/common/model/types';
+import { TTransformedTracksByUser, TTrack } from 'entities/track/common/model/types';
 import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
 import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
-import { Spin } from 'antd';
+
 import { useAppSelector } from 'shared/lib/hooks';
 import { selectTeam } from 'entities/track/common/model/selectors';
 import { track } from 'entities/track/common/model/reducers';
-
+import { ReportsTable } from './ReportsTable';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -45,6 +43,7 @@ type TProps = {
 export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
   const [currentMenuKey, setCurrentMenuKey] = useState('tracks');
   const logout = useLogoutTracker(tracker);
+  const teamInitializedRef = useRef(false);
 
   const {
     from,
@@ -74,50 +73,55 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
   const dispatch = useDispatch();
 
   // Initialize team from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedTeam = JSON.parse(localStorage.getItem('team') || '[]');
-      if (savedTeam.length > 0) {
-        dispatch(track.actions.setTeam(savedTeam));
+  useLayoutEffect(() => {
+    if (!teamInitializedRef.current) {
+      try {
+        const savedTeam = JSON.parse(localStorage.getItem('team') || '[]');
+        if (savedTeam.length > 0) {
+          dispatch(track.actions.setTeam(savedTeam));
+        }
+      } catch {
+        // Handle parse error silently
       }
-    } catch {
-      // Handle parse error silently
+      teamInitializedRef.current = true;
     }
-  }, [dispatch]);
+  }, []); // Remove dispatch dependency as it's stable from useDispatch
 
   const [userTracks, setUserTracks] = useState<TTransformedTracksByUser[]>([]);
   const [loadingUserTracks, setLoadingUserTracks] = useState(false);
+
+  const [triggerGetYandexTracks] = yandexTrackApi.useLazyGetYandexTracksQuery();
 
   useEffect(() => {
     if (currentMenuKey === 'reports' && team.length > 0) {
       setLoadingUserTracks(true);
       Promise.all(
-        team.map(user =>
-          (dispatch as any)(
-            yandexTrackApi.endpoints.getYandexTracks.initiate({
-              from,
-              to,
-              createdBy: user.uid,
-              utcOffsetInMinutes,
-              tracker,
-            })
-          ).unwrap()
-        )
-      ).then(results => {
-        setUserTracks(
-          results.flatMap((r, i) =>
-            (r?.list ?? []).map((track: TTransformedTracksByUser) => ({
-              ...track,
-              display: team[i].display,
-              uid: team[i].uid
-            }))
-          )
-        );
-      }).finally(() => setLoadingUserTracks(false));
+        team.map((user) =>
+          triggerGetYandexTracks({
+            from,
+            to,
+            createdBy: user.uid,
+            utcOffsetInMinutes,
+            tracker,
+          }).unwrap(),
+        ),
+      )
+        .then((results) => {
+          setUserTracks(
+            results.flatMap((r, i) =>
+              (r?.list ?? []).map((trackItem: TTrack) => ({
+                ...trackItem,
+                display: team[i].display,
+                uid: team[i].uid,
+              })),
+            ),
+          );
+        })
+        .finally(() => setLoadingUserTracks(false));
     } else if (currentMenuKey === 'reports') {
       setUserTracks([]);
     }
-  }, [currentMenuKey, team, from, to, utcOffsetInMinutes, tracker, dispatch]);
+  }, [currentMenuKey, team, from, to, utcOffsetInMinutes, tracker, triggerGetYandexTracks]);
 
   const { isLoadingIssues, issues } = useIssuesList({
     from,
@@ -152,7 +156,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
       <TrackCalendarHeader
         isEdit={isEdit}
         tracker={tracker}
-        upperRowControls={
+        _upperRowControls={
           <Button onClick={logout} type="link">
             <Message id="home.logout" />
           </Button>
@@ -187,14 +191,14 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
           showWeekends={showWeekends}
           utcOffsetInMinutes={utcOffsetInMinutes}
           issueSortingKey={YANDEX_ISSUE_SORTING_KEY}
-          isLoading={isLoading}
+          _isLoading={isLoading}
           issues={issues}
           pinnedIssues={pinnedIssues}
           pinIssue={pinIssue}
           unpinIssue={unpinIssue}
           isTrackCreateLoading={isTrackCreateLoading}
           createTrack={createTrack}
-          isTrackDeleteLoading={isTrackDeleteLoading}
+          _isTrackDeleteLoading={isTrackDeleteLoading}
           deleteTrack={deleteTrack}
           renderTrackCalendarRowConnected={(props) => (
             <YandexTrackCalendarRowConnected
@@ -205,7 +209,9 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
               deleteTrack={deleteTrack}
             />
           )}
-          renderTrackCalendarFootConnected={(props) => <YandexTrackCalendarFootConnected {...props} tracker={tracker} />}
+          renderTrackCalendarFootConnected={(props) => (
+            <YandexTrackCalendarFootConnected {...props} tracker={tracker} />
+          )}
           renderIssueTracksConnected={(props) => (
             <YandexIssueTracksConnected
               {...props}

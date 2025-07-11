@@ -3,8 +3,8 @@ import { TextArea } from 'components';
 import { FocusEventHandler, memo, useEffect } from 'react';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/model/types';
-import { TrackDeleteButton } from './TrackDeleteButton';
 import { DeleteRowOutlined } from '@ant-design/icons';
+import { TrackDeleteButton } from './TrackDeleteButton';
 import styles from './TrackNameColumn.module.scss';
 
 interface ITrackNameColumnProps {
@@ -29,7 +29,6 @@ export const TrackNameColumn = memo(
     deleteTrack,
     trackCommentEditDisabledReason,
   }: ITrackNameColumnProps) => {
-    
     const message = useMessage();
     const initialValues = {
       comment: trackComment ?? '',
@@ -61,10 +60,14 @@ export const TrackNameColumn = memo(
         <div>
           {isEdit ? (
             <>
-              <Popconfirm icon={<DeleteRowOutlined />} title={message('track.delete.title')+ "?"} onConfirm={() => {
-                // console.log('Popconfirm confirm clicked', { issueId, trackId });
-                deleteTrack({ issueIdOrKey: issueId, trackId })
-                }}>
+              <Popconfirm
+                icon={<DeleteRowOutlined />}
+                title={`${message('track.delete.title')}?`}
+                onConfirm={() => {
+                  // console.log('Popconfirm confirm clicked', { issueId, trackId });
+                  deleteTrack({ issueIdOrKey: issueId, trackId });
+                }}
+              >
                 <TrackDeleteButton />
               </Popconfirm>
               {isEditTrackComment ? (

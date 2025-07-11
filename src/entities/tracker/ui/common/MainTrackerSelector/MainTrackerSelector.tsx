@@ -51,7 +51,7 @@ export const MainTrackerSelector = () => {
       <Select
         options={options}
         onChange={onChange}
-        value={options.find(opt => opt.value === mainTrackerId) || null}
+        value={options.find((opt) => opt.value === mainTrackerId) || null}
         className={styles.selector}
       />
     </section>

@@ -6,7 +6,10 @@ export function useYandexUser(tracker: TTrackerConfig, id?: string, login?: stri
 
   const { data: otherUserById } = yandexUserApi.useGetYandexUserByIdQuery({ userId: id ?? '', tracker }, { skip: !id });
 
-  const { data: otherUserByLogin } = yandexUserApi.useGetYandexUserByLoginQuery({ login: login ?? '', tracker }, { skip: !login });
+  const { data: otherUserByLogin } = yandexUserApi.useGetYandexUserByLoginQuery(
+    { login: login ?? '', tracker },
+    { skip: !login },
+  );
 
   const otherUser = id ? otherUserById : otherUserByLogin;
 

@@ -1,0 +1,77 @@
+# Project Structure Guide
+
+This is a Next.js timesheet application built with TypeScript, following Feature-Sliced Design (FSD) architecture.
+
+## Architecture Overview
+
+The project follows a layered architecture with clear separation of concerns:
+
+### Core Layers (from bottom to top):
+- **`shared/`** - Reusable utilities, types, and configurations
+- **`entities/`** - Business entities (track, tracker, user, etc.)
+- **`features/`** - User-facing features and functionality
+- **`widgets/`** - Complex UI components that combine multiple features
+- **`pages/`** - Next.js pages and routing
+- **`app/`** - Application-level configuration and providers
+
+### Key Directories:
+
+#### `src/entities/` - Business Domain Entities
+- **`track/`** - Time tracking functionality
+  - `common/` - Shared track logic
+  - `jira/` - Jira-specific implementations
+  - `yandex/` - Yandex Tracker implementations
+- **`tracker/`** - Tracker management (Jira, Yandex)
+- **`user/`** - User management
+- **`auth/`** - Authentication
+- **`locale/`** - Internationalization
+- **`config/`** - Configuration management
+
+#### `src/features/` - User Features
+- **`date/`** - Date handling and formatting
+- **`filters/`** - Data filtering functionality
+- **`form/`** - Form components and validation
+
+#### `src/shared/` - Shared Utilities
+- **`api/`** - API configuration and base queries
+- **`lib/`** - Utility functions and hooks
+- **`ui/` - Reusable UI components
+- **`styles/` - Global styles and themes
+
+#### `src/components/` - Basic UI Components
+- **`DatePicker/`** - Date selection components
+- **`Icons/`** - Icon components
+- **`Text/`** - Text display components
+- **`TextArea/`** - Text area components
+
+#### `src/widgets/` - Complex UI Widgets
+- **`Layout/`** - Application layout
+- **`Head/`** - Page head management
+
+## Import Patterns
+
+Use absolute imports with the configured aliases:
+- `entities/...` - Business entities
+- `features/...` - User features
+- `shared/...` - Shared utilities
+- `components/...` - UI components
+- `widgets/...` - Complex widgets
+- `app/...` - App configuration
+
+## State Management
+
+- Uses Redux Toolkit with RTK Query
+- Store configuration in [src/app/store.ts](mdc:src/app/store.ts)
+- Entity-specific reducers in `entities/*/model/reducers.ts`
+- Custom hooks in `entities/*/lib/hooks.ts`
+
+## Key Configuration Files
+
+- [next.config.js](mdc:next.config.js) - Next.js configuration with path aliases
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript configuration
+- [package.json](mdc:package.json) - Dependencies and scripts
+- [jest.config.js](mdc:jest.config.js) - Testing configuration
+description:
+globs:
+alwaysApply: false
+---

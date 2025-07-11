@@ -1,5 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TTrackInputCreate, TTrackInputDelete, TTeamManageCreate, TTeamLdapLogin, TTrackStore } from 'entities/track/common/model/types';
+import {
+  TTrackInputCreate,
+  TTrackInputDelete,
+  TTeamManageCreate,
+  TTeamLdapLogin,
+  TTrackStore,
+} from 'entities/track/common/model/types';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 
 const initialState: TTrackStore = {};

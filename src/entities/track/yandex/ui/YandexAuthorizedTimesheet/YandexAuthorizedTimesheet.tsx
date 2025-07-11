@@ -25,16 +25,20 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
   const dispatch = useAppDispatch();
 
   const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
-  
+
   let team: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
   // Sort by display field (case-insensitive)
-  team = team.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+  team = team
+    .slice()
+    .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
   const ldapCredentials = localStorage.getItem('ldapCredentials');
 
   // Update team in Redux when self is available and not in team
   useEffect(() => {
-    if (self && !team.some(e => e?.login === self?.login)) {
-      const updatedTeam = [...team, self].slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+    if (self && !team.some((e) => e?.login === self?.login)) {
+      const updatedTeam = [...team, self]
+        .slice()
+        .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
       localStorage.setItem('team', JSON.stringify(updatedTeam));
       dispatch(track.actions.setTeam(updatedTeam));
     }
@@ -43,14 +47,12 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
   if (self && !ldapCredentials) {
     const credentials = {
       username: self.email,
-      type: 'ldap'
+      type: 'ldap',
     };
     localStorage.setItem('ldapCredentials', JSON.stringify(credentials));
     // Note: This only sets username, not token, so hasLdapCredentials should remain false
     // until user enters password in LdapLoginFormManage
   }
-  
-  
 
   const logout = useLogoutTracker(tracker);
 

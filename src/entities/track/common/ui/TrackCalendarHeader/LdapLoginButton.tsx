@@ -13,7 +13,6 @@ interface ILdapLoginButtonProps {
 export const LdapLoginButton = ({ className, isEdit }: ILdapLoginButtonProps) => {
   const createTeamAction = useLdapLoginAction();
 
-
   const handleLdapLogin = () => {
     createTeamAction();
   };

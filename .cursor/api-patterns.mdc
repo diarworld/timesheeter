@@ -1,0 +1,244 @@
+# API Patterns and Data Fetching
+
+## RTK Query Configuration
+
+### Base API Setup
+The main API is configured in [src/shared/api/api.ts](mdc:src/shared/api/api.ts) using RTK Query:
+
+```typescript
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { createApiBaseQuery } from './api-base-query';
+
+export const api = createApi({
+  baseQuery: createApiBaseQuery({ baseUrl: '/' }),
+  endpoints: () => ({}),
+  tagTypes: ['Track', 'JiraTrack', 'Locale', 'Auth', 'Organization'],
+});
+```
+
+### Entity-Specific APIs
+Create entity-specific API slices in `entities/*/model/`:
+
+```typescript
+import { api } from 'shared/api/api';
+
+export const entityApi = api.injectEndpoints({
+  endpoints: (builder) => ({
+    getData: builder.query<TData, void>({
+      query: () => '/api/endpoint',
+      providesTags: ['Entity'],
+    }),
+    createData: builder.mutation<TData, TCreateData>({
+      query: (data) => ({
+        url: '/api/endpoint',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Entity'],
+    }),
+  }),
+});
+```
+
+## Custom Hooks Pattern
+
+### Data Fetching Hooks
+Create custom hooks in `entities/*/lib/hooks/`:
+
+```typescript
+// use-get-data.ts
+import { useGetDataQuery } from '../model/api';
+
+export const useGetData = () => {
+  const { data, isLoading, error } = useGetDataQuery();
+  
+  return {
+    data,
+    isLoading,
+    error,
+  };
+};
+```
+
+### Mutation Hooks
+```typescript
+// use-create-data.ts
+import { useCreateDataMutation } from '../model/api';
+
+export const useCreateData = () => {
+  const [createData, { isLoading, error }] = useCreateDataMutation();
+  
+  const handleCreate = async (data: TCreateData) => {
+    try {
+      const result = await createData(data).unwrap();
+      return result;
+    } catch (error) {
+      console.error('Failed to create data:', error);
+      throw error;
+    }
+  };
+  
+  return {
+    createData: handleCreate,
+    isLoading,
+    error,
+  };
+};
+```
+
+## Error Handling
+
+### API Error Handling
+```typescript
+// Handle API errors consistently
+const handleApiCall = async () => {
+  try {
+    const result = await apiCall().unwrap();
+    antMessage.success('Operation successful');
+    return result;
+  } catch (error) {
+    console.error('API Error:', error);
+    antMessage.error('Operation failed');
+    throw error;
+  }
+};
+```
+
+### Loading States
+```typescript
+// Use loading states for better UX
+const { data, isLoading, error } = useGetDataQuery();
+
+if (isLoading) return <Loading />;
+if (error) return <ErrorComponent error={error} />;
+```
+
+## Data Transformation
+
+### Response Transformers
+```typescript
+// Transform API responses to match frontend needs
+export const transformApiResponse = (response: TApiResponse): TFrontendData => {
+  return {
+    id: response.id,
+    name: response.display_name,
+    // ... other transformations
+  };
+};
+```
+
+### Request Transformers
+```typescript
+// Transform frontend data for API requests
+export const transformRequest = (data: TFrontendData): TApiRequest => {
+  return {
+    id: data.id,
+    display_name: data.name,
+    // ... other transformations
+  };
+};
+```
+
+## Caching Strategy
+
+### Tag-Based Cache Invalidation
+```typescript
+// Define cache tags for automatic invalidation
+export const entityApi = api.injectEndpoints({
+  endpoints: (builder) => ({
+    getData: builder.query({
+      query: () => '/api/data',
+      providesTags: ['Data'],
+    }),
+    updateData: builder.mutation({
+      query: (data) => ({
+        url: `/api/data/${data.id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Data'],
+    }),
+  }),
+});
+```
+
+### Optimistic Updates
+```typescript
+// Use optimistic updates for better UX
+export const updateData = builder.mutation({
+  query: (data) => ({
+    url: `/api/data/${data.id}`,
+    method: 'PUT',
+    body: data,
+  }),
+  async onQueryStarted({ id, ...patch }, { dispatch, queryFulfilled }) {
+    const patchResult = dispatch(
+      api.util.updateQueryData('getData', undefined, (draft) => {
+        Object.assign(draft, patch);
+      })
+    );
+    try {
+      await queryFulfilled;
+    } catch {
+      patchResult.undo();
+    }
+  },
+});
+```
+
+## Authentication
+
+### Token Management
+```typescript
+// Handle authentication tokens
+const handleAuth = async (token: string) => {
+  try {
+    localStorage.setItem('authToken', token);
+    // Update Redux state
+    dispatch(setAuthToken(token));
+  } catch (error) {
+    console.error('Failed to save auth token:', error);
+  }
+};
+```
+
+### Protected Endpoints
+```typescript
+// Add auth headers to protected requests
+const createApiBaseQuery = (config: TConfig) => {
+  return async (args: any) => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    
+    return fetch(`${config.baseUrl}${args.url}`, {
+      ...args,
+      headers: { ...headers, ...args.headers },
+    });
+  };
+};
+```
+
+## Testing
+
+### Mock API Responses
+```typescript
+// Create mock data for testing
+export const mockApiResponse = {
+  id: '1',
+  name: 'Test Data',
+  // ... other fields
+};
+
+// Mock API calls in tests
+jest.mock('../api', () => ({
+  useGetDataQuery: () => ({
+    data: mockApiResponse,
+    isLoading: false,
+    error: null,
+  }),
+}));
+```
+description:
+globs:
+alwaysApply: false
+---

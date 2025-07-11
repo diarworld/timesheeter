@@ -1,4 +1,3 @@
-import router, { useRouter } from 'next/router';
 import { useRef, useEffect, useMemo } from 'react';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { Loading } from 'shared/ui/Loading';
@@ -6,7 +5,6 @@ import { actionSetTrackerToken } from 'entities/tracker/model/actions';
 import { getTrackerIdFromQuery } from 'entities/tracker/lib/getTrackerIdFromQuery';
 
 export const AuthToken = () => {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const hasRun = useRef(false);
 
@@ -32,7 +30,7 @@ export const AuthToken = () => {
       .then(() => {
         dispatch(actionSetTrackerToken(token, trackerId ? getTrackerIdFromQuery(trackerId) : undefined));
         const url = pathToRedirect
-          ? `${pathToRedirect}${parameters.toString() ? '?' + parameters.toString() : ''}`
+          ? `${pathToRedirect}${parameters.toString() ? `?${parameters.toString()}` : ''}`
           : '/';
         window.location.replace(url);
       })

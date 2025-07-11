@@ -1,0 +1,244 @@
+# Debugging and Development Tips
+
+## Common Issues and Solutions
+
+### TypeScript Errors
+
+#### Type Mismatch in Table Components
+When working with Ant Design Table components, you may encounter type mismatches:
+
+```typescript
+// Problem: RecordType vs DataType mismatch
+onRow={(record) => ({
+  onClick: (event) => {
+    handleRowClick(record); // Error: RecordType vs DataType
+  },
+})}
+
+// Solution: Type assertion or proper typing
+onRow={(record: DataType) => ({
+  onClick: (event) => {
+    handleRowClick(record);
+  },
+})}
+```
+
+#### Import Path Issues
+If you encounter module resolution errors:
+
+1. Check [tsconfig.json](mdc:tsconfig.json) for proper path mapping
+2. Verify [next.config.js](mdc:next.config.js) webpack aliases
+3. Use absolute imports with configured aliases
+
+### Redux State Debugging
+
+#### Store Inspection
+```typescript
+// Add to component for debugging
+import { useAppSelector } from 'shared/lib/hooks';
+
+const Component = () => {
+  const state = useAppSelector(state => state);
+  console.log('Current Redux state:', state);
+  
+  // ... rest of component
+};
+```
+
+#### RTK Query Cache Inspection
+```typescript
+// Check RTK Query cache state
+const { data, isLoading, error } = useGetDataQuery();
+console.log('Query state:', { data, isLoading, error });
+```
+
+### API Debugging
+
+#### Network Requests
+- Use browser DevTools Network tab
+- Check for CORS issues
+- Verify API endpoints in [next.config.js](mdc:next.config.js) rewrites
+
+#### Error Handling
+```typescript
+// Add comprehensive error logging
+try {
+  const result = await apiCall().unwrap();
+  return result;
+} catch (error) {
+  console.error('API Error Details:', {
+    message: error.message,
+    status: error.status,
+    data: error.data,
+    stack: error.stack,
+  });
+  throw error;
+}
+```
+
+## Development Workflow
+
+### Hot Reload Issues
+If hot reload isn't working:
+
+1. Check for syntax errors in console
+2. Restart development server: `npm run dev`
+3. Clear Next.js cache: `rm -rf .next`
+
+### Build Issues
+```bash
+# Check TypeScript errors
+npm run check-types
+
+# Lint code
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+```
+
+### Testing Issues
+```bash
+# Run tests in watch mode
+npm run test:unit
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests silently (for CI)
+npm run ci:test:unit
+```
+
+## Performance Debugging
+
+### React DevTools
+- Install React DevTools browser extension
+- Use Profiler to identify performance bottlenecks
+- Check component re-renders
+
+### Bundle Analysis
+```bash
+# Analyze bundle size
+npm run build
+# Check .next/static/chunks/ for large files
+```
+
+### Memory Leaks
+- Check for missing dependency arrays in useEffect
+- Ensure proper cleanup in useEffect return functions
+- Monitor memory usage in DevTools
+
+## Common Patterns
+
+### State Management Debugging
+```typescript
+// Debug state changes
+const [state, setState] = useState(initialState);
+
+useEffect(() => {
+  console.log('State changed:', state);
+}, [state]);
+
+// Debug Redux actions
+const dispatch = useAppDispatch();
+const originalDispatch = dispatch;
+
+const debugDispatch = (action: any) => {
+  console.log('Dispatching action:', action);
+  return originalDispatch(action);
+};
+```
+
+### Component Debugging
+```typescript
+// Add debug props
+interface ComponentProps {
+  debug?: boolean;
+  // ... other props
+}
+
+export const Component: React.FC<ComponentProps> = ({ debug, ...props }) => {
+  if (debug) {
+    console.log('Component props:', props);
+    console.log('Component state:', state);
+  }
+  
+  // ... component logic
+};
+```
+
+### API Response Debugging
+```typescript
+// Log API responses
+const { data, isLoading, error } = useGetDataQuery();
+
+useEffect(() => {
+  if (data) {
+    console.log('API Response:', data);
+  }
+  if (error) {
+    console.error('API Error:', error);
+  }
+}, [data, error]);
+```
+
+## Environment Setup
+
+### Local Development
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Open http://localhost:3000
+```
+
+### Docker Development
+```bash
+# Build and run with Docker
+docker-compose up --build
+
+# Access application
+# Check docker-compose.yaml for port mapping
+```
+
+### Environment Variables
+- Check for required environment variables
+- Use `.env.local` for local development
+- Verify environment setup in [entrypoint.sh](mdc:entrypoint.sh)
+
+## Useful Commands
+
+### Development
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run export       # Export static site
+```
+
+### Code Quality
+```bash
+npm run lint         # Check code style
+npm run lint:fix     # Fix code style issues
+npm run check-types  # Check TypeScript types
+```
+
+### Testing
+```bash
+npm run test:unit    # Run unit tests
+npm run storybook    # Start Storybook
+npm run build-storybook # Build Storybook
+```
+
+### Debugging Tools
+- Browser DevTools for network and console debugging
+- React DevTools for component inspection
+- Redux DevTools for state management debugging
+- Jest debugging with `--detectOpenHandles` flag
+description:
+globs:
+alwaysApply: false
+---

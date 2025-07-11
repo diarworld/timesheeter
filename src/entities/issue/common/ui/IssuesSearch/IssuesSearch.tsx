@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { AutoCompleteProps, Select, Spin } from 'antd';
 import { FieldInputProps } from 'react-final-form';
 import { TOption } from 'shared/lib/types';
+import { DEFAULT_ISSUES_PER_PAGE, DEFAULT_ISSUES_MAX_ITEMS } from 'entities/issue/common/lib/constants';
 
 export type TIssuesSearchProps = AutoCompleteProps<string> &
   FieldInputProps<string> & {
@@ -16,10 +17,12 @@ export const IssuesSearch = ({
   options,
   onSearch,
   isFetchingIssues,
-  perPage,
-  maxItems,
+  perPage: _perPage = DEFAULT_ISSUES_PER_PAGE,
+  maxItems: _maxItems = DEFAULT_ISSUES_MAX_ITEMS,
   ...autoCompleteProps
 }: TIssuesSearchProps) => {
+  // perPage and maxItems are used by connected components (e.g., YandexIssuesSearchConnected)
+  // to configure the underlying API calls
   const handleSelect = useCallback(
     (issueKey: string) => {
       onChange(issueKey);

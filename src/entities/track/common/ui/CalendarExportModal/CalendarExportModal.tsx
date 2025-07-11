@@ -1,20 +1,21 @@
-import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, AutoCompleteProps, Popover, Alert } from 'antd';
+import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, Popover } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
-import { TEwsCalendarResponse } from 'entities/track/common/model/ews-api';
+import { IEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { ScheduleFilled } from '@ant-design/icons';
-import { TTrackerConfig } from 'entities/tracker/model/types';
+import { TTrackerConfig, isJiraTrackerCfg, isYandexTrackerCfg } from 'entities/tracker/model/types';
 import { useCreateJiraTrack } from 'entities/track/jira/lib/hooks/use-create-jira-track';
 import { useCreateYandexTrack } from 'entities/track/yandex/lib/hooks/use-create-yandex-track';
-import { isJiraTrackerCfg, isYandexTrackerCfg } from 'entities/tracker/model/types';
+
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
 import './CalendarExportModal.scss';
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
+
 const { Text, Title } = Typography;
 
-interface DataType {
+interface IDataType {
   key: React.Key;
   subject: React.Key;
   start: string;
@@ -23,25 +24,25 @@ interface DataType {
   issueKey?: string;
 }
 
-interface CalendarExportModalProps {
+interface ICalendarExportModalProps {
   visible: boolean;
   onHidden: () => void;
-  data: TEwsCalendarResponse | null;
+  data: IEwsCalendarResponse | null;
   loading: boolean;
   tracker: TTrackerConfig;
 }
 
-export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
+export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   visible,
   onHidden,
   data,
   loading,
-  tracker
+  tracker,
 }) => {
   const message = useMessage();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [issueKeys, setIssueKeys] = useState<Record<string, string>>({});
-  
+
   // Load default issue key from localStorage on component mount
   const [defaultIssueKey, setDefaultIssueKey] = useState<string>(() => {
     try {
@@ -51,7 +52,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       return 'PM-4';
     }
   });
-  
+
   const [isImporting, setIsImporting] = useState(false);
 
   // Add state for editing subject
@@ -66,13 +67,14 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
   // Get the appropriate track creation hook based on tracker type
   const jiraTrackHook = useCreateJiraTrack(tracker);
   const yandexTrackHook = useCreateYandexTrack(tracker);
-  
+
   const createTrack = isJiraTrackerCfg(tracker) ? jiraTrackHook.createTrack : yandexTrackHook.createTrack;
 
+  // handleIssueKeyChange is not used in this component but kept for interface compatibility
   const handleIssueKeyChange = (key: string, value: string) => {
-    setIssueKeys(prev => ({
+    setIssueKeys((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
   };
 
@@ -81,9 +83,15 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
     return regex.test(value);
   };
 
+  const tableData =
+    data?.meetings.map((meeting, index) => ({
+      key: meeting.id || index,
+      ...meeting,
+    })) || [];
+
   const applyDefaultToAll = () => {
     const newIssueKeys: Record<string, string> = {};
-    tableData.forEach((record) => {
+    tableData.forEach((record: IDataType) => {
       newIssueKeys[String(record.key)] = defaultIssueKey;
     });
     setIssueKeys(newIssueKeys);
@@ -110,7 +118,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
   };
   // Handler to save edit
   const saveSubjectEdit = (key: string) => {
-    setSubjects(prev => ({ ...prev, [key]: editingSubjectValue }));
+    setSubjects((prev) => ({ ...prev, [key]: editingSubjectValue }));
     setEditingSubjectKey(null);
     setEditingSubjectValue('');
   };
@@ -131,7 +139,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
   };
   // Handler to save edit
   const saveIssueKeyEdit = (key: string) => {
-    setIssueKeys(prev => ({ ...prev, [key]: editingIssueKeyValue }));
+    setIssueKeys((prev) => ({ ...prev, [key]: editingIssueKeyValue }));
     setEditingIssueKey(null);
     setEditingIssueKeyValue('');
   };
@@ -146,40 +154,52 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
 
     setIsImporting(true);
     try {
-      const selectedRows = tableData.filter(record => selectedRowKeys.includes(record.key));
-      
-      for (const row of selectedRows) {
+      const selectedRows = tableData.filter((record: IDataType) => selectedRowKeys.includes(record.key));
+      const validRows = selectedRows.filter((row) => {
         const issueKey = issueKeys[String(row.key)] || defaultIssueKey;
         const subject = subjects[String(row.key)] ?? row.subject;
-        
+
         if (!validateIssueKey(issueKey)) {
           console.warn(`Invalid issue key for meeting: ${subject}`);
-          continue;
+          return false;
         }
 
         // Convert duration from minutes to human readable format
         const hours = Math.floor(row.duration / 60);
         const minutes = row.duration % 60;
         const durationString = `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
-        
+
         // Convert to ISO duration
         const isoDuration = humanReadableDurationToISO(durationString);
         if (!isoDuration) {
           console.warn(`Invalid duration for meeting: ${subject}`);
-          continue;
+          return false;
         }
 
-        // Create track
-        await createTrack({
+        return true;
+      });
+
+      // Create all tracks in parallel
+      const trackPromises = validRows.map((row) => {
+        const issueKey = issueKeys[String(row.key)] || defaultIssueKey;
+        const subject = subjects[String(row.key)] ?? row.subject;
+        const hours = Math.floor(row.duration / 60);
+        const minutes = row.duration % 60;
+        const durationString = `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+
+        return createTrack({
           issueKey,
           start: row.start,
           duration: durationString,
-          comment: "Meeting: " + subject
+          comment: `Meeting: ${subject}`,
         });
-      }
+      });
+
+      await Promise.all(trackPromises);
+
       // Show notification after successful import
       // Close modal after successful import
-      antMessage.success(message('calendar.import.success') + ' ' + message('calendar.import.success.description'));
+      antMessage.success(`${message('calendar.import.success')} ${message('calendar.import.success.description')}`);
       onHidden();
     } catch (error) {
       console.error('Error importing tracks:', error);
@@ -194,8 +214,9 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
         <Popover
           content={
             <>
-            {/* <CloseCircleFilled style={{ color: 'red' }}/> */}
-            <span>{message('calendar.export.table.issue.help')}</span></>
+              {/* <CloseCircleFilled style={{ color: 'red' }}/> */}
+              <span>{message('calendar.export.table.issue.help')}</span>
+            </>
             // <Alert
             //   type="error"
             //   showIcon
@@ -213,7 +234,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       dataIndex: 'issueKey',
       key: 'issueKey',
       width: 160,
-      render: (text: string, record: DataType) => {
+      render: (text: string, record: IDataType) => {
         const key = String(record.key);
         const value = issueKeys[key] || defaultIssueKey;
         if (editingIssueKey === key) {
@@ -232,6 +253,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
                   autoFocus
                   name={`issueKey-${key}`}
                   onFocus={() => {}}
+                  style={{ width: '250px' }}
                 />
               ) : (
                 // Fallback: plain Input or JiraIssuesSearchConnected for Jira
@@ -241,8 +263,10 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
                   onChange={handleIssueKeyInputChange}
                   onBlur={() => saveIssueKeyEdit(key)}
                   onPressEnter={() => saveIssueKeyEdit(key)}
-                  onKeyDown={e => { if (e.key === 'Escape') cancelIssueKeyEdit(); }}
-                  onFocus={e => e.target.select()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') cancelIssueKeyEdit();
+                  }}
+                  onFocus={(e) => e.target.select()}
                   size="small"
                   status={value && !validateIssueKey(value) ? 'error' : ''}
                   placeholder="PM-4"
@@ -257,6 +281,14 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
             <div
               className="editable-cell-value-wrap"
               onClick={() => handleEditIssueKey(key, value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleEditIssueKey(key, value);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
               <Text
                 strong
@@ -274,7 +306,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       title: message('calendar.export.table.subject'),
       dataIndex: 'subject',
       key: 'subject',
-      render: (text: string, record: DataType) => {
+      render: (text: string, record: IDataType) => {
         const key = String(record.key);
         if (editingSubjectKey === key) {
           return (
@@ -285,8 +317,10 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
                 onChange={handleSubjectInputChange}
                 onBlur={() => saveSubjectEdit(key)}
                 onPressEnter={() => saveSubjectEdit(key)}
-                onKeyDown={e => { if (e.key === 'Escape') cancelSubjectEdit(); }}
-                onFocus={e => e.target.select()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') cancelSubjectEdit();
+                }}
+                onFocus={(e) => e.target.select()}
                 size="small"
                 style={{ minWidth: 120 }}
               />
@@ -298,6 +332,14 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
             <div
               className="editable-cell-value-wrap"
               onClick={() => handleEditSubject(key, subjects[key] ?? text)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleEditSubject(key, subjects[key] ?? text);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
               <Text strong style={{ cursor: 'pointer' }}>
                 {subjects[key] ?? text}
@@ -311,9 +353,7 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       title: message('calendar.export.table.start'),
       dataIndex: 'start',
       key: 'start',
-      render: (date: string) => (
-        <Text>{dayjs(date).format('MMM DD, YYYY HH:mm')}</Text>
-      ),
+      render: (date: string) => <Text>{dayjs(date).format('MMM DD, YYYY HH:mm')}</Text>,
     },
     // {
     //   title: message('calendar.export.table.end'),
@@ -328,7 +368,10 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
       dataIndex: 'duration',
       key: 'duration',
       render: (minutes: number) => (
-        <Text>{message('date.hours.short', { value: Math.floor(minutes / 60) })} {message('date.minutes.short', { value: Math.floor(minutes % 60) })}</Text>
+        <Text>
+          {message('date.hours.short', { value: Math.floor(minutes / 60) })}{' '}
+          {message('date.minutes.short', { value: Math.floor(minutes % 60) })}
+        </Text>
       ),
     },
     //   title: message('calendar.export.table.location'),
@@ -348,32 +391,26 @@ export const CalendarExportModal: React.FC<CalendarExportModalProps> = ({
     // },
   ];
 
-  const tableData = data?.meetings.map((meeting, index) => ({
-    key: meeting.id || index,
-    ...meeting,
-  })) || [];
-
-
   // rowSelection object indicates the need for row selection
-const rowSelection: TableProps<DataType>['rowSelection'] = {
-  selectedRowKeys: selectedRowKeys,
-  onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
-    setSelectedRowKeys(selectedRowKeys);
-    // console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-  },
-  getCheckboxProps: (record: DataType) => ({
-    disabled: false, // Column configuration not to be checked
-    name: String(record.subject),
-  }),
-};
+  const rowSelection: TableProps<IDataType>['rowSelection'] = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys: React.Key[], _selectedRows: IDataType[]) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+      // console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+    },
+    getCheckboxProps: (record: IDataType) => ({
+      disabled: false, // Column configuration not to be checked
+      name: String(record.subject),
+    }),
+  };
 
-const handleRowClick = (record: DataType) => {
-  const key = record.key;
-  const newSelectedRowKeys = selectedRowKeys.includes(key)
-    ? selectedRowKeys.filter((k: React.Key) => k !== key)
-    : [...selectedRowKeys, key];
-  setSelectedRowKeys(newSelectedRowKeys);
-};
+  const handleRowClick = (record: IDataType) => {
+    const { key } = record;
+    const newSelectedRowKeys = selectedRowKeys.includes(key)
+      ? selectedRowKeys.filter((k: React.Key) => k !== key)
+      : [...selectedRowKeys, key];
+    setSelectedRowKeys(newSelectedRowKeys);
+  };
 
   return (
     <Modal
@@ -382,12 +419,16 @@ const handleRowClick = (record: DataType) => {
           <Title level={4}>{message('calendar.export.results')}</Title>
           {data && (
             <Text type="secondary">
-              {data.totalMeetings} {message('calendar.export.results.top')} {message('calendar.export.results.top.from')} {DateWrapper.getDateFormat(dayjs(data.dateRange.start_date), 'DD MMMM YYYY')} {message('calendar.export.results.top.to')} {DateWrapper.getDateFormat(dayjs(data.dateRange.end_date), 'DD MMMM YYYY')}
+              {data.totalMeetings} {message('calendar.export.results.top')}{' '}
+              {message('calendar.export.results.top.from')}{' '}
+              {DateWrapper.getDateFormat(dayjs(data.dateRange.start_date), 'DD MMMM YYYY')}{' '}
+              {message('calendar.export.results.top.to')}{' '}
+              {DateWrapper.getDateFormat(dayjs(data.dateRange.end_date), 'DD MMMM YYYY')}
             </Text>
           )}
-        <Space>
-          <Text>{message('calendar.import.issue.key')}</Text>
-          {/* <Input
+          <Space>
+            <Text>{message('calendar.import.issue.key')}</Text>
+            {/* <Input
             value={defaultIssueKey}
             onChange={(e) => handleDefaultIssueKeyChange(e.target.value)}
             placeholder="PM-4"
@@ -395,40 +436,41 @@ const handleRowClick = (record: DataType) => {
             onFocus={(e) => e.target.select()}
             status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : ''}
           /> */}
-          {isYandexTrackerCfg(tracker) ? (
-            <YandexIssuesSearchConnected
-              value={defaultIssueKey}
-              onChange={handleDefaultIssueKeyChange}
-              tracker={tracker}
-              status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : undefined}
-              placeholder="PM-4"
-              maxItems={50}
-              perPage={50}
-              onBlur={() => saveIssueKeyEdit(defaultIssueKey)}
-              autoFocus
-              name={`issueKey-${defaultIssueKey}`}
-              onFocus={() => {}}
-            />
-          ) : (
-            // Fallback: plain Input or JiraIssuesSearchConnected for Jira
-            <Input
-              value={defaultIssueKey}
-              autoFocus
-              onChange={handleIssueKeyInputChange}
-              onBlur={() => saveIssueKeyEdit(defaultIssueKey)}
-              onPressEnter={() => saveIssueKeyEdit(defaultIssueKey)}
-              onKeyDown={e => { if (e.key === 'Escape') cancelIssueKeyEdit(); }}
-              onFocus={e => e.target.select()}
-              size="small"
-              status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : ''}
-              placeholder="PM-4"
-              style={{ minWidth: 120 }}
-            />
-          )}
-          <Button onClick={applyDefaultToAll}>
-          {message('calendar.export.default.set')}
-          </Button>
-        </Space>
+            {isYandexTrackerCfg(tracker) ? (
+              <YandexIssuesSearchConnected
+                value={defaultIssueKey}
+                onChange={handleDefaultIssueKeyChange}
+                tracker={tracker}
+                status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : undefined}
+                placeholder="PM-4"
+                maxItems={50}
+                perPage={50}
+                onBlur={() => saveIssueKeyEdit(defaultIssueKey)}
+                autoFocus
+                name={`issueKey-${defaultIssueKey}`}
+                onFocus={() => {}}
+                style={{ width: '540px' }}
+              />
+            ) : (
+              // Fallback: plain Input or JiraIssuesSearchConnected for Jira
+              <Input
+                value={defaultIssueKey}
+                autoFocus
+                onChange={handleIssueKeyInputChange}
+                onBlur={() => saveIssueKeyEdit(defaultIssueKey)}
+                onPressEnter={() => saveIssueKeyEdit(defaultIssueKey)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') cancelIssueKeyEdit();
+                }}
+                onFocus={(e) => e.target.select()}
+                size="small"
+                status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : ''}
+                placeholder="PM-4"
+                style={{ minWidth: 120 }}
+              />
+            )}
+            <Button onClick={applyDefaultToAll}>{message('calendar.export.default.set')}</Button>
+          </Space>
         </Space>
       }
       open={visible}
@@ -439,45 +481,44 @@ const handleRowClick = (record: DataType) => {
     >
       <Table
         bordered
-        rowSelection={{ type: "checkbox", ...rowSelection }}
+        rowSelection={{ type: 'checkbox', ...rowSelection }}
         columns={columns}
         dataSource={tableData}
         loading={loading}
-        onRow={(record) => ({
+        onRow={(record: IDataType) => ({
           onClick: (event) => {
             // Prevent row selection if clicking inside an input or textarea
             if (
               event.target instanceof HTMLElement &&
-              (
-                event.target.tagName === 'INPUT' ||
+              (event.target.tagName === 'INPUT' ||
                 event.target.closest('.editable-cell-value-wrap') ||
-                event.target.closest('.editable-cell')
-              )
+                event.target.closest('.editable-cell'))
             ) {
               return;
             }
             handleRowClick(record);
           },
-          style: { cursor: 'pointer' }
+          style: { cursor: 'pointer' },
         })}
         pagination={{
           showTotal: (total, range) => `${range[0]}-${range[1]} ${message('calendar.export.results.top.of')} ${total}`,
-          showSizeChanger: true
+          showSizeChanger: true,
         }}
         // scroll={{ x: 800 }}
         scroll={{ x: 'max-content' }}
         size="middle"
       />
       <Flex gap="middle" justify="space-evenly" vertical>
-        <Button 
-           type="primary"
-           icon={<ScheduleFilled />}
-           onClick={handleImportTracks}
-           disabled={selectedRowKeys.length === 0 || isImporting}
-           loading={isImporting}
-           >{message('calendar.import')}
-         </Button>
+        <Button
+          type="primary"
+          icon={<ScheduleFilled />}
+          onClick={handleImportTracks}
+          disabled={selectedRowKeys.length === 0 || isImporting}
+          loading={isImporting}
+        >
+          {message('calendar.import')}
+        </Button>
       </Flex>
     </Modal>
   );
-}; 
+};

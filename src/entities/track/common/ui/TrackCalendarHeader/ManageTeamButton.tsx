@@ -13,7 +13,6 @@ interface IManageTeamButtonProps {
 export const ManageTeamButton = ({ className, isEdit }: IManageTeamButtonProps) => {
   const createTeamAction = useManageTeamAction();
 
-
   const handleManageTeam = () => {
     createTeamAction();
   };

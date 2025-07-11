@@ -14,10 +14,7 @@ type TProps = {
   isTrackCreateLoading: boolean;
 };
 
-export const LdapLoginModalCreate = ({
-  tracker,
-  isTrackCreateLoading,
-}: TProps) => {
+export const LdapLoginModalCreate = ({ tracker, isTrackCreateLoading }: TProps) => {
   const message = useMessage();
   const dispatch = useAppDispatch();
   const trackInput = useAppSelector(selectLdapLoginManage);
@@ -37,11 +34,7 @@ export const LdapLoginModalCreate = ({
       footer={null}
       width="fit-content"
     >
-      <LdapLoginFormManage
-        tracker={tracker}
-        initialValues={trackInput}
-        isTrackCreateLoading={isTrackCreateLoading}
-      />
+      <LdapLoginFormManage />
     </Modal>
   );
 };

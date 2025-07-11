@@ -9,7 +9,12 @@ import { getOptionFromIssue } from 'entities/issue/common/lib/get-option-from-is
 
 const emptyArray: TOption[] = [];
 
-export const useYandexIssuesSearchOptions = (tracker: TTrackerConfig, value: string | undefined, maxItems?: number, perPage?: number) => {
+export const useYandexIssuesSearchOptions = (
+  tracker: TTrackerConfig,
+  value: string | undefined,
+  maxItems?: number,
+  perPage?: number,
+) => {
   const [search, setSearch, isDebouncingSearch] = useDebouncedState<string>('');
   const initialIssueKey = useInitialValue(value);
 

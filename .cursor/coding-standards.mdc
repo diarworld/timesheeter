@@ -1,0 +1,126 @@
+# Coding Standards and Best Practices
+
+## TypeScript & React Patterns
+
+### Component Structure
+- Use functional components with TypeScript interfaces
+- Export components as named exports: `export const ComponentName: React.FC<Props>`
+- Use `React.FC` type for functional components
+- Define interfaces for props with descriptive names
+
+### State Management
+- Use `useAppDispatch` and `useAppSelector` from [src/shared/lib/hooks.ts](mdc:src/shared/lib/hooks.ts)
+- Follow Redux Toolkit patterns with slice reducers
+- Use RTK Query for API calls
+- Store entity-specific state in `entities/*/model/` directories
+
+### Import Organization
+```typescript
+// 1. External libraries
+import { useState, useEffect } from 'react';
+import { Button, Modal } from 'antd';
+
+// 2. Internal shared utilities
+import { useAppDispatch } from 'shared/lib/hooks';
+
+// 3. Entity imports
+import { useMessage } from 'entities/locale/lib/hooks';
+
+// 4. Feature imports
+import { DateWrapper } from 'features/date/lib/DateWrapper';
+
+// 5. Component imports
+import { Text } from 'components';
+
+// 6. Relative imports (same file)
+import './Component.module.scss';
+```
+
+### Type Definitions
+- Use `T` prefix for type aliases: `TUserData`, `TTrackerConfig`
+- Use `I` prefix for interfaces: `IComponentProps`
+- Define types in `model/types.ts` files within entities
+- Export types from entity index files
+
+### Error Handling
+- Use try-catch blocks for async operations
+- Log errors with `console.error()` for debugging
+- Show user-friendly error messages using Ant Design's message system
+
+### Performance
+- Use `useMemo` and `useCallback` for expensive computations
+- Implement proper dependency arrays in useEffect
+- Use React.memo for components that receive stable props
+
+## File Naming Conventions
+
+### Components
+- PascalCase for component files: `CalendarExportModal.tsx`
+- kebab-case for directories: `calendar-export-modal/`
+- Index files: `index.tsx` for component exports
+
+### Utilities and Hooks
+- camelCase for utility files: `useCreateTrack.ts`
+- kebab-case for directories: `use-create-track/`
+
+### Styles
+- Use SCSS modules: `Component.module.scss`
+- Import styles at the bottom of component files
+
+## Code Organization
+
+### Entity Structure
+```
+entities/track/
+├── common/
+│   ├── lib/          # Shared utilities
+│   ├── model/        # Redux state, types, API
+│   └── ui/           # UI components
+├── jira/             # Jira-specific implementation
+└── yandex/           # Yandex-specific implementation
+```
+
+### Component Structure
+```typescript
+// 1. Imports
+import { useState } from 'react';
+import { Button } from 'antd';
+
+// 2. Types/Interfaces
+interface ComponentProps {
+  // props definition
+}
+
+// 3. Component
+export const Component: React.FC<ComponentProps> = ({ prop1, prop2 }) => {
+  // 4. State
+  const [state, setState] = useState();
+  
+  // 5. Effects
+  useEffect(() => {
+    // effect logic
+  }, []);
+  
+  // 6. Handlers
+  const handleClick = () => {
+    // handler logic
+  };
+  
+  // 7. Render
+  return (
+    <div>
+      {/* JSX */}
+    </div>
+  );
+};
+```
+
+## Testing
+- Write unit tests for utilities and hooks
+- Use Jest and React Testing Library
+- Test files should be in `__tests__/` directories
+- Mock external dependencies appropriately
+description:
+globs:
+alwaysApply: false
+---
