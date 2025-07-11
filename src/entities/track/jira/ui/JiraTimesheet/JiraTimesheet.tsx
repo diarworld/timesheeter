@@ -35,7 +35,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
   // otherwise in case user creates track for an issue that hasn't been loaded yet, it wouldn't be loaded
   const [createdTrackIssueKeys, setCreatedTrackIssueKeys] = useState<string[]>([]);
 
-
   const {
     from,
     to,
@@ -111,6 +110,10 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
 
   const getIssueUrl = useCallback((issueKey: string) => new URL(`/browse/${issueKey}`, tracker.url).href, [tracker]);
 
+  const handleMenuChange = useCallback((_key: string): void => {
+    // Menu change functionality not implemented yet
+  }, []);
+
   const viewingAnotherUser = !!userIdFromFilter;
   const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined;
   const isLoading = isLoadingIssues || isLoadingTracks;
@@ -120,22 +123,27 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
       <TrackCalendarHeader
         tracker={tracker}
         isEdit={isEdit}
-        filters={<>
-          <JiraUserSelectConnected tracker={tracker} userId={userIdFromFilter} />
-          <JiraIssueStatusSelectConnected
-            tracker={tracker}
-            value={issueStatus}
-            language={language}
-            onChange={updateIssueStatus} />
-          <QueueSelect
-            value={queue}
-            onChange={updateQueue}
-            queueList={queueList}
-            isFetchingQueueList={isFetchingQueueList} />
-          <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
-        </>} currentMenuKey={''} onMenuChange={function (key: string): void {
-          throw new Error('Function not implemented.');
-        } }      />
+        filters={
+          <>
+            <JiraUserSelectConnected tracker={tracker} userId={userIdFromFilter} />
+            <JiraIssueStatusSelectConnected
+              tracker={tracker}
+              value={issueStatus}
+              language={language}
+              onChange={updateIssueStatus}
+            />
+            <QueueSelect
+              value={queue}
+              onChange={updateQueue}
+              queueList={queueList}
+              isFetchingQueueList={isFetchingQueueList}
+            />
+            <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
+          </>
+        }
+        currentMenuKey=""
+        onMenuChange={handleMenuChange}
+      />
       <TrackCalendar
         tracker={tracker}
         isEdit={isEdit}
@@ -144,14 +152,14 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
         showWeekends={showWeekends}
         utcOffsetInMinutes={utcOffsetInMinutes}
         issueSortingKey={JIRA_ISSUE_SORTING_KEY}
-        isLoading={isLoading}
+        _isLoading={isLoading}
         issues={sortedIssues}
         pinnedIssues={pinnedIssues}
         pinIssue={pinIssue}
         unpinIssue={unpinIssue}
         isTrackCreateLoading={isTrackCreateLoading}
         createTrack={onCreateTrack}
-        isTrackDeleteLoading={isTrackDeleteLoading}
+        _isTrackDeleteLoading={isTrackDeleteLoading}
         deleteTrack={deleteTrack}
         renderTrackCalendarRowConnected={(props) => (
           <JiraTrackCalendarRowConnected

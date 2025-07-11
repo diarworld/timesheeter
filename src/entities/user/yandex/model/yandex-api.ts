@@ -5,7 +5,12 @@ import { getTrackerHeaders } from 'entities/tracker/lib/getTrackerHeaders';
 import { yandexUserEndpoints } from 'entities/user/yandex/model/endpoints';
 import { YA_ROBOTS_IDS } from 'entities/user/yandex/model/constants';
 import { TYandexUser } from 'entities/user/yandex/model/types';
-import { TGetMyselfParams, TGetUserParams, TGetUserByLoginParams, TGetUsersParams } from 'entities/user/common/model/types';
+import {
+  TGetMyselfParams,
+  TGetUserParams,
+  TGetUserByLoginParams,
+  TGetUsersParams,
+} from 'entities/user/common/model/types';
 
 export const yandexUserApi = api.injectEndpoints({
   overrideExisting: true,
@@ -42,7 +47,7 @@ export const yandexUserApi = api.injectEndpoints({
             }) as TFetchAllPagesBaseQueryResult<TYandexUser[]>,
           identity,
           undefined,
-          50
+          50,
         );
 
         if (res.data) {

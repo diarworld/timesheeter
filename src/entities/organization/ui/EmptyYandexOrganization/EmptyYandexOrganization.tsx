@@ -6,7 +6,7 @@ import { trackers } from 'entities/tracker/model/reducers';
 import styles from './EmptyYandexOrganization.module.scss';
 
 export const EmptyYandexOrganization: FC = () => {
-  const defaultTracker = getDefaultTracker("7867633", false);
+  const defaultTracker = getDefaultTracker('7867633', false);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -14,8 +14,5 @@ export const EmptyYandexOrganization: FC = () => {
     dispatch(trackers.actions.setMainTracker({ id: defaultTracker.id }));
   }, [dispatch, defaultTracker]);
 
-  return (
-    <div className={styles.container}>
-    </div>
-  );
+  return <div className={styles.container} />;
 };

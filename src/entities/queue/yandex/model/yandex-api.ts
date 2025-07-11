@@ -1,5 +1,5 @@
-import { fetchAllPages, TFetchAllPagesBaseQueryResult } from 'shared/api';
-import { api } from 'shared/api';
+import { fetchAllPages, TFetchAllPagesBaseQueryResult, api } from 'shared/api';
+
 import { identity } from 'shared/lib/utils';
 import { TGetQueuesParams, TQueue, TGetQueueParams } from 'entities/queue/common/model/types';
 import { getTrackerHeaders } from 'entities/tracker/lib/getTrackerHeaders';
@@ -33,10 +33,10 @@ export const yandexQueueApi = api.injectEndpoints({
               credentials: 'omit',
             });
             return response.data as TQueue;
-          })
+          }),
         );
         // console.log(results)
-        return { data: results }
+        return { data: results };
       },
     }),
   }),

@@ -14,12 +14,11 @@ export const UnauthorizedTracker: FC<TUnauthorizedTrackerProps> = ({ errorMessag
   <div className={styles.container}>
     <div className={styles.message}>{errorMessage}</div>
     <div>
-      {logout 
-        && (
+      {logout && (
         <Button onClick={logout} type="link" size="large">
           <Message id="unauthorizedTracker.changeAccount" />
-        </Button> )
-        }
+        </Button>
+      )}
       {actions}
     </div>
   </div>

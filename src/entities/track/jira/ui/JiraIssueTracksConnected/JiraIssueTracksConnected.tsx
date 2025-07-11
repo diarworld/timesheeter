@@ -15,7 +15,7 @@ type TProps = Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'> & {
 };
 
 export const JiraIssueTracksConnected = (props: TProps) => {
-  const { date, issueKey, tracker, uId } = props;
+  const { date, issueKey, tracker, uId, deleteTrack } = props;
 
   const { from, to, fromTimestamp, toTimestamp } = useMemo(() => {
     const dateObj = DateWrapper.getDate({ date, utcOffsetInMinutes: undefined });
@@ -45,5 +45,5 @@ export const JiraIssueTracksConnected = (props: TProps) => {
     { skip: !issueKey || !date || !uId },
   );
 
-  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={props.deleteTrack} />;
+  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={deleteTrack} />;
 };

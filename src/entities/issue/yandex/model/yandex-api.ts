@@ -38,7 +38,7 @@ export const yandexIssueApi = api.injectEndpoints({
             }) as TFetchAllPagesBaseQueryResult<TYandexIssue[]>,
           identity,
           undefined,
-          arg.maxItems ?? 300 // Use arg.maxItems if provided, else default to 300
+          arg.maxItems ?? 300, // Use arg.maxItems if provided, else default to 300
         );
       },
     }),
@@ -57,7 +57,7 @@ export const yandexIssueApi = api.injectEndpoints({
             }) as TFetchAllPagesBaseQueryResult<TIssueStatusDescription[]>,
           identity,
           undefined,
-          300
+          300,
         );
       },
     }),

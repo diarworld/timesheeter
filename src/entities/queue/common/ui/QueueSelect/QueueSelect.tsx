@@ -14,13 +14,22 @@ interface IQueueSelectProps {
   placeholder?: string;
 }
 
-export const QueueSelect = ({ onChange, value, queueList, isFetchingQueueList, className, placeholder }: IQueueSelectProps) => {
+export const QueueSelect = ({
+  onChange,
+  value,
+  queueList,
+  isFetchingQueueList,
+  className,
+  placeholder,
+}: IQueueSelectProps) => {
   const message = useMessage();
 
   const options = useMemo(
     () =>
       queueList
-        ? [...queueList].sort((a, b) => a.key.localeCompare(b.key)).map((queue) => ({ label: queue.key, value: queue.key }))
+        ? [...queueList]
+            .sort((a, b) => a.key.localeCompare(b.key))
+            .map((queue) => ({ label: queue.key, value: queue.key }))
         : [],
     [queueList],
   );

@@ -1,6 +1,5 @@
 import { TrackCalendarHead } from 'entities/track/common/ui/TrackCalendarHead';
 import React, { FC, ReactNode } from 'react';
-import { Loading } from 'shared/ui/Loading';
 import { ITrackCalendarFootProps } from 'entities/track/common/ui/TrackCalendarFoot/TrackCalendarFoot';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate';
 // import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
@@ -27,9 +26,9 @@ type TProps = {
   issues: TIssue[];
   pinnedIssues: string[];
   issueSortingKey: string;
-  isLoading: boolean;
+  _isLoading: boolean;
   isTrackCreateLoading: boolean;
-  isTrackDeleteLoading: boolean;
+  _isTrackDeleteLoading: boolean;
   renderTrackCalendarRowConnected(
     props: Omit<TTrackCalendarRowProps, 'tracks' | 'date2IssueTracks' | 'updateTrack' | 'getIssueUrl'>,
   ): React.ReactNode;
@@ -48,7 +47,7 @@ export const TrackCalendar: FC<TProps> = ({
   to,
   showWeekends,
   utcOffsetInMinutes,
-  isLoading,
+  _isLoading,
   issues,
   isEdit = false,
   pinnedIssues,
@@ -70,7 +69,7 @@ export const TrackCalendar: FC<TProps> = ({
 
   return (
     <>
-    {/* <Loading isLoading={isLoading}> */}
+      {/* <Loading isLoading={isLoading}> */}
       <div className={styles.wrapper}>
         <table className={styles.table} ref={tableRef}>
           <TrackCalendarHead range={range} sortingKey={issueSortingKey} />
@@ -92,17 +91,16 @@ export const TrackCalendar: FC<TProps> = ({
           {renderTrackCalendarFootConnected({ range, totalIssues: issues.length, utcOffsetInMinutes })}
         </table>
         {isEdit && (
-          <>
-            <TrackModalCreate
-              tracker={tracker}
-              isTrackCreateLoading={isTrackCreateLoading}
-              createTrack={createTrack}
-              renderIssueTracksConnected={renderIssueTracksConnected}
-              renderIssuesSearchConnected={renderIssuesSearchConnected} />
-          </>
+          <TrackModalCreate
+            tracker={tracker}
+            isTrackCreateLoading={isTrackCreateLoading}
+            createTrack={createTrack}
+            renderIssueTracksConnected={renderIssueTracksConnected}
+            renderIssuesSearchConnected={renderIssuesSearchConnected}
+          />
         )}
       </div>
-    {/* </Loading> */}
+      {/* </Loading> */}
       {/* <TeamModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
       <LdapLoginModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} /> */}
     </>

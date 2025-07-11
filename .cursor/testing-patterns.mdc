@@ -1,0 +1,281 @@
+# Testing Patterns and Guidelines
+
+## Testing Setup
+
+### Jest Configuration
+The project uses Jest with Next.js configuration from [jest.config.js](mdc:jest.config.js):
+
+```typescript
+// jest.config.js
+const nextJest = require('next/jest');
+
+const createJestConfig = nextJest({
+  dir: './',
+});
+
+const config = {
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    '^entities/(.*)$': ['<rootDir>/src/entities/$1'],
+    '^shared/(.*)$': ['<rootDir>/src/shared/$1'],
+    // ... other aliases
+  },
+};
+```
+
+### Test File Organization
+- Place test files in `__tests__/` directories within each module
+- Use `.test.ts` or `.test.tsx` extensions
+- Group related tests using `describe` blocks
+
+## Component Testing
+
+### React Testing Library Patterns
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { store } from 'app/store';
+
+// Test component with Redux provider
+const renderWithProvider = (component: React.ReactElement) => {
+  return render(
+    <Provider store={store}>
+      {component}
+    </Provider>
+  );
+};
+
+// Test component
+describe('ComponentName', () => {
+  it('should render correctly', () => {
+    renderWithProvider(<ComponentName />);
+    expect(screen.getByText('Expected Text')).toBeInTheDocument();
+  });
+
+  it('should handle user interactions', async () => {
+    renderWithProvider(<ComponentName />);
+    
+    const button = screen.getByRole('button', { name: /submit/i });
+    fireEvent.click(button);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Success')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+### Mocking Dependencies
+```typescript
+// Mock external dependencies
+jest.mock('antd', () => ({
+  Button: ({ children, onClick }: any) => (
+    <button onClick={onClick}>{children}</button>
+  ),
+  Modal: ({ children, open }: any) => 
+    open ? <div data-testid="modal">{children}</div> : null,
+}));
+
+// Mock custom hooks
+jest.mock('entities/locale/lib/hooks', () => ({
+  useMessage: () => (key: string) => key,
+}));
+
+// Mock API calls
+jest.mock('../api', () => ({
+  useGetDataQuery: () => ({
+    data: mockData,
+    isLoading: false,
+    error: null,
+  }),
+}));
+```
+
+## Hook Testing
+
+### Custom Hook Testing
+```typescript
+import { renderHook, act } from '@testing-library/react';
+import { useCustomHook } from './useCustomHook';
+
+describe('useCustomHook', () => {
+  it('should return initial state', () => {
+    const { result } = renderHook(() => useCustomHook());
+    
+    expect(result.current.data).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('should update state when called', async () => {
+    const { result } = renderHook(() => useCustomHook());
+    
+    await act(async () => {
+      await result.current.fetchData();
+    });
+    
+    expect(result.current.data).toEqual(expectedData);
+  });
+});
+```
+
+## Utility Function Testing
+
+### Pure Function Testing
+```typescript
+import { transformData } from './transformData';
+
+describe('transformData', () => {
+  it('should transform API response correctly', () => {
+    const apiResponse = {
+      id: '1',
+      display_name: 'Test Name',
+    };
+    
+    const result = transformData(apiResponse);
+    
+    expect(result).toEqual({
+      id: '1',
+      name: 'Test Name',
+    });
+  });
+
+  it('should handle empty data', () => {
+    const result = transformData(null);
+    expect(result).toBeNull();
+  });
+});
+```
+
+## Redux Testing
+
+### Reducer Testing
+```typescript
+import { reducer, initialState } from './reducers';
+
+describe('reducer', () => {
+  it('should return initial state', () => {
+    const state = reducer(undefined, { type: 'UNKNOWN' });
+    expect(state).toEqual(initialState);
+  });
+
+  it('should handle action', () => {
+    const action = { type: 'SET_DATA', payload: { id: '1' } };
+    const state = reducer(initialState, action);
+    
+    expect(state.data).toEqual({ id: '1' });
+  });
+});
+```
+
+### Action Testing
+```typescript
+import { createData } from './actions';
+
+describe('actions', () => {
+  it('should create action with correct payload', () => {
+    const data = { id: '1', name: 'Test' };
+    const action = createData(data);
+    
+    expect(action.type).toBe('CREATE_DATA');
+    expect(action.payload).toEqual(data);
+  });
+});
+```
+
+## API Testing
+
+### RTK Query Testing
+```typescript
+import { api } from 'shared/api/api';
+import { setupApiStore } from '@reduxjs/toolkit/query/react';
+
+const storeRef = setupApiStore(api);
+
+describe('API endpoints', () => {
+  it('should fetch data successfully', async () => {
+    const { store } = storeRef;
+    
+    await store.dispatch(
+      api.endpoints.getData.initiate()
+    );
+    
+    const state = store.getState();
+    expect(state.api.queries['getData(undefined)']?.data).toBeDefined();
+  });
+});
+```
+
+## Mock Data
+
+### Creating Mock Data
+```typescript
+// __mocks__/data.ts
+export const mockUser = {
+  id: '1',
+  name: 'Test User',
+  email: 'test@example.com',
+};
+
+export const mockTrack = {
+  id: '1',
+  issueKey: 'TEST-123',
+  duration: '2h',
+  start: '2023-01-01T10:00:00Z',
+};
+
+export const mockApiResponse = {
+  data: [mockTrack],
+  total: 1,
+  page: 1,
+};
+```
+
+## Test Utilities
+
+### Custom Test Helpers
+```typescript
+// test-utils.tsx
+import { render, RenderOptions } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { store } from 'app/store';
+
+const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Provider store={store}>
+      {children}
+    </Provider>
+  );
+};
+
+const customRender = (
+  ui: React.ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) => render(ui, { wrapper: AllTheProviders, ...options });
+
+export * from '@testing-library/react';
+export { customRender as render };
+```
+
+## Best Practices
+
+### Test Organization
+- Group related tests using `describe` blocks
+- Use descriptive test names that explain the behavior
+- Test one thing per test case
+- Use `beforeEach` and `afterEach` for setup/cleanup
+
+### Assertions
+- Use specific assertions: `toBeInTheDocument()`, `toHaveTextContent()`
+- Test user behavior, not implementation details
+- Use `data-testid` sparingly, prefer semantic queries
+
+### Coverage
+- Aim for high test coverage on business logic
+- Focus on critical user paths
+- Test error scenarios and edge cases
+- Use `npm run test:coverage` to check coverage
+description:
+globs:
+alwaysApply: false
+---

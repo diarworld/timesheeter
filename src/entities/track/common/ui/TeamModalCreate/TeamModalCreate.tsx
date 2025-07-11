@@ -14,10 +14,7 @@ type TProps = {
   isTrackCreateLoading: boolean;
 };
 
-export const TeamModalCreate = ({
-  tracker,
-  isTrackCreateLoading,
-}: TProps) => {
+export const TeamModalCreate = ({ tracker, isTrackCreateLoading }: TProps) => {
   const message = useMessage();
   const dispatch = useAppDispatch();
   const trackInput = useAppSelector(selectTeamManageCreate);
@@ -37,11 +34,7 @@ export const TeamModalCreate = ({
       footer={null}
       width="fit-content"
     >
-      <TeamFormManage
-        tracker={tracker}
-        initialValues={trackInput}
-        isTrackCreateLoading={isTrackCreateLoading}
-      />
+      <TeamFormManage tracker={tracker} _initialValues={trackInput} isTrackCreateLoading={isTrackCreateLoading} />
     </Modal>
   );
 };

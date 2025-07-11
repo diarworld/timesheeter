@@ -17,7 +17,9 @@ export const YandexUserSelectConnected = ({ tracker, userId, login }: TProps) =>
   // const { isLoading, data: users } = yandexUserApi.useGetYandexUsersListQuery({ tracker }, { skip: !isUsersLoad });
   let users: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
   // Sort by display field (case-insensitive)
-  users = users.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+  users = users
+    .slice()
+    .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
 
   const { user } = useYandexUser(tracker, userId, login);
 

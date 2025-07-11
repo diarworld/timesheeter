@@ -10,7 +10,7 @@ export const getDefaultTracker = (orgId: string, isCloud: boolean | false): TYan
     id: getTrackerIdFromName(name),
     url: 'https://tracker.yandex.ru/',
     name,
-    isCloud: isCloud,
+    isCloud,
     orgId,
     type: Tracker.Yandex,
     // username will be set in useSetTrackerUsername hook when user opens default tracker

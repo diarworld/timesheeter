@@ -41,7 +41,7 @@ export async function fetchAllPages<TPage, TResult>(
 ) {
   const reqFetch = async (
     page: number,
-    accumulated: TResult[] = []
+    accumulated: TResult[] = [],
   ): Promise<QueryReturnValue<TResult[], FetchBaseQueryError, FetchBaseQueryMeta>> => {
     if (maxItems !== undefined && accumulated.length >= maxItems) {
       return { data: accumulated.slice(0, maxItems) };

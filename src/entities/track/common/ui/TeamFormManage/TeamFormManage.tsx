@@ -2,7 +2,7 @@ import { Button, InputNumber } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
 import { TYandexUser } from 'entities/user/yandex/model/types';
@@ -16,20 +16,15 @@ import styles from './TeamFormManage.module.scss';
 
 type TProps = {
   tracker: TTrackerConfig;
-  initialValues: TTeamManageCreate;
+  _initialValues: TTeamManageCreate;
   isTrackCreateLoading: boolean;
 };
 
-export const TeamFormManage: FC<TProps> = ({
-  initialValues,
-  tracker,
-  isTrackCreateLoading,
-}) => {
-
+export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCreateLoading }) => {
   // Local queue state for team form manage
   const [teamQueue, setTeamQueue] = useState<string[]>([]);
   const [teamQueueYT, setTeamQueueYT] = useState<string[]>([]);
-  
+
   const { currentData: queueList, isFetching: isFetchingQueueList } = yandexQueueApi.useGetQueuesQuery({ tracker });
 
   const message = useMessage();
@@ -45,9 +40,9 @@ export const TeamFormManage: FC<TProps> = ({
   const [error, setError] = useState('');
   const [userData, setUserData] = useState<TYandexUser | undefined>(undefined);
 
-  const { data: user, isLoading, error: queryError } = yandexUserApi.useGetYandexUserByLoginQuery(
-    { login: ldapValue ?? '', tracker }, 
-    { skip: !ldapValue || ldapValue.length != 8 }
+  const { data: user, error: queryError } = yandexUserApi.useGetYandexUserByLoginQuery(
+    { login: ldapValue ?? '', tracker },
+    { skip: !ldapValue || ldapValue.length !== 8 },
   );
 
   React.useEffect(() => {
@@ -56,114 +51,123 @@ export const TeamFormManage: FC<TProps> = ({
       // console.log("User set to undefined");
       setError(
         queryError.data &&
-        typeof queryError.data === 'object' &&
-        'errorMessages' in queryError.data &&
-        Array.isArray((queryError.data as any).errorMessages)
-          ? (queryError.data as any).errorMessages.join(', ')
-          : JSON.stringify(queryError.data)
+          typeof queryError.data === 'object' &&
+          'errorMessages' in queryError.data &&
+          Array.isArray((queryError.data as { errorMessages: string[] }).errorMessages)
+          ? (queryError.data as { errorMessages: string[] }).errorMessages.join(', ')
+          : JSON.stringify(queryError.data),
       );
     } else if (user) {
       // console.log("User set to " + user)
       setUserData(user);
     }
   }, [user, queryError]);
-  
-  const { data: teamYT, isLoading: isLoadingTeams, error: queryErrorTeams } = yandexQueueApi.useGetQueueByKeysQuery(
-    { keys: teamQueueYT, tracker }, 
-    { skip: !teamQueueYT || teamQueueYT.length == 0 }
+
+  const { data: teamYT } = yandexQueueApi.useGetQueueByKeysQuery(
+    { keys: teamQueueYT, tracker },
+    { skip: !teamQueueYT || teamQueueYT.length === 0 },
   );
 
   const [triggerGetUserById, { isLoading: isLoadingUsersFromTeam }] = yandexUserApi.useLazyGetYandexUserByIdQuery();
 
-  React.useEffect(() => {
-    if (teamYT) {
-      const allIds = teamYT.flatMap(queue => [
-        queue.lead.id,
-        ...(queue.teamUsers ?? []).map(user => user.id)
-      ]);
-      const uniqueIds = Array.from(new Set(allIds));
+  const processTeamData = useCallback(
+    (teamYTData: typeof teamYT) => {
+      if (teamYTData) {
+        const allIds = teamYTData.flatMap((queue) => [
+          queue.lead.id,
+          ...(queue.teamUsers ?? []).map((teamUser) => teamUser.id),
+        ]);
+        const uniqueIds = Array.from(new Set(allIds));
 
-      // Fetch all users in parallel
-      Promise.all(uniqueIds.map(id =>
-        triggerGetUserById({ userId: id, tracker }).unwrap()
-      )).then(users => {
-        const filteredUsers = users.filter(user => !user.dismissed).filter(user => user.login.startsWith('60'));
-        const merged = [...team, ...filteredUsers];
-        const deduped = Array.from(
-          new Map(merged.map(user => [user.login, user])).values()
-        );
-        // Sort by display field (case-insensitive)
-        const sorted = deduped.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-        const minimalUsers = sorted.map(user => ({
-          uid: user.uid,
-          login: user.login,
-          display: user.display,
-          email: user.email,
-          position: user.position,
-        }));
-        localStorage.setItem('team', JSON.stringify(minimalUsers));
-        setTeam(sorted);
-        dispatch(track.actions.setTeam(sorted));
-      });
-    }
-  }, [teamYT]);
-  
-  
+        // Fetch all users in parallel
+        Promise.all(uniqueIds.map((id) => triggerGetUserById({ userId: id, tracker }).unwrap())).then((users) => {
+          const filteredUsers = users
+            .filter((teamUser) => !teamUser.dismissed)
+            .filter((teamUser) => teamUser.login.startsWith('60'));
+          const merged = [...team, ...filteredUsers];
+          const deduped = Array.from(new Map(merged.map((teamUser) => [teamUser.login, teamUser])).values());
+          // Sort by display field (case-insensitive)
+          const sorted = deduped
+            .slice()
+            .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+          const minimalUsers = sorted.map((teamUser) => ({
+            uid: teamUser.uid,
+            login: teamUser.login,
+            display: teamUser.display,
+            email: teamUser.email,
+            position: teamUser.position,
+          }));
+          localStorage.setItem('team', JSON.stringify(minimalUsers));
+          setTeam(sorted);
+          dispatch(track.actions.setTeam(sorted));
+        });
+      }
+    },
+    [team, tracker, triggerGetUserById, dispatch],
+  );
+
+  React.useEffect(() => {
+    processTeamData(teamYT);
+  }, [teamYT, processTeamData]);
+
   const handleAdd = () => {
     if (userData) {
-    const newTeam = [...team, userData];
-    // Sort by display field (case-insensitive)
-    const sorted = newTeam.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-    const minimalUsers = sorted.map(user => ({
-      uid: user.uid,
-      login: user.login,
-      display: user.display,
-      email: user.email,
-      position: user.position,
-    }));
-    localStorage.setItem('team', JSON.stringify(minimalUsers));
-    setTeam(sorted);
-    dispatch(track.actions.setTeam(sorted));
+      const newTeam = [...team, userData];
+      // Sort by display field (case-insensitive)
+      const sorted = newTeam
+        .slice()
+        .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+      const minimalUsers = sorted.map((teamUser) => ({
+        uid: teamUser.uid,
+        login: teamUser.login,
+        display: teamUser.display,
+        email: teamUser.email,
+        position: teamUser.position,
+      }));
+      localStorage.setItem('team', JSON.stringify(minimalUsers));
+      setTeam(sorted);
+      dispatch(track.actions.setTeam(sorted));
     }
   };
 
   const handleRemove = (ldap: string) => {
     setError('');
-    const filtered = team.filter(member => member.login !== ldap);
+    const filtered = team.filter((member) => member.login !== ldap);
     // Sort by display field (case-insensitive)
-    const sorted = filtered.slice().sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+    const sorted = filtered
+      .slice()
+      .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
     setTeam(sorted);
     localStorage.setItem('team', JSON.stringify(sorted));
     dispatch(track.actions.setTeam(sorted));
   };
 
-  const validate = (ldap: string, team: TYandexUser[]) => {
+  const validate = (ldap: string, teamData: TYandexUser[]) => {
     if (ldap && !validateLDAP(ldap)) {
-      setUserData(undefined)
-      return { error: message('manage.team.add.error') };      
+      setUserData(undefined);
+      return { error: message('manage.team.add.error') };
     }
-    if (team.some(e => e.login === ldap)) {
-      setUserData(undefined)
+    if (teamData.some((e) => e.login === ldap)) {
+      setUserData(undefined);
       return { error: message('manage.team.add.duplicate') };
-    }    
-    return { error: ''};
+    }
+    return { error: '' };
   };
 
+  const [ldapNumber, _setLdapNumber] = useState<string | number | null>('');
 
-  const [ldapNumber, setLdapNumber] = useState<string | number | null>('');
-  
   const handleLdapNumber = (ldap: string | number | null) => {
-    const es = validate(String(ldap), team)
+    const es = validate(String(ldap), team);
     setError(es.error);
     if (!es.error) {
       // console.log('Ready to search: ', ldap);
-      setLdapValue(String(ldap))
-    }    
+      setLdapValue(String(ldap));
+    }
   };
 
   const handleAddFromTeam = () => {
     if (teamQueue.length > 0) {
-      setTeamQueueYT(teamQueue)
+      setTeamQueueYT(teamQueue);
     }
   };
 
@@ -174,79 +178,85 @@ export const TeamFormManage: FC<TProps> = ({
 
   return (
     <>
-    <ul style={{padding: "0px"}}>
-    <li style={{ display: 'flex', marginBottom: 5 }}>
-    <span style={{ flex: 1 }}>
-    <QueueSelect
-      className={styles.select}
-      value={teamQueue}
-      onChange={handleTeamQueueChange}
-      queueList={queueList}
-      placeholder={message('manage.team.queue.placeholder')}
-      isFetchingQueueList={isFetchingQueueList}
-    />
-    </span>
-    <Button
-      className={styles.input}
-      style={{ marginLeft: 8 }}
-      disabled={teamQueue.length == 0}
-      type="primary"
-      name="addLdap"
-      htmlType="button"
-      onClick={handleAddFromTeam}
-      loading={isLoadingUsersFromTeam}
-      >
-      <Message id="manage.team.add" />
-    </Button>
-    </li>
-    <li style={{ display: 'flex', marginBottom: 5 }}>
-    <span style={{ flex: 1 }}>
-    <InputNumber 
-      name="ldap"
-      className={styles.input}
-      style={{ width: '100%' }}
-      placeholder={message('manage.team.ldap')}
-      onChange={value => {
-        handleLdapNumber(value);
-      }}
-      value={ldapNumber}
-      status={error ? 'error' : undefined}
-    />
-    </span>
-    <Button
-      className={styles.input}
-      style={{ marginLeft: 8 }}
-      disabled={!!error || !userData}
-      type="primary"
-      name="addLdap"
-      htmlType="button"
-      onClick={handleAdd}
-      // loading={isTrackCreateLoading || isLoading }
-      >
-      <Message id="manage.team.add" />
-    </Button>
-    </li>
-    </ul>
-    <ul style={{padding: "0px"}}>
-    {error && <li className={styles.input} style={{ display: 'flex', marginBottom: 5, color: 'red' }}>{error}</li>}
-    </ul>
-    <ul style={{padding: "0px"}}>
-      {team.map(user => (
-        <li key={user.login} style={{ display: 'flex', marginBottom: 5 }}>
-          <span style={{ flex: 1 }}>{user.login} - {user.display} - {user.position}</span>
+      <ul style={{ padding: '0px' }}>
+        <li style={{ display: 'flex', marginBottom: 5 }}>
+          <span style={{ flex: 1 }}>
+            <QueueSelect
+              className={styles.select}
+              value={teamQueue}
+              onChange={handleTeamQueueChange}
+              queueList={queueList}
+              placeholder={message('manage.team.queue.placeholder')}
+              isFetchingQueueList={isFetchingQueueList}
+            />
+          </span>
           <Button
+            className={styles.input}
+            style={{ marginLeft: 8 }}
+            disabled={teamQueue.length === 0}
             type="primary"
             name="addLdap"
             htmlType="button"
-            onClick={() => handleRemove(user.login)} 
-            style={{ marginLeft: 8 }}
-            loading={isTrackCreateLoading}
+            onClick={handleAddFromTeam}
+            loading={isLoadingUsersFromTeam}
           >
-            <Message id="manage.team.remove" />
+            <Message id="manage.team.add" />
           </Button>
         </li>
-      ))}
-    </ul>
+        <li style={{ display: 'flex', marginBottom: 5 }}>
+          <span style={{ flex: 1 }}>
+            <InputNumber
+              name="ldap"
+              className={styles.input}
+              style={{ width: '100%' }}
+              placeholder={message('manage.team.ldap')}
+              onChange={(value) => {
+                handleLdapNumber(value);
+              }}
+              value={ldapNumber}
+              status={error ? 'error' : undefined}
+            />
+          </span>
+          <Button
+            className={styles.input}
+            style={{ marginLeft: 8 }}
+            disabled={!!error || !userData}
+            type="primary"
+            name="addLdap"
+            htmlType="button"
+            onClick={handleAdd}
+            // loading={isTrackCreateLoading || isLoading }
+          >
+            <Message id="manage.team.add" />
+          </Button>
+        </li>
+      </ul>
+      <ul style={{ padding: '0px' }}>
+        {error && (
+          <li className={styles.input} style={{ display: 'flex', marginBottom: 5, color: 'red' }}>
+            {error}
+          </li>
+        )}
+      </ul>
+      <ul style={{ padding: '0px' }}>
+        {team.map((teamUser) => (
+          <li key={teamUser.login} style={{ display: 'flex', marginBottom: 5 }}>
+            <span style={{ flex: 1 }}>
+              {teamUser.login} - {teamUser.display} - {teamUser.position}
+            </span>
+            <Button
+              type="primary"
+              name="addLdap"
+              htmlType="button"
+              onClick={() => handleRemove(teamUser.login)}
+              style={{ marginLeft: 8 }}
+              loading={isTrackCreateLoading}
+            >
+              <Message id="manage.team.remove" />
+            </Button>
+          </li>
+        ))}
+      </ul>
     </>
   );
 };

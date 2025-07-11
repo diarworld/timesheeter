@@ -1,0 +1,161 @@
+# UI Patterns and Ant Design Guidelines
+
+## Ant Design Usage
+
+### Component Imports
+```typescript
+// Import specific components to reduce bundle size
+import { Modal, Table, Space, Typography, Button, Input } from 'antd';
+import { ScheduleFilled } from '@ant-design/icons';
+
+// Destructure Typography components
+const { Text, Title } = Typography;
+```
+
+### Form Patterns
+- Use Ant Design Form components for consistent validation
+- Implement proper error handling with `status` prop
+- Use `onBlur` and `onPressEnter` for better UX
+- Add `autoFocus` for immediate editing
+
+### Table Patterns
+```typescript
+// Define column structure
+const columns = [
+  {
+    title: 'Column Title',
+    dataIndex: 'fieldName',
+    key: 'fieldName',
+    render: (value, record) => (
+      <Text>{value}</Text>
+    ),
+  },
+];
+
+// Use proper row selection
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys, rows) => setSelectedRowKeys(keys),
+};
+```
+
+### Modal Patterns
+- Use `destroyOnClose` for complex modals
+- Set appropriate `width` for content
+- Handle `onCancel` properly
+- Use `footer={null}` for custom footer
+
+### Message and Notifications
+```typescript
+import { message as antMessage } from 'antd';
+
+// Success messages
+antMessage.success('Operation completed successfully');
+
+// Error handling
+try {
+  await operation();
+  antMessage.success('Success message');
+} catch (error) {
+  console.error('Error:', error);
+  antMessage.error('Error message');
+}
+```
+
+## Styling Guidelines
+
+### SCSS Modules
+- Use `.module.scss` files for component-specific styles
+- Import styles at the bottom of component files
+- Use BEM-like naming for complex selectors
+
+### Inline Styles
+- Use inline styles sparingly for dynamic values
+- Prefer SCSS modules for static styling
+- Use Ant Design's `style` prop for quick adjustments
+
+### Responsive Design
+- Use Ant Design's responsive components
+- Implement proper breakpoints
+- Test on different screen sizes
+
+## Accessibility
+
+### Keyboard Navigation
+- Implement proper `onKeyDown` handlers
+- Use `onPressEnter` for form submissions
+- Add `onKeyDown={e => { if (e.key === 'Escape') cancelAction(); }}`
+
+### Screen Reader Support
+- Use semantic HTML elements
+- Add proper `aria-*` attributes
+- Test with screen readers
+
+## Common UI Patterns
+
+### Editable Cells
+```typescript
+// Pattern for inline editing
+const [editingKey, setEditingKey] = useState<string | null>(null);
+
+const handleEdit = (key: string) => {
+  setEditingKey(key);
+};
+
+const saveEdit = (key: string) => {
+  // Save logic
+  setEditingKey(null);
+};
+
+const cancelEdit = () => {
+  setEditingKey(null);
+};
+```
+
+### Loading States
+```typescript
+// Use Ant Design loading props
+<Button loading={isLoading} onClick={handleClick}>
+  Submit
+</Button>
+
+<Table loading={loading} dataSource={data} />
+```
+
+### Error States
+```typescript
+// Show validation errors
+<Input
+  status={hasError ? 'error' : undefined}
+  placeholder="Enter value"
+/>
+
+// Error boundaries for component errors
+<Alert
+  type="error"
+  message="Error occurred"
+  description="Please try again"
+/>
+```
+
+## Internationalization
+
+### Message Usage
+```typescript
+import { useMessage } from 'entities/locale/lib/hooks';
+
+const message = useMessage();
+
+// Use message function for all text
+<Typography.Title>{message('page.title')}</Typography.Title>
+<Button>{message('button.submit')}</Button>
+```
+
+### Locale Provider
+- Wrap app with `LocaleProvider` from [src/entities/locale/ui/LocaleProvider](mdc:src/entities/locale/ui/LocaleProvider)
+- Use `LocaleSelector` for language switching
+- Support Russian and English locales
+description:
+globs:
+alwaysApply: false
+---

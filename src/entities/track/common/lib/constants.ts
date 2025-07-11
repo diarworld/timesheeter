@@ -20,7 +20,7 @@ export const NUMBERS_REGEX = /^\d+$/;
 export const HUMAN_DURATION_STR_REGEX =
   /^(?:\s*(\d+)\s*(?:[wн]|нед|неделя|недель|недели))?(?:\s*(\d+)\s*(?:[dд]|день|дня|дней))?(?:\s*(\d+)\s*(?:[hч]|час|часа|часов))?(?:\s*(\d+)\s*(?:[mм]|мин|минута|минуты|минут))?(?:\s*(\d+)\s*(?:[sс]|сек|секунда|секунды|секунд))?\s*$/i;
 
-export const LDAP_REGEX = /^60\d{6}$/
+export const LDAP_REGEX = /^60\d{6}$/;
 export const DURATION_DESIGNATORS = ['W', 'D', 'H', 'M', 'S'] as const;
 export const HOUR_DESIGNATOR_IDX = DURATION_DESIGNATORS.indexOf('H');
 

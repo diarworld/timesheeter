@@ -15,7 +15,7 @@ type TProps = Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'> & {
 };
 
 export const YandexIssueTracksConnected = (props: TProps) => {
-  const { date, issueKey, uId, tracker } = props;
+  const { date, issueKey, uId, tracker, deleteTrack } = props;
 
   const { from, to } = useMemo(() => {
     const dateObj = DateWrapper.getDate({ date, utcOffsetInMinutes: undefined });
@@ -28,5 +28,5 @@ export const YandexIssueTracksConnected = (props: TProps) => {
     { skip: !issueKey || !date || !uId },
   );
 
-  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={props.deleteTrack} />;
+  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={deleteTrack} />;
 };

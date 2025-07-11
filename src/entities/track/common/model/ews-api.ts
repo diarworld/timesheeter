@@ -1,17 +1,17 @@
 import { api } from 'shared/api/api';
 
-export interface TEwsCredentials {
+export interface IEwsCredentials {
   username: string;
   token: string;
   type?: string;
 }
 
-export interface TEwsCalendarRequest extends TEwsCredentials {
+export interface IEwsCalendarRequest extends IEwsCredentials {
   start_date: string;
   end_date: string;
 }
 
-export interface TEwsAuthResponse {
+export interface IEwsAuthResponse {
   success: boolean;
   message?: string;
   userInfo?: {
@@ -20,7 +20,7 @@ export interface TEwsAuthResponse {
   };
 }
 
-export interface TEwsCalendarResponse {
+export interface IEwsCalendarResponse {
   success: boolean;
   meetings: Array<{
     id: string;
@@ -47,21 +47,21 @@ export interface TEwsCalendarResponse {
 export const ewsApi = api.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
-    authenticateEws: builder.mutation<TEwsAuthResponse, TEwsCredentials>({
+    authenticateEws: builder.mutation<IEwsAuthResponse, IEwsCredentials>({
       query: (credentials) => ({
         url: '/api/ews/authenticate',
         method: 'POST',
         body: credentials,
       }),
     }),
-    getCalendarMeetings: builder.mutation<TEwsCalendarResponse, TEwsCalendarRequest>({
+    getCalendarMeetings: builder.mutation<IEwsCalendarResponse, IEwsCalendarRequest>({
       query: (credentials) => ({
         url: '/api/ews/calendar',
         method: 'POST',
         body: credentials,
       }),
     }),
-    testEwsConnection: builder.query<TEwsAuthResponse, TEwsCredentials>({
+    testEwsConnection: builder.query<IEwsAuthResponse, IEwsCredentials>({
       query: (credentials) => ({
         url: '/api/ews/test',
         method: 'POST',
@@ -71,4 +71,4 @@ export const ewsApi = api.injectEndpoints({
   }),
 });
 
-export const { useAuthenticateEwsMutation, useGetCalendarMeetingsMutation, useTestEwsConnectionQuery } = ewsApi; 
+export const { useAuthenticateEwsMutation, useGetCalendarMeetingsMutation, useTestEwsConnectionQuery } = ewsApi;

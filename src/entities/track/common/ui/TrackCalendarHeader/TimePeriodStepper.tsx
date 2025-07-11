@@ -7,8 +7,8 @@ import { ArrowLeft } from 'components/Icons/ArrowLeft';
 import { ArrowRight } from 'components/Icons/ArrowRight';
 import { useCalculateSelectedPeriod } from 'entities/track/common/ui/TrackCalendarHeader/hooks/useCalculateSelectedPeriod';
 import { useFilters } from 'features/filters/lib/useFilters';
-import styles from './TimePeriodStepper.module.scss';
 import { CalendarOutlined } from '@ant-design/icons';
+import styles from './TimePeriodStepper.module.scss';
 
 export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
   const message = useMessage();
@@ -66,9 +66,7 @@ export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
     <div className={styles.stepper}>
       <Space direction="horizontal" size="small">
         <CalendarOutlined />
-        <Text>
-          {message(`track.calendar.unit.${unit}`)}
-        </Text>
+        <Text>{message(`track.calendar.unit.${unit}`)}</Text>
 
         <Space size="small">
           <Button type="text" shape="circle" style={{ verticalAlign: 'bottom' }} onClick={handleDateNavClick(-1)}>

@@ -92,7 +92,11 @@ export const TrackEdit = ({
             onPressEnter={handleSubmit}
             placeholder={isEditTrackComment ? message('track.comment.placeholder') : undefined}
           />
-          <Popconfirm icon={<DeleteRowOutlined />} title={message('track.delete.title')+ "?"} onConfirm={() => deleteTrack({ issueIdOrKey: issueKey, trackId })}>
+          <Popconfirm
+            icon={<DeleteRowOutlined />}
+            title={`${message('track.delete.title')}?`}
+            onConfirm={() => deleteTrack({ issueIdOrKey: issueKey, trackId })}
+          >
             <TrackDeleteButton />
           </Popconfirm>
           <Spin size="small" spinning className={spinnerClassName?.(isTrackUpdateLoading)} />

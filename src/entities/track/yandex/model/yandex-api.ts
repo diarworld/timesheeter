@@ -66,7 +66,7 @@ export const yandexTrackApi = api.injectEndpoints({
             }) as TFetchAllPagesBaseQueryResult<TYandexTrack[]>,
           identity,
           undefined,
-          500
+          500,
         );
 
         if (allTracks.error) {

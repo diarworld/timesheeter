@@ -20,10 +20,7 @@ export const YandexIssueStatusSelectConnected = ({ language, tracker, ...props }
   );
 
   const sortedStatusList = useMemo(
-    () =>
-      statusList
-        ? [...statusList].sort((a, b) => a.name.localeCompare(b.name))
-        : undefined,
+    () => (statusList ? [...statusList].sort((a, b) => a.name.localeCompare(b.name)) : undefined),
     [statusList],
   );
 
