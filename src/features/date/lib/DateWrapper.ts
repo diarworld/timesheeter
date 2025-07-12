@@ -1,6 +1,7 @@
 import dayjs, { Dayjs, OpUnitType } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import isBetween from 'dayjs/plugin/isBetween';
+import calendar from 'entities/track/yandex/ui/YandexTimesheet/calendar.json';
 import 'dayjs/locale/ru';
 
 dayjs.extend(isBetween);
@@ -67,5 +68,16 @@ export class DateWrapper {
   static isWeekend(date: TDate) {
     const day = this.getDay(date);
     return day === 0 || day === 6;
+  }
+
+  static isHoliday(date: TDate) {
+    const day = this.getDay(date);
+    const dayStr = date.format('YYYY-MM-DD');
+    return day !== 0 && day !== 6 && (calendar.holidays.includes(dayStr) || calendar.nowork.includes(dayStr));
+  }
+  
+  static isPreholiday(date: TDate) {
+    const dayStr = date.format('YYYY-MM-DD');
+    return calendar.preholidays.includes(dayStr);
   }
 }

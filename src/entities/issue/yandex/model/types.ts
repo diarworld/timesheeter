@@ -45,4 +45,7 @@ export type TYandexIssue = {
   updatedBy: TEntityShort;
   version: number;
   votes: number;
+  domains?: string[];
+  productteams?: string[];
+  products?: string[];
 };

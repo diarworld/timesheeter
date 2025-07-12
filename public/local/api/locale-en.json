@@ -73,6 +73,7 @@
   "track.log.message": "Time tracks should be the same as production calendar",
   "track.powerbi.message": "Go to deatiled report",
   "track.powerbi.link": "Учет трудозатрат ЛМЦТ (Power BI)",
+  "track.products.percent.explanation": "Shows the share of logged hours for issues with filled products out of the total logged hours for all issues.",
   "issue.issueKey.placeholder": "Enter the key or the name of the task",
   "issue.issueKey.title": "Task",
   "issue.tracksForDate.title": "Issue {issueKey} worklogs for {date}",
@@ -172,5 +173,8 @@
   "menu.locale.english": "English",
   "menu.locale.russian": "Русский",
   "menu.tracks": "Timesheets",
-  "menu.reports": "Reports"
+  "menu.reports": "Reports",
+  "track.domains": "Domains",
+  "track.productTeams": "Product Teams",
+  "track.products": "Products"
 }

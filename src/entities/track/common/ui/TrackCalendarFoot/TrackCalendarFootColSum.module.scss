@@ -9,3 +9,14 @@
   z-index: 1;
   background: var(--color-periwinkle);
 }
+.col[data-is-undertracked='true'] {
+    background: var(--color-bleach-white);
+  }
+  
+  .col[data-is-exact-tracked='true'] {
+    background: var(--color-snowy-mint);
+  }
+  
+  .col[data-is-over-tracked='true'] {
+    background: #ffd6e7;
+  }
