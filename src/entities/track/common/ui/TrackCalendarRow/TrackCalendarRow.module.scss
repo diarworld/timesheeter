@@ -15,6 +15,18 @@
   box-shadow: 1px 0 0 0 var(--color-soft-peach), -1px 0 0 0 var(--white);
 }
 
+.domainsCol,
+.productTeamsCol,
+.productsCol {
+  text-align: center;
+}
+
+.domainsCol button,
+.productTeamsCol button,
+.productsCol button {
+  position: static !important;
+}
+
 .row {
   position: relative;
 }
