@@ -1,3 +1,7 @@
+---
+description: API Patterns and Data Fetching
+alwaysApply: false
+---
 # API Patterns and Data Fetching
 
 ## RTK Query Configuration

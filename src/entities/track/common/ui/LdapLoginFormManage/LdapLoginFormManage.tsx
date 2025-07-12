@@ -1,4 +1,5 @@
 import { Button, Form, Input, Flex } from 'antd';
+import { message as antMessage } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import React, { FC, useCallback, useEffect } from 'react';
 import { useAppDispatch } from 'shared/lib/hooks';
@@ -30,19 +31,26 @@ export const LdapLoginFormManage: FC = () => {
 
         // Test EWS authentication
         const result = await authenticateEws(credentials).unwrap();
-
         if (result.success) {
           localStorage.setItem('ldapCredentials', JSON.stringify(credentials));
           // Set LDAP credentials status in Redux store
           dispatch(track.actions.setHasLdapCredentials(true));
           // Close the modal after successful authentication
           dispatch(track.actions.setLdapLoginCreate());
+          antMessage.success(message('ldap.auth.success'));
         } else {
           // Handle authentication error
           console.error('EWS authentication failed:', result.message);
+          antMessage.error(
+            result.message
+              ? `${message('ldap.auth.error')}: ${result.message}`
+              : message('ldap.auth.error')
+          );
         }
       } catch (error) {
         console.error('EWS authentication error:', error);
+        antMessage.error(message('ldap.auth.error')
+        );
       }
     },
     [dispatch, authenticateEws],
@@ -80,7 +88,19 @@ export const LdapLoginFormManage: FC = () => {
         name="token"
         label={message('ldap.auth.password')}
         rules={[{ required: true }]}
-        extra={<p>{message('ldap.auth.password.hint')}</p>}
+        extra={
+          <>
+            {/* <p>{message('ldap.auth.password.hint')}</p> */}
+            <a
+              href="https://intraru.lemanapro.ru/restore"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: '12px', display: 'inline-block', marginTop: 4 }}
+            >
+              {message('ldap.auth.forgotPassword')}
+            </a>
+          </>
+        }
       >
         <Input type="password" />
       </Form.Item>

@@ -1,0 +1,231 @@
+---
+description: Localization Patterns and Internationalization Guidelines
+alwaysApply: false
+---
+# Localization Patterns and Internationalization Guidelines
+
+## Localization Architecture
+
+### Locale Files Structure
+- Store locale files in `public/local/api/` directory
+- Use JSON format: `locale-en.json` and `locale-ru.json`
+- Follow dot notation for keys: `module.component.action`
+- Support interpolation with `{value}` placeholders
+
+### Locale Provider Setup
+The app uses `LocaleProvider` from [src/entities/locale/ui/LocaleProvider](mdc:src/entities/locale/ui/LocaleProvider) to wrap the application with `react-intl`:
+
+```typescript
+import { LocaleProvider } from 'entities/locale/ui/LocaleProvider';
+
+// Wrap your app
+<LocaleProvider>
+  <App />
+</LocaleProvider>
+```
+
+## Message Usage Patterns
+
+### Primary Hook: useMessage
+Always use the `useMessage` hook from [src/entities/locale/lib/hooks.ts](mdc:src/entities/locale/lib/hooks.ts) for all text content:
+
+```typescript
+import { useMessage } from 'entities/locale/lib/hooks';
+
+const Component = () => {
+  const message = useMessage();
+  
+  return (
+    <div>
+      <h1>{message('page.title')}</h1>
+      <button>{message('button.submit')}</button>
+    </div>
+  );
+};
+```
+
+### Message with Interpolation
+Use the second parameter for dynamic values:
+
+```typescript
+// For simple values
+message('track.duration', { value: '2h 30m' })
+
+// For complex objects
+message('user.welcome', { 
+  name: userName,
+  count: userCount 
+})
+```
+
+### JSX Message Component
+Use the `Message` component for JSX content:
+
+```typescript
+import { Message } from 'entities/locale/ui/Message';
+
+// For JSX content
+<Message id="component.description" />
+
+// With interpolation
+<Message 
+  id="user.greeting" 
+  values={{ name: userName }} 
+/>
+```
+
+## Key Naming Conventions
+
+### Hierarchical Structure
+Follow this pattern for message keys:
+- `{module}.{component}.{action}` - `track.create.title`
+- `{module}.{component}.{field}` - `track.duration.placeholder`
+- `{module}.{component}.{status}` - `track.status.loading`
+
+### Common Patterns
+```typescript
+// Page titles
+'page.title'
+'page.description'
+
+// Form fields
+'form.field.label'
+'form.field.placeholder'
+'form.field.error'
+
+// Actions
+'action.create'
+'action.edit'
+'action.delete'
+'action.save'
+'action.cancel'
+
+// Status messages
+'status.loading'
+'status.success'
+'status.error'
+
+// Navigation
+'menu.item'
+'menu.section'
+```
+
+## Locale Management
+
+### Current Locale Access
+```typescript
+import { useCurrentLocale } from 'entities/locale/lib/hooks';
+
+const Component = () => {
+  const currentLocale = useCurrentLocale();
+  
+  // Check for specific locale
+  if (currentLocale === 'ru') {
+    // Russian-specific logic
+  }
+};
+```
+
+### Locale Switching
+Use `LocaleSelector` component for language switching:
+
+```typescript
+import { LocaleSelector } from 'entities/locale/ui/LocaleSelector';
+
+// In your settings or header
+<LocaleSelector />
+```
+
+## Testing Localization
+
+### Mock useMessage Hook
+Mock the `useMessage` hook in tests:
+
+```typescript
+// In test setup
+jest.mock('entities/locale/lib/hooks', () => ({
+  useMessage: () => (key: string) => key,
+  useCurrentLocale: () => 'en',
+}));
+```
+
+### Test Message Keys
+```typescript
+// Test that correct keys are used
+expect(screen.getByText('track.create.title')).toBeInTheDocument();
+```
+
+## Best Practices
+
+### Always Use Localization
+- Never hardcode text strings in components
+- Use message keys for all user-facing text
+- Include fallback messages for missing translations
+
+### Key Organization
+- Group related keys together
+- Use consistent naming patterns
+- Keep keys descriptive but concise
+
+### Interpolation Safety
+- Always provide fallback values for interpolation
+- Validate interpolation values before use
+- Use TypeScript for type safety
+
+### Performance
+- The `useMessage` hook is memoized for performance
+- Locale files are loaded via RTK Query with caching
+- Avoid creating message functions inside render loops
+
+## Adding New Locales
+
+### 1. Create Locale File
+Add new locale file: `public/local/api/locale-{code}.json`
+
+### 2. Update Types
+Add new locale to `TLocale` type in [src/entities/locale/model/types.ts](mdc:src/entities/locale/model/types.ts)
+
+### 3. Update Constants
+Add locale to constants in [src/entities/locale/model/constants.ts](mdc:src/entities/locale/model/constants.ts)
+
+### 4. Add to Locale List
+Update locale list in `public/local/api/locale.json`
+
+## Common Patterns
+
+### Form Validation Messages
+```typescript
+// In locale files
+{
+  "form.validation.required": "This field is required",
+  "form.validation.email": "Please enter a valid email",
+  "form.validation.minLength": "Minimum {min} characters required"
+}
+
+// In components
+const validationMessages = {
+  required: message('form.validation.required'),
+  email: message('form.validation.email'),
+  minLength: (min: number) => message('form.validation.minLength', { min })
+};
+```
+
+### Error Messages
+```typescript
+// In locale files
+{
+  "error.network": "Network error occurred",
+  "error.unauthorized": "You are not authorized",
+  "error.notFound": "Resource not found"
+}
+
+// In components
+const getErrorMessage = (error: any) => {
+  if (error.status === 401) return message('error.unauthorized');
+  if (error.status === 404) return message('error.notFound');
+  return message('error.network');
+};
+```
+```
+
+This rule provides comprehensive guidance for working with your localization system, including the specific patterns I observed in your codebase like the `useMessage` hook, locale file structure, and testing approaches.

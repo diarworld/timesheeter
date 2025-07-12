@@ -1,3 +1,7 @@
+---
+description: Project Structure Guide
+alwaysApply: false
+---
 # Project Structure Guide
 
 This is a Next.js timesheet application built with TypeScript, following Feature-Sliced Design (FSD) architecture.
