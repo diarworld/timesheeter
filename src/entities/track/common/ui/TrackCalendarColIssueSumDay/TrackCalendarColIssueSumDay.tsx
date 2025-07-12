@@ -25,6 +25,7 @@ export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, 
   const dateObj = useMemo(() => DateWrapper.getDate({ date, utcOffsetInMinutes }), [date, utcOffsetInMinutes]);
 
   const isWeekend = useMemo(() => DateWrapper.isWeekend(dateObj), [dateObj]);
+  const isHoliday = useMemo(() => DateWrapper.isHoliday(dateObj), [dateObj]);
 
   const handleClick = () => {
     const dateWithStartHour = dateObj.set('hour', STANDARD_WORK_DAY_START_LOCAL_HOUR);
@@ -34,7 +35,7 @@ export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, 
   const issueSum = dashIsEmpty(tracks, <TrackCalendarSum tracksOrTrack={tracks} />);
 
   return (
-    <td className={clsx(styles.col, { [styles.col_weekend]: isWeekend })}>
+    <td className={clsx(styles.col, { [styles.col_weekend]: isWeekend || isHoliday })}>
       {isEdit ? (
         <button type="button" className={styles.button} onClick={handleClick}>
           {issueSum}

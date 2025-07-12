@@ -45,6 +45,17 @@ export const TrackCalendarHead = memo(({ range, sortingKey }: ITrackCalendarHead
           </div>
         </th>
 
+        {/* TODO Translate to russian New columns for domains, productteams, products */}
+        <th className={styles.domainsCol} aria-label="Domains">
+          <Text fs={13}><Message id="track.domains" /></Text>
+        </th>
+        <th className={styles.productTeamsCol} aria-label="Product Teams">
+          <Text fs={13}><Message id="track.productTeams" /></Text>
+        </th>
+        <th className={styles.productsCol} aria-label="Products">
+          <Text fs={13}><Message id="track.products" /></Text>
+        </th>
+
         {range.map((date) => (
           <TrackCalendarColHead date={date} key={date} now={now} />
         ))}

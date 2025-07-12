@@ -56,7 +56,7 @@ export const TrackNameColumn = memo(
     };
 
     return (
-      <td colSpan={2} className={styles.col}>
+      <td colSpan={5} className={styles.col}>
         <div>
           {isEdit ? (
             <>

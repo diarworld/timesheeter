@@ -23,7 +23,7 @@ export function useRange({
   return useMemo(() => {
     let dateRange = DateWrapper.getDateRange(dateFrom, dateTo, 'day');
     if (!showWeekends) {
-      dateRange = dateRange.filter((date) => !DateWrapper.isWeekend(date));
+      dateRange = dateRange.filter((date) => !DateWrapper.isWeekend(date) && !DateWrapper.isHoliday(date));
     }
     return dateRange.map((d) => formatDateAsTrackKey(d));
   }, [dateFrom, dateTo, showWeekends]);

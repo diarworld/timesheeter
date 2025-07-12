@@ -172,5 +172,9 @@
   "menu.locale.english": "English",
   "menu.locale.russian": "Русский",
   "menu.tracks": "Таймшиты",
-  "menu.reports": "Отчеты"
+  "menu.reports": "Отчеты",
+  "track.products.percent.explanation": "Доля часов по задачам с заполненными продуктами от общего числа залогированных часов",
+  "track.domains": "Домены",
+  "track.productTeams": "Продуктовые команды",
+  "track.products": "Продукты"
 }

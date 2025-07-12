@@ -12,11 +12,12 @@ import { compareTrackCalendarRowProps } from 'entities/track/common/ui/TrackCale
 import { TTrack, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TIssue } from 'entities/issue/common/model/types';
+import { TYandexIssue } from 'entities/issue/yandex/model/types';
 import styles from './TrackCalendarRow.module.scss';
 
 export type TTrackCalendarRowProps = {
   range: string[];
-  issue: TIssue;
+  issue: TIssue | TYandexIssue;
   tracks?: TTrack[] | undefined;
   date2IssueTracks: Record<string, TTrack[]>;
   isEdit?: boolean;
@@ -111,6 +112,17 @@ export const TrackCalendarRow = memo(
               <IssueStatusBadge status={issue.status} />
             </div>
           </th>
+
+          {/* New columns for domains, productteams, products */}
+          <td className={styles.domainsCol}>
+            {'domains' in issue && Array.isArray(issue.domains) && issue.domains.length > 0 ? issue.domains.join(', ') : ''}
+          </td>
+          <td className={styles.productTeamsCol}>
+            {'productteams' in issue && Array.isArray(issue.productteams) && issue.productteams.length > 0 ? issue.productteams.join(', ') : ''}
+          </td>
+          <td className={styles.productsCol}>
+            {'products' in issue && Array.isArray(issue.products) && issue.products.length > 0 ? issue.products.join(', ') : ''}
+          </td>
 
           {range.map((date) => (
             <TrackCalendarColIssueSumDay

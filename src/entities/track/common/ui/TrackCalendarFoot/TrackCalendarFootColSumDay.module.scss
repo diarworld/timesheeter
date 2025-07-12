@@ -1,14 +1,14 @@
-.col {
-  position: relative;
-}
+// .col {
+//   position: relative;
+// }
 
-.col > * {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  inset: 0;
-}
+// .col > * {
+//   position: absolute;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   inset: 0;
+// }
 
 .col[data-is-undertracked='true'] {
   background: var(--color-bleach-white);
@@ -19,7 +19,7 @@
 }
 
 .col[data-is-over-tracked='true'] {
-  background: var(--color-soft-peach);
+  background: #ffd6e7;
 }
 
 .col_weekend {

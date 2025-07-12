@@ -88,7 +88,7 @@ export const TrackCalendar: FC<TProps> = ({
               </React.Fragment>
             ))}
           </tbody>
-          {renderTrackCalendarFootConnected({ range, totalIssues: issues.length, utcOffsetInMinutes })}
+          {renderTrackCalendarFootConnected({ range, totalIssues: issues.length, utcOffsetInMinutes, issues })}
         </table>
         {isEdit && (
           <TrackModalCreate

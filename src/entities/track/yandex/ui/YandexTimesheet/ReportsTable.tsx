@@ -17,6 +17,7 @@ import clsx from 'clsx';
 import { Message } from 'entities/locale/ui/Message';
 import { ExportOutlined } from '@ant-design/icons';
 import calendar from './calendar.json';
+import { getExpectedHoursForDay } from 'entities/track/common/lib/hooks/use-expected-hours-for-day';
 
 import styles from './ReportsTable.module.scss';
 
@@ -33,14 +34,6 @@ function getDaysArray(from: string, to: string, utcOffsetInMinutes: number | und
     current = current.add(1, 'day');
   }
   return days;
-}
-
-function getExpectedHoursForDay(day: string): number {
-  // const today = DateWrapper.getDate({ utcOffsetInMinutes: undefined }).format('YYYY-MM-DD');
-  // if (day > today) return 0;
-  if (calendar.holidays.includes(day) || calendar.nowork.includes(day)) return 0;
-  if (calendar.preholidays.includes(day)) return 7;
-  return 8;
 }
 
 type TReportsTableProps = {
@@ -72,8 +65,8 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
     const dateFormat = DateWrapper.getDateFormat(dateObj, DATE_FORMAT_MONTH);
     const dayFormat = DateWrapper.getDateFormat(dateObj, isRuLocale(currentLocale) ? 'dd' : 'ddd');
     const isWeekend = DateWrapper.isWeekend(dateObj);
-    const isHoliday = !isWeekend && calendar.holidays.includes(day);
-    const isPreholiday = calendar.preholidays.includes(day);
+    const isHoliday = DateWrapper.isHoliday(dateObj);
+    const isPreholiday = DateWrapper.isPreholiday(dateObj);
     const expectedHours = getExpectedHoursForDay(day);
 
     let popoverContent = '';
