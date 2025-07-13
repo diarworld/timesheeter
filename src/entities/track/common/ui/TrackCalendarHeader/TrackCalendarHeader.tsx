@@ -1,4 +1,4 @@
-import { Button, Col, Row, Menu, MenuProps } from 'antd';
+import { Button, Col, Row, Menu, MenuProps, Modal } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import {
   ScheduleFilled,
@@ -8,6 +8,7 @@ import {
   UsergroupAddOutlined,
   LogoutOutlined,
   FieldTimeOutlined,
+  OpenAIOutlined,
 } from '@ant-design/icons';
 import { GlobalFetching } from 'shared/ui/GlobalFetching';
 import { ReactNode, useCallback, useState, useEffect } from 'react';
@@ -30,6 +31,8 @@ import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TimePeriodStepper } from './TimePeriodStepper';
 
 import styles from './TrackCalendarHeader.module.scss';
+import { RulesManage } from 'entities/track/common/ui/RulesManage';
+import { message as antdMessage } from 'antd';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -56,6 +59,7 @@ export function TrackCalendarHeader({
   const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
   const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [rulesModalVisible, setRulesModalVisible] = useState(false);
 
   const dispatch = useAppDispatch();
 
@@ -113,9 +117,11 @@ export function TrackCalendarHeader({
           setModalVisible(true);
         } else {
           console.error('Failed to fetch calendar meetings');
+          antdMessage.error(message('calendar.export.error'));
         }
       } catch (error) {
         console.error('Error fetching calendar meetings:', error);
+        antdMessage.error(message('calendar.export.error'));
       } finally {
         setLoadings((prevLoadings) => {
           const newLoadings = [...prevLoadings];
@@ -189,6 +195,12 @@ export function TrackCalendarHeader({
               icon: <UsergroupAddOutlined />,
               key: 'manage-team',
               onClick: useManageTeamAction(),
+            },
+            {
+              label: message('menu.rules'),
+              key: 'rules',
+              icon: <OpenAIOutlined />,
+              onClick: () => setRulesModalVisible(true),
             },
           ],
         },
@@ -290,6 +302,15 @@ export function TrackCalendarHeader({
           />
         </Row>
       </div>
+      <Modal
+        open={rulesModalVisible}
+        onCancel={() => setRulesModalVisible(false)}
+        footer={null}
+        title={message('menu.rules.title')}
+        style={{ minWidth: '800px' }}
+      >
+        <RulesManage tracker={tracker} />
+      </Modal>
     </>
   );
 }

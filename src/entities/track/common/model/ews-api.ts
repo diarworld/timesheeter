@@ -34,6 +34,9 @@ export interface IEwsCalendarResponse {
     organizer?: string;
     body?: string;
     categories: string[];
+    requiredAttendees: string[];
+    optionalAttendees: string[];
+    participants: number;
   }>;
   totalMeetings: number;
   dateRange: {

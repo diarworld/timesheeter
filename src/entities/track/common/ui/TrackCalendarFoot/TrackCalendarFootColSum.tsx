@@ -41,13 +41,13 @@ export const TrackCalendarFootColSum = memo(({ tracks = [], range }: ITrackCalen
   const isOvertracked = Boolean(tracks.length) && trackedMs > expectedMs;
 
   return (
-    <th className={styles.col} aria-label="total sum"
+    <th className={styles.col}
       data-is-exact-tracked={isExactTracked}
       data-is-undertracked={isUndertracked}
       data-is-over-tracked={isOvertracked}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 120 }}>
-        <Text fs={13} fw={800} >
+        <Text fs={13} fw={800} aria-label="total sum" >
           <DurationFormat duration={msToBusinessDurationData(trackedMs)} />
         </Text>
         <span style={{ color: '#888', fontSize: 10 }}>

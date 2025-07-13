@@ -5,11 +5,12 @@ import { track } from 'entities/track/common/model/reducers';
 import { LdapLoginFormManage } from '../LdapLoginFormManage';
 
 // Mock the EWS API hook
+const authenticateEwsMock = jest.fn(() => ({
+  unwrap: () => Promise.resolve({ success: true }),
+}));
 jest.mock('entities/track/common/model/ews-api', () => ({
   useAuthenticateEwsMutation: () => [
-    jest.fn().mockResolvedValue({
-      unwrap: () => Promise.resolve({ success: true }),
-    }),
+    authenticateEwsMock,
     { isLoading: false },
   ],
 }));
@@ -43,24 +44,32 @@ const renderWithProvider = (component: React.ReactElement) => {
 
 describe('LdapLoginFormManage', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue('{}');
+    localStorageMock.getItem.mockReturnValue(
+      JSON.stringify({ username: 'test@example.com' })
+    );
     localStorageMock.setItem.mockClear();
   });
 
   it('should dispatch setHasLdapCredentials when authentication succeeds', async () => {
-    const { getByText, getByLabelText } = renderWithProvider(<LdapLoginFormManage />);
+    const { getByText, getByLabelText, container } = renderWithProvider(<LdapLoginFormManage />);
 
     const passwordInput = getByLabelText('ldap.auth.password');
-    const submitButton = getByText('share.save.action');
-
     fireEvent.change(passwordInput, { target: { value: 'testpassword' } });
-    fireEvent.click(submitButton);
+    fireEvent.blur(passwordInput); // trigger validation
+
+    // Find the form element and submit it
+    const form = container.querySelector('form');
+    if (form) {
+      fireEvent.submit(form);
+    } else {
+      throw new Error('Form element not found');
+    }
 
     await waitFor(() => {
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'ldapCredentials',
         JSON.stringify({
-          username: '',
+          username: 'test@example.com',
           token: 'testpassword',
           type: 'ldap',
         }),

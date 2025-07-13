@@ -12,6 +12,14 @@ import {
   PropertySet
 } from 'ews-javascript-api';
 
+// Helper to process promises in batches
+async function batchPromises<T>(items: T[], batchSize: number, fn: (item: T) => Promise<any>) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    await Promise.all(batch.map(fn));
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -45,21 +53,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Find appointments
     const appointments = await calendar.FindAppointments(calendarView);
+    // Load details for each appointment (all needed properties)
+
+    const fullPropertySet = new PropertySet(
+      AppointmentSchema.Subject,
+      AppointmentSchema.Start,
+      AppointmentSchema.End,
+      AppointmentSchema.Location,
+      AppointmentSchema.Duration,
+      AppointmentSchema.IsAllDayEvent,
+      AppointmentSchema.RequiredAttendees,
+      AppointmentSchema.OptionalAttendees,
+      AppointmentSchema.Organizer
+    );
     
+    await batchPromises(appointments.Items, 5, appt => appt.Load(fullPropertySet));
     // Convert to JSON format
-    const meetings = appointments.Items.map(appointment => ({
-      id: appointment.Id.UniqueId,
-      subject: appointment.Subject,
-      start: appointment.Start.ToISOString(),
-      end: appointment.End.ToISOString(),
-      location: appointment.Location,
-      duration: appointment.Duration.TotalMinutes,
-      isAllDay: appointment.IsAllDayEvent,
-      isCancelled: false, // Default value since property not available
-      organizer: '', // Default value since property not available
-      body: '', // Default value since property not available
-      categories: [] // Simplified for now
-    }));
+    const meetings = appointments.Items.map(appointment => {
+      // Extract all attendee emails
+      const requiredEmails: string[] = [];
+      if (appointment.RequiredAttendees && appointment.RequiredAttendees.Count > 0) {
+        const attendees = (appointment.RequiredAttendees as any).Items as any[];
+        
+        for (let i = 0; i < attendees.length; i++) {
+          const attendee = attendees[i];
+          if (attendee && attendee.Address) {
+            requiredEmails.push(attendee.Address);
+          }
+        }
+      }
+      const optionalEmails: string[] = [];
+      if (appointment.OptionalAttendees && appointment.OptionalAttendees.Count > 0) {
+        const attendees = (appointment.OptionalAttendees as any).Items as any[];
+        for (let i = 0; i < attendees.length; i++) {
+          const attendee = attendees[i];
+          if (attendee && attendee.Address) {
+            optionalEmails.push(attendee.Address);
+          }
+        }
+      }
+      // Ensure unique participants
+      const participants = Array.from(new Set([...requiredEmails, ...optionalEmails]));
+      return {
+        id: appointment.Id.UniqueId,
+        subject: appointment.Subject,
+        start: appointment.Start.ToISOString(),
+        end: appointment.End.ToISOString(),
+        location: appointment.Location,
+        duration: appointment.Duration.TotalMinutes,
+        isAllDay: appointment.IsAllDayEvent,
+        isCancelled: false, // Default value since property not available
+        organizer: appointment.Organizer ? appointment.Organizer.Name : '',
+        requiredAttendees: requiredEmails,
+        optionalAttendees: optionalEmails,
+        participants: participants.length,
+        body: '', // Default value since property not available
+        categories: [] // Simplified for now
+      };
+    });
 
     res.status(200).json({
       success: true,
