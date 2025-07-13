@@ -33,6 +33,7 @@ export const yandexUserApi = api.injectEndpoints({
       query: ({ tracker }) => ({
         url: yandexUserEndpoints.myself,
         headers: getTrackerHeaders(tracker),
+        credentials: 'omit',
       }),
     }),
     getYandexUsersList: builder.query<TYandexUser[], TGetUsersParams>({
