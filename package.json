@@ -16,6 +16,10 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
+    "@microsoft/mgt-components": "^4.6.0",
+    "@microsoft/mgt-element": "^4.6.0",
+    "@microsoft/mgt-msal2-provider": "^4.6.0",
+    "@microsoft/mgt-react": "^4.6.0",
     "@reduxjs/toolkit": "^2.0.1",
     "@types/cookie": "^0.6.0",
     "@vvo/tzdb": "^6.124.0",

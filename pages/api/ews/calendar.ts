@@ -1,133 +1,45 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { 
-  ExchangeService, 
-  ExchangeVersion, 
-  CalendarFolder, 
-  Uri, 
-  WebCredentials, 
-  WellKnownFolderName,
-  CalendarView,
-  DateTime,
-  AppointmentSchema,
-  PropertySet
-} from 'ews-javascript-api';
-
-// Helper to process promises in batches
-async function batchPromises<T>(items: T[], batchSize: number, fn: (item: T) => Promise<any>) {
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize);
-    await Promise.all(batch.map(fn));
-  }
-}
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { parse } from 'cookie';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  // Only allow GET or POST (depending on your frontend)
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  // Parse cookies
+  const cookies = parse(req.headers.cookie || '');
+  const accessToken = cookies.code; // 'code' is your access token
+
+  if (!accessToken) {
+    return res.status(401).json({ message: 'No access token found in cookies' });
+  }
+
+  // Optionally, get date range from query/body
+  const { start, end } = req.method === 'POST' ? req.body : req.query;
+
+  // Build Microsoft Graph API URL
+  let url = 'https://graph.microsoft.com/v1.0/me/calendar/events';
+  if (start && end) {
+    url += `?$filter=start/dateTime ge '${start}' and end/dateTime le '${end}'`;
+  }
+
   try {
-    const { username, token, start_date, end_date } = req.body;
-    
-    const service = new ExchangeService(ExchangeVersion.Exchange2016);
-    const usernameOnly = username.split('@')[0];
-    service.Credentials = new WebCredentials(`RU1000\\${usernameOnly}`, token);
-    service.Url = new Uri("https://owa.lemanapro.ru/EWS/Exchange.asmx");
-    
-    // Access calendar
-    const calendar = await CalendarFolder.Bind(service, WellKnownFolderName.Calendar);
-    
-    // Use provided date range
-    const ewsStartDate = new DateTime(new Date(start_date));
-    const ewsEndDate = new DateTime(new Date(end_date));
-    
-    // Create calendar view
-    const calendarView = new CalendarView(ewsStartDate, ewsEndDate);
-    calendarView.PropertySet = new PropertySet(
-      AppointmentSchema.Subject, 
-      AppointmentSchema.Start, 
-      AppointmentSchema.End, 
-      AppointmentSchema.Location,
-      AppointmentSchema.Duration,
-      AppointmentSchema.IsAllDayEvent
-    );
-    
-    // Find appointments
-    const appointments = await calendar.FindAppointments(calendarView);
-    // Load details for each appointment (all needed properties)
-
-    const fullPropertySet = new PropertySet(
-      AppointmentSchema.Subject,
-      AppointmentSchema.Start,
-      AppointmentSchema.End,
-      AppointmentSchema.Location,
-      AppointmentSchema.Duration,
-      AppointmentSchema.IsAllDayEvent,
-      AppointmentSchema.RequiredAttendees,
-      AppointmentSchema.OptionalAttendees,
-      AppointmentSchema.Organizer
-    );
-    
-    await batchPromises(appointments.Items, 5, appt => appt.Load(fullPropertySet));
-    // Convert to JSON format
-    const meetings = appointments.Items.map(appointment => {
-      // Extract all attendee emails
-      const requiredEmails: string[] = [];
-      if (appointment.RequiredAttendees && appointment.RequiredAttendees.Count > 0) {
-        const attendees = (appointment.RequiredAttendees as any).Items as any[];
-        
-        for (let i = 0; i < attendees.length; i++) {
-          const attendee = attendees[i];
-          if (attendee && attendee.Address) {
-            requiredEmails.push(attendee.Address);
-          }
-        }
-      }
-      const optionalEmails: string[] = [];
-      if (appointment.OptionalAttendees && appointment.OptionalAttendees.Count > 0) {
-        const attendees = (appointment.OptionalAttendees as any).Items as any[];
-        for (let i = 0; i < attendees.length; i++) {
-          const attendee = attendees[i];
-          if (attendee && attendee.Address) {
-            optionalEmails.push(attendee.Address);
-          }
-        }
-      }
-      // Ensure unique participants
-      const participants = Array.from(new Set([...requiredEmails, ...optionalEmails]));
-      return {
-        id: appointment.Id.UniqueId,
-        subject: appointment.Subject,
-        start: appointment.Start.ToISOString(),
-        end: appointment.End.ToISOString(),
-        location: appointment.Location,
-        duration: appointment.Duration.TotalMinutes,
-        isAllDay: appointment.IsAllDayEvent,
-        isCancelled: false, // Default value since property not available
-        organizer: appointment.Organizer ? appointment.Organizer.Name : '',
-        requiredAttendees: requiredEmails,
-        optionalAttendees: optionalEmails,
-        participants: participants.length,
-        body: '', // Default value since property not available
-        categories: [] // Simplified for now
-      };
+    const graphRes = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
     });
 
-    res.status(200).json({
-      success: true,
-      meetings: meetings,
-      totalMeetings: meetings.length,
-      dateRange: {
-        start: ewsStartDate.ToISOString(),
-        end: ewsEndDate.ToISOString(),
-        start_date: start_date,
-        end_date: end_date
-      }
-    });
+    if (!graphRes.ok) {
+      const error = await graphRes.json();
+      return res.status(graphRes.status).json({ message: 'Graph API error', error });
+    }
+
+    const data = await graphRes.json();
+    return res.status(200).json({ success: true, events: data.value });
   } catch (error) {
-    console.error('Calendar fetch error:', error);
-    res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    return res.status(500).json({ message: 'Internal server error', error: (error as Error).message });
   }
 } 

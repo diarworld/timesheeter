@@ -6,7 +6,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).end();
   }
 
-  const { token, clear } = req.body;
+  const { type, token, clear } = req.body;
+
   if (clear) {
     res.setHeader('Set-Cookie', cookie.serialize('access_token', '', {
       httpOnly: true,
@@ -16,6 +17,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       expires: new Date(0),
     }));
     return res.status(200).json({ success: true });
+  }
+
+  if (token && type) {
+    const cookieName = type === 'microsoft' ? 'code' : type === 'yandex' ? 'access_code' : 'access_token';
+    res.setHeader('Set-Cookie', cookie.serialize(cookieName, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 1 week, adjust as needed
+    }));
+    res.status(200).json({ success: true });
+    return;
   }
 
   if (!token) {
