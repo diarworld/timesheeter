@@ -47,7 +47,7 @@ export const TrackCalendarFootColSumDay = memo(({ tracks = [], date, utcOffsetIn
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 120 }}>
         
           <>
-            <Text fs={13} fw={800} style={{ textTransform: 'capitalize', minWidth: 55 }}>
+            <Text aria-label="total day sum" fs={13} fw={800} style={{ textTransform: 'capitalize', minWidth: 55 }}>
               <DurationFormat duration={durationTotal} />
             </Text>
             <span style={{ color: '#888', fontSize: 10 }}>

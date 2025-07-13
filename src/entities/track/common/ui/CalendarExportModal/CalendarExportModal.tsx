@@ -3,7 +3,7 @@ import { useMessage } from 'entities/locale/lib/hooks';
 import { IEwsCalendarResponse } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScheduleFilled } from '@ant-design/icons';
 import { TTrackerConfig, isJiraTrackerCfg, isYandexTrackerCfg } from 'entities/tracker/model/types';
 import { useCreateJiraTrack } from 'entities/track/jira/lib/hooks/use-create-jira-track';
@@ -12,16 +12,21 @@ import { useCreateYandexTrack } from 'entities/track/yandex/lib/hooks/use-create
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
 import './CalendarExportModal.scss';
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
+import { isoDurationToSeconds } from '../../lib/iso-duration-to-seconds';
 
 const { Text, Title } = Typography;
 
 interface IDataType {
-  key: React.Key;
+  key: string;
   subject: React.Key;
   start: string;
   end: string;
   duration: number;
   issueKey?: string;
+  requiredAttendees?: string[];
+  optionalAttendees?: string[];
+  participants?: number;
+  organizer?: string;
 }
 
 interface ICalendarExportModalProps {
@@ -40,8 +45,9 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   tracker,
 }) => {
   const message = useMessage();
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [issueKeys, setIssueKeys] = useState<Record<string, string>>({});
+  const [issueDurations, setIssueDurations] = useState<Record<string, number>>({});
 
   // Load default issue key from localStorage on component mount
   const [defaultIssueKey, setDefaultIssueKey] = useState<string>(() => {
@@ -85,17 +91,126 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
 
   const tableData =
     data?.meetings.map((meeting, index) => ({
-      key: meeting.id || index,
+      key: meeting.id ? String(meeting.id) : String(index),
       ...meeting,
     })) || [];
 
-  const applyDefaultToAll = () => {
+  // Helper: get rules from localStorage
+  function getTimesheeterRules() {
+    try {
+      const rulesStr = localStorage.getItem('timesheeterRules');
+      if (!rulesStr) return [];
+      return JSON.parse(rulesStr);
+    } catch {
+      return [];
+    }
+  }
+
+  // Helper: check if a meeting matches a rule (case-insensitive)
+  function meetingMatchesRule(meeting: IDataType, rule: any) {
+    if (!rule.conditions || rule.conditions.length === 0) return false;
+    let result = null;
+    for (let i = 0; i < rule.conditions.length; i++) {
+      const cond = rule.conditions[i];
+      let condResult = false;
+      const op = cond.operator;
+      const val = cond.value?.toString() || '';
+
+      if (cond.field === 'participants') {
+        if (op === '>' || op === '<' || op === '=') {
+          const num = typeof meeting.participants === 'number' ? meeting.participants : Number(meeting.participants);
+          const cmp = parseFloat(val);
+          if (op === '>') condResult = num > cmp;
+          else if (op === '<') condResult = num < cmp;
+          else if (op === '=') condResult = num === cmp;
+        } else if (op === 'includes' || op === 'not_includes') {
+          const allEmails = [
+            ...(meeting.requiredAttendees || []),
+            ...(meeting.optionalAttendees || [])
+          ];
+          if (op === 'includes') condResult = allEmails.includes(val);
+          else condResult = !allEmails.includes(val);
+        }
+      } else if (cond.field === 'summary') {
+        const fieldValue = String(meeting.subject || '');
+        if (op === 'equals') condResult = fieldValue.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0;
+        else if (op === 'contains') condResult = fieldValue.toLowerCase().includes(val.toLowerCase());
+        else if (op === 'not_contains') condResult = !fieldValue.toLowerCase().includes(val.toLowerCase());
+      } else if (cond.field === 'duration') {
+        // meeting.duration is in minutes, val is human-readable (e.g. '1h 30m')
+        const fieldMinutes = typeof meeting.duration === 'number' ? meeting.duration : Number(meeting.duration);
+        const iso = humanReadableDurationToISO(val);
+        const seconds = iso ? isoDurationToSeconds(iso) : undefined;
+        const compareMinutes = typeof seconds === 'number' ? seconds / 60 : NaN;
+        if (op === '>') condResult = fieldMinutes > compareMinutes;
+        else if (op === '<') condResult = fieldMinutes < compareMinutes;
+        else if (op === '=') condResult = fieldMinutes === compareMinutes;
+      } else if (cond.field === 'organizer') {
+        const fieldValue = meeting.organizer || '';
+        if (op === 'is') condResult = fieldValue.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0;
+        else if (op === 'is_not') condResult = fieldValue.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0;
+      }
+
+      // Logic
+      if (i === 0) {
+        result = condResult;
+      } else {
+        const logic = cond.logic || 'AND';
+        if (logic === 'AND') result = result && condResult;
+        else result = result || condResult;
+      }
+    }
+    return !!result;
+  }
+
+  // Apply rules to all meetings and set issueKeys
+  const applyRulesToAll = () => {
+    const rules = getTimesheeterRules();
     const newIssueKeys: Record<string, string> = {};
+    const newIssueDurations: Record<string, number> = {};
+    const filteredTableData: IDataType[] = [];
     tableData.forEach((record: IDataType) => {
-      newIssueKeys[String(record.key)] = defaultIssueKey;
+      let matchedKey = defaultIssueKey;
+      let newDuration = record.duration;
+      let skip = false;
+      for (const rule of rules) {
+        if (!rule.actions) continue;
+        if (meetingMatchesRule(record, rule)) {
+          const skipAction = rule.actions.find((a: any) => a.type === 'skip' && a.value === 'true');
+          if (skipAction) {
+            skip = true;
+            break;
+          }
+          const setTaskAction = rule.actions.find((a: any) => a.type === 'set_task');
+          const setDurationAction = rule.actions.find((a: any) => a.type === 'set_duration');
+          if (setTaskAction) {
+            matchedKey = setTaskAction.value;
+          }
+          if (setDurationAction) {
+            const duration = setDurationAction.value;
+            const isoDuration = humanReadableDurationToISO(duration);
+            if (isoDuration) {
+              const seconds = isoDurationToSeconds(isoDuration);
+              if (typeof seconds === 'number') {
+                newDuration = seconds / 60;
+              }
+            }
+          }
+        }
+      }
+      if (!skip) {
+        newIssueKeys[record.key] = matchedKey;
+        newIssueDurations[record.key] = newDuration;
+        filteredTableData.push(record);
+      }
     });
     setIssueKeys(newIssueKeys);
+    setIssueDurations(newIssueDurations);
+    setFilteredTableData(filteredTableData);
   };
+
+  // Add state for filtered table data
+  const [filteredTableData, setFilteredTableData] = useState<IDataType[]>(tableData);
 
   // Save default issue key to localStorage whenever it changes
   const handleDefaultIssueKeyChange = (value: string) => {
@@ -154,9 +269,10 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
 
     setIsImporting(true);
     try {
-      const selectedRows = tableData.filter((record: IDataType) => selectedRowKeys.includes(record.key));
+      const selectedRows = filteredTableData.filter((record: IDataType) => selectedRowKeys.map(String).includes(record.key));
       const validRows = selectedRows.filter((row) => {
         const issueKey = issueKeys[String(row.key)] || defaultIssueKey;
+        const duration = issueDurations[String(row.key)] || row.duration;
         const subject = subjects[String(row.key)] ?? row.subject;
 
         if (!validateIssueKey(issueKey)) {
@@ -165,8 +281,8 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
         }
 
         // Convert duration from minutes to human readable format
-        const hours = Math.floor(row.duration / 60);
-        const minutes = row.duration % 60;
+        const hours = Math.floor(duration / 60);
+        const minutes = duration % 60;
         const durationString = `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
 
         // Convert to ISO duration
@@ -182,9 +298,10 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       // Create all tracks in parallel
       const trackPromises = validRows.map((row) => {
         const issueKey = issueKeys[String(row.key)] || defaultIssueKey;
+        const duration = issueDurations[String(row.key)] || row.duration;
         const subject = subjects[String(row.key)] ?? row.subject;
-        const hours = Math.floor(row.duration / 60);
-        const minutes = row.duration % 60;
+        const hours = Math.floor(duration / 60);
+        const minutes = duration % 60;
         const durationString = `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
 
         return createTrack({
@@ -207,6 +324,14 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       setIsImporting(false);
     }
   };
+
+  // Call applyRulesToAll on first open
+  useEffect(() => {
+    if (visible) {
+      applyRulesToAll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const columns = [
     {
@@ -367,10 +492,10 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       title: message('calendar.export.table.duration'),
       dataIndex: 'duration',
       key: 'duration',
-      render: (minutes: number) => (
+      render: (minutes: number, record: IDataType) => (
         <Text>
-          {message('date.hours.short', { value: Math.floor(minutes / 60) })}{' '}
-          {message('date.minutes.short', { value: Math.floor(minutes % 60) })}
+          {message('date.hours.short', { value: (Math.floor((issueDurations[String(record.key)] || minutes) / 60)) })}{' '}
+          {message('date.minutes.short', { value: (Math.floor((issueDurations[String(record.key)] || minutes) % 60)) })}
         </Text>
       ),
     },
@@ -394,9 +519,8 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   // rowSelection object indicates the need for row selection
   const rowSelection: TableProps<IDataType>['rowSelection'] = {
     selectedRowKeys,
-    onChange: (newSelectedRowKeys: React.Key[], _selectedRows: IDataType[]) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-      // console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys.map(String));
     },
     getCheckboxProps: (record: IDataType) => ({
       disabled: false, // Column configuration not to be checked
@@ -406,9 +530,11 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
 
   const handleRowClick = (record: IDataType) => {
     const { key } = record;
-    const newSelectedRowKeys = selectedRowKeys.includes(key)
-      ? selectedRowKeys.filter((k: React.Key) => k !== key)
-      : [...selectedRowKeys, key];
+    const keyStr = String(key);
+    const selectedKeysStr = selectedRowKeys.map(String);
+    const newSelectedRowKeys = selectedKeysStr.includes(keyStr)
+      ? selectedRowKeys.filter((k) => String(k) !== keyStr)
+      : [...selectedRowKeys, keyStr];
     setSelectedRowKeys(newSelectedRowKeys);
   };
 
@@ -469,7 +595,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
                 style={{ minWidth: 120 }}
               />
             )}
-            <Button onClick={applyDefaultToAll}>{message('calendar.export.default.set')}</Button>
+            <Button onClick={applyRulesToAll}>{message('calendar.export.default.set')}</Button>
           </Space>
         </Space>
       }
@@ -483,7 +609,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
         bordered
         rowSelection={{ type: 'checkbox', ...rowSelection }}
         columns={columns}
-        dataSource={tableData}
+        dataSource={filteredTableData}
         loading={loading}
         onRow={(record: IDataType) => ({
           onClick: (event) => {
