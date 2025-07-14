@@ -1,6 +1,6 @@
 import { Button, Col, Row, Menu, MenuProps, Modal } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
-import {
+import Icon, {
   ScheduleFilled,
   DashboardOutlined,
   SettingOutlined,
@@ -33,6 +33,7 @@ import { TimePeriodStepper } from './TimePeriodStepper';
 import styles from './TrackCalendarHeader.module.scss';
 import { RulesManage } from 'entities/track/common/ui/RulesManage';
 import { message as antdMessage } from 'antd';
+import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -250,6 +251,17 @@ export function TrackCalendarHeader({
       onMenuChange(e.key);
     }
   };
+  const team = JSON.parse(localStorage.getItem('team') || '[]');
+  const user = team.find((u: { email: string }) => u.email === tracker.username);
+  const displayName = user ? user.display : tracker.username || '';
+  const YTSvg = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" fill="#000000">
+      <path fill="#000000" fill-rule="evenodd" d="M2.75 2.5a.25.25 0 0 0-.25.25v2.167c0 .138.112.25.25.25h2.417V2.5zm3.917 0v2.667h2.666V2.5zm4.166 0v2.667h2.417a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25zm0 4.167h2.417A1.75 1.75 0 0 0 15 4.917V2.75A1.75 1.75 0 0 0 13.25 1H2.75A1.75 1.75 0 0 0 1 2.75v2.167c0 .966.784 1.75 1.75 1.75h2.417v6.583c0 .966.783 1.75 1.75 1.75h2.166a1.75 1.75 0 0 0 1.75-1.75zm-1.5 0H6.667v2.666h2.666zm0 4.166H6.667v2.417c0 .138.112.25.25.25h2.166a.25.25 0 0 0 .25-.25z" clip-rule="evenodd"/>
+    </svg>
+  );
+  const YTIcon = (props: Partial<CustomIconComponentProps>) => (
+    <Icon component={YTSvg} {...props} />
+  );
   return (
     <>
       <Row className={styles.menu} justify="space-between" align="middle">
@@ -262,7 +274,12 @@ export function TrackCalendarHeader({
             theme="light"
           />
         </Col>
-        <Col style={{ marginLeft: 'auto' }}>
+        
+        <Col style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+          <YTIcon style={{ marginRight: 10 }} />
+          <span style={{ marginRight: 10 }}>
+            {displayName}
+          </span>
           <Menu
             onClick={onClick}
             mode="horizontal"

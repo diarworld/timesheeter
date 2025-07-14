@@ -67,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       AppointmentSchema.Organizer
     );
     
-    await batchPromises(appointments.Items, 5, appt => appt.Load(fullPropertySet));
+    await batchPromises(appointments.Items, 20, appt => appt.Load(fullPropertySet));
     // Convert to JSON format
     const meetings = appointments.Items.map(appointment => {
       // Extract all attendee emails
