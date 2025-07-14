@@ -1,5 +1,5 @@
-import { Button, Form, Input, Flex, Select, Space, Divider, Typography, message as antdMessage, Switch } from 'antd';
-import { PlusOutlined, MinusCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { Button, Form, Input, Flex, Select, Space, Divider, Typography, message as antdMessage, Switch, Modal } from 'antd';
+import Icon, { PlusOutlined, MinusCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useMessage } from 'entities/locale/lib/hooks';
 import React, { FC, useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +8,7 @@ import { validateHumanReadableDuration } from '../../lib/validate-human-readable
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { isYandexTrackerCfg } from 'entities/tracker/model/types';
+import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
 
 export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const message = useMessage();
@@ -15,6 +16,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const [rules, setRules] = useState<TRule[]>([]);
   const [editingRule, setEditingRule] = useState<TRule | null>(null);
   const [messageApi, contextHolder] = antdMessage.useMessage();
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiForm] = Form.useForm();
 
   // Localized constants must be inside the component
   const CONDITION_FIELDS = [
@@ -287,9 +290,89 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
     prevConditionsRef.current = currentConditions.map((c: unknown) => ({ ...(c as object) }));
   };
 
+  const handleAiGeneration = async () => {
+    const query = aiForm.getFieldValue('ai_generation');
+    if (!query) {
+      messageApi.error(message('rules.ai.generate.placeholder'));
+      return;
+    }
+    if (query.length > 250) {
+      messageApi.error(message('form.invalid.maxlength', { max: 250 }));
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const displayName = tracker?.username || 'Current User';
+      const res = await fetch('/api/ai-generate-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, user: displayName }), // Optionally replace with actual user
+      });
+      const { rule, error, raw } = await res.json();
+      const totalTokens = raw?.metadata?.usage?.total_tokens || 0;
+      const cost = (totalTokens * 0.00084).toFixed(2);
+      if (error || !rule) {
+        // Try to extract error message from raw.answer if present
+        let errorMsg = message('rules.ai.generate.error');
+        if (raw?.answer) {
+          try {
+            const match = raw.answer.match(/```(?:json)?\n?([\s\S]*?)```/i);
+            if (match && match[1]) {
+              const parsed = JSON.parse(match[1]);
+              if (parsed.message) errorMsg = parsed.message;
+            }
+          } catch {}
+        } else if (raw?.error) {
+          errorMsg = raw.error;
+        }
+        // messageApi.error(errorMsg);
+        messageApi.warning({duration: 10, content: message('rules.ai.generate.usage', { total_tokens: totalTokens, cost })});
+        throw new Error(errorMsg);
+      }
+
+      // Defensive: ensure conditions/actions are arrays
+      const safeRule = {
+        ...rule,
+        conditions: Array.isArray(rule.conditions) ? rule.conditions : [],
+        actions: Array.isArray(rule.actions) ? rule.actions : [],
+      };
+
+      setRules(prev => [...prev, safeRule]);
+      localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify([...rules, safeRule]));
+      messageApi.success(message('rules.rule.saved', { name: rule.name }));
+      aiForm.resetFields();
+      messageApi.warning({duration: 10, content: message('rules.ai.generate.usage', { total_tokens: totalTokens, cost })});
+    } catch (e) {
+      messageApi.error({duration: 10, content: e instanceof Error ? e.message : message('rules.ai.generate.error')});
+    } finally {
+      setAiLoading(false);
+    }
+  };
+  const AISvg = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" viewBox="0 0 100 100" >
+      <path fill="#262626" d="m85.188 44.582c-16.801-4.6406-20.297-8.1367-24.934-24.938-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-4.6406 16.801-8.1367 20.297-24.938 24.938-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 16.801 4.6406 20.297 8.1328 24.938 24.934 0.19531 0.70312 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 4.6406-16.801 8.1328-20.297 24.934-24.934 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"/>
+      <path fill="#262626" d="m20.023 23.164c7.5938 2.0977 8.9375 3.4375 11.031 11.031 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.0977-7.5938 3.4375-8.9375 11.031-11.031 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625-7.5938-2.0977-8.9336-3.4375-11.031-11.031-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.0977 7.5938-3.4375 8.9375-11.031 11.031-0.70313 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625z"/>
+      <path fill="#262626" d="m46.957 73.906c-9.8828-2.7266-11.781-4.6289-14.508-14.508-0.19531-0.70313-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.7266 9.8828-4.625 11.781-14.508 14.508-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 9.8828 2.7266 11.781 4.6289 14.508 14.508 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.7266-9.8828 4.6289-11.781 14.508-14.508 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"/>
+    </svg>
+  );
+  const AIIcon = (props: Partial<CustomIconComponentProps>) => (
+    <Icon component={AISvg} {...props} />
+  );
+
   return (
     <div>
       {contextHolder}
+      {/* TODO Add Ai generation of rules here */}
+      <Divider orientation="left">{message('menu.rules.title.ai.generate')} <AIIcon style={{ position: 'relative', top: 2, marginLeft: 2 }} /></Divider>
+      <Form layout="vertical" form={aiForm}>
+        <Form.Item name="ai_generation" label={message('rules.ai.generate')}>
+          <Input.TextArea maxLength={250} showCount placeholder={message('rules.ai.generate.placeholder')} />
+        </Form.Item>
+        {/* <AIIcon /> */}
+        <Button type="primary" onClick={handleAiGeneration} loading={aiLoading}>
+          {message('rules.ai.generate.submit')}
+        </Button>
+      </Form>      
       <Divider orientation="left">{message('menu.rules.title.description')}</Divider>
       <Form
         form={form}
@@ -502,7 +585,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           <Typography.Text strong>{rule.name}</Typography.Text>
           <Typography.Paragraph type="secondary" style={{ margin: 0 }}>{rule.description}</Typography.Paragraph>
           <div style={{ margin: '8px 0' }}>
-            <b>{message('rules.divider.when')}:</b> {rule.conditions.map((c, i) => {
+            <b>{message('rules.divider.when')}:</b> {(Array.isArray(rule.conditions) ? rule.conditions : []).map((c, i) => {
               const condStr = `${c.field} ${c.operator} "${c.value}"`;
               if (i === 0) return condStr;
               const prevLogic = rule.conditions[i].logic || 'AND';
@@ -510,7 +593,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
             }).join('')}
           </div>
           <div style={{ margin: '8px 0' }}>
-            <b>{message('rules.divider.then')}:</b> {rule.actions.map(a => `${a.type} = ${a.value}`).join(' AND ')}
+            <b>{message('rules.divider.then')}:</b> {(Array.isArray(rule.actions) ? rule.actions : []).map(a => `${a.type} = ${a.value}`).join(' AND ')}
           </div>
           <Space>
             <Button size="small" onClick={() => handleEdit(rule)}>{message('rules.rule.edit')}</Button>
