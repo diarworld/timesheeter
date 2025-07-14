@@ -1,9 +1,9 @@
-import { Button, Form, Input, Flex, Select, Space, Divider, Typography, message as antdMessage, Switch, Modal } from 'antd';
+import { Button, Form, Input, Flex, Select, Space, Divider, Typography, message as antdMessage, Switch, Collapse } from 'antd';
 import Icon, { PlusOutlined, MinusCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useMessage } from 'entities/locale/lib/hooks';
 import React, { FC, useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { TCondition, TAction, TRule } from './types';
+import { TRule } from './types';
 import { validateHumanReadableDuration } from '../../lib/validate-human-readable-duration';
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
 import { TTrackerConfig } from 'entities/tracker/model/types';
@@ -38,6 +38,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       { value: 'not_includes', label: message('rules.op.not_includes') },
       { value: '>', label: message('rules.op.gt') },
       { value: '<', label: message('rules.op.lt') },
+      { value: '=', label: message('rules.op.eq') },
     ],
     duration: [
       { value: '>', label: message('rules.op.gt') },
@@ -47,6 +48,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
     organizer: [
       { value: 'is', label: message('rules.op.is') },
       { value: 'is_not', label: message('rules.op.is_not') },
+      { value: 'contains', label: message('rules.op.contains') },
+      { value: 'not_contains', label: message('rules.op.not_contains') },
     ],
   } as const;
 
@@ -448,6 +451,14 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                         ({ getFieldValue }) => ({
                           validator(_, value) {
                             const fieldVal = getFieldValue(['conditions', field.name, 'field']);
+                            const operatorVal = getFieldValue(['conditions', field.name, 'operator']);
+                            // If operator is >, <, or =, value must be a positive number
+                            if ((operatorVal === '>' || operatorVal === '<' || operatorVal === '=') && fieldVal === 'participants') {
+                              if (isNaN(Number(value)) || Number(value) < 0) {
+                                return Promise.reject(message('form.invalid.positive_number'));
+                              }
+                            }
+                            // For duration, also check human readable format if not a number
                             if (fieldVal === 'duration' && value) {
                               if (!validateHumanReadableDuration(value)) {
                                 return Promise.reject(message('form.invalid.format'));
@@ -580,27 +591,43 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       </Form>
       <Divider orientation="left">{message('rules.saved_rules')}</Divider>
       {rules.length === 0 && <Typography.Text type="secondary">{message('rules.no_rules_yet')}</Typography.Text>}
-      {rules.map(rule => (
-        <div key={rule.id} style={{ border: '1px solid #eee', borderRadius: 6, padding: 12, marginBottom: 12 }}>
-          <Typography.Text strong>{rule.name}</Typography.Text>
-          <Typography.Paragraph type="secondary" style={{ margin: 0 }}>{rule.description}</Typography.Paragraph>
-          <div style={{ margin: '8px 0' }}>
-            <b>{message('rules.divider.when')}:</b> {(Array.isArray(rule.conditions) ? rule.conditions : []).map((c, i) => {
-              const condStr = `${c.field} ${c.operator} "${c.value}"`;
-              if (i === 0) return condStr;
-              const prevLogic = rule.conditions[i].logic || 'AND';
-              return ` ${prevLogic} ${condStr}`;
-            }).join('')}
-          </div>
-          <div style={{ margin: '8px 0' }}>
-            <b>{message('rules.divider.then')}:</b> {(Array.isArray(rule.actions) ? rule.actions : []).map(a => `${a.type} = ${a.value}`).join(' AND ')}
-          </div>
-          <Space>
-            <Button size="small" onClick={() => handleEdit(rule)}>{message('rules.rule.edit')}</Button>
-            <Button size="small" danger onClick={() => handleDelete(rule.id)}>{message('rules.rule.delete')}</Button>
-          </Space>
-        </div>
-      ))}
+      {rules.length > 0 && (
+        <Collapse
+          accordion
+          items={rules.map(rule => ({
+            key: rule.id,
+            label: (
+              <span>
+                <Typography.Text strong>{rule.name}</Typography.Text>
+                {rule.description && (
+                  <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
+                    {rule.description}
+                  </Typography.Text>
+                )}
+              </span>
+            ),
+            children: (
+              <>
+                <div style={{ margin: '8px 0' }}>
+                  <b>{message('rules.divider.when')}:</b> {(Array.isArray(rule.conditions) ? rule.conditions : []).map((c, i) => {
+                    const condStr = `${c.field} ${c.operator} "${c.value}"`;
+                    if (i === 0) return condStr;
+                    const prevLogic = rule.conditions[i].logic || 'AND';
+                    return ` ${prevLogic} ${condStr}`;
+                  }).join('')}
+                </div>
+                <div style={{ margin: '8px 0' }}>
+                  <b>{message('rules.divider.then')}:</b> {(Array.isArray(rule.actions) ? rule.actions : []).map(a => `${a.type} = ${a.value}`).join(' AND ')}
+                </div>
+                <Space>
+                  <Button size="small" onClick={() => handleEdit(rule)}>{message('rules.rule.edit')}</Button>
+                  <Button size="small" danger onClick={() => handleDelete(rule.id)}>{message('rules.rule.delete')}</Button>
+                </Space>
+              </>
+            ),
+          }))}
+        />
+      )}
     </div>
   );
 };

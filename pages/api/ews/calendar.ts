@@ -103,7 +103,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         duration: appointment.Duration.TotalMinutes,
         isAllDay: appointment.IsAllDayEvent,
         isCancelled: false, // Default value since property not available
-        organizer: appointment.Organizer ? appointment.Organizer.Name : '',
+        organizer: appointment.Organizer ? appointment.Organizer : '',
         requiredAttendees: requiredEmails,
         optionalAttendees: optionalEmails,
         participants: participants.length,

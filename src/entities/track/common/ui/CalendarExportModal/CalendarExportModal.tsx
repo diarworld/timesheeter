@@ -1,6 +1,6 @@
-import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, Popover } from 'antd';
+import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, Popover, Badge } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
-import { IEwsCalendarResponse } from 'entities/track/common/model/ews-api';
+import { IEwsCalendarResponse, IMeetingOrganizer } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
@@ -26,8 +26,9 @@ interface IDataType {
   requiredAttendees?: string[];
   optionalAttendees?: string[];
   participants?: number;
-  organizer?: string;
+  organizer?: IMeetingOrganizer;
 }
+
 
 interface ICalendarExportModalProps {
   visible: boolean;
@@ -146,9 +147,12 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
         else if (op === '<') condResult = fieldMinutes < compareMinutes;
         else if (op === '=') condResult = fieldMinutes === compareMinutes;
       } else if (cond.field === 'organizer') {
-        const fieldValue = meeting.organizer || '';
-        if (op === 'is') condResult = fieldValue.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0;
-        else if (op === 'is_not') condResult = fieldValue.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0;
+        const fieldName = meeting.organizer?.name || '';
+        const fieldEmail = meeting.organizer?.address || '';
+        if (op === 'is') condResult = fieldName.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0 || fieldEmail.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0;
+        else if (op === 'contains') condResult = fieldName.toLowerCase().includes(val.toLowerCase()) || fieldEmail.toLowerCase().includes(val.toLowerCase());
+        else if (op === 'not_contains') condResult = !fieldName.toLowerCase().includes(val.toLowerCase()) && !fieldEmail.toLowerCase().includes(val.toLowerCase());
+        else if (op === 'is_not') condResult = fieldName.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0 && fieldEmail.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0;
       }
 
       // Logic
@@ -475,19 +479,48 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       },
     },
     {
+      title: message('calendar.export.table.organizer'),
+      dataIndex: 'organizer',
+      key: 'organizer',
+      render: (organizer: IMeetingOrganizer, record: IDataType) => {
+        const attendees = [
+          ...(record.requiredAttendees || []),
+          ...(record.optionalAttendees || [])
+        ];
+        // Remove duplicates
+        const uniqueAttendees = Array.from(new Set(attendees));
+        const showAttendees = uniqueAttendees.slice(0, 10);
+        const hasMore = uniqueAttendees.length > 10;
+        return (
+          <>
+            <Text>{organizer.name}</Text>
+            <Popover
+              content={
+                <div style={{ maxWidth: 300, maxHeight: 350, overflowY: 'auto' }}>
+                  {showAttendees.map((email) => (
+                    <Text key={email} style={{ display: 'block', marginBottom: 4, fontFamily: 'monospace', fontSize: 12 }}>{email}</Text>
+                  ))}
+                  {hasMore && <Text style={{ display: 'block', fontFamily: 'monospace', fontSize: 12 }}>...</Text>}
+                </div>
+              }
+              title={message('calendar.export.table.attendees')}
+              trigger="hover"
+            >
+              <Badge
+                count={record.participants}
+                style={{ marginLeft: 3, backgroundColor: '#fdc300', color: '#21282b' }}
+              />
+            </Popover>
+          </>
+        );
+      },
+    },
+    {
       title: message('calendar.export.table.start'),
       dataIndex: 'start',
       key: 'start',
       render: (date: string) => <Text>{dayjs(date).format('MMM DD, YYYY HH:mm')}</Text>,
     },
-    // {
-    //   title: message('calendar.export.table.end'),
-    //   dataIndex: 'end',
-    //   key: 'end',
-    //   render: (date: string) => (
-    //     <Text>{dayjs(date).format('MMM DD, YYYY HH:mm')}</Text>
-    //   ),
-    // },
     {
       title: message('calendar.export.table.duration'),
       dataIndex: 'duration',
@@ -499,21 +532,6 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
         </Text>
       ),
     },
-    //   title: message('calendar.export.table.location'),
-    //   dataIndex: 'location',
-    //   key: 'location',
-    //   render: (location: string) => location ? <Text>{location}</Text> : <Text type="secondary">-</Text>,
-    // },
-    // {
-    //   title: message('calendar.export.table.type'),
-    //   key: 'type',
-    //   render: (record: any) => (
-    //     <Space>
-    //       {record.isAllDay && <Tag color="blue">{message('calendar.export.table.all.day')}</Tag>}
-    //       {record.isCancelled && <Tag color="red">{message('calendar.export.table.cancelled')}</Tag>}
-    //     </Space>
-    //   ),
-    // },
   ];
 
   // rowSelection object indicates the need for row selection
@@ -554,14 +572,6 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
           )}
           <Space>
             <Text>{message('calendar.import.issue.key')}</Text>
-            {/* <Input
-            value={defaultIssueKey}
-            onChange={(e) => handleDefaultIssueKeyChange(e.target.value)}
-            placeholder="PM-4"
-            style={{ width: 160 }}
-            onFocus={(e) => e.target.select()}
-            status={defaultIssueKey && !validateIssueKey(defaultIssueKey) ? 'error' : ''}
-          /> */}
             {isYandexTrackerCfg(tracker) ? (
               <YandexIssuesSearchConnected
                 value={defaultIssueKey}
@@ -618,7 +628,8 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
               event.target instanceof HTMLElement &&
               (event.target.tagName === 'INPUT' ||
                 event.target.closest('.editable-cell-value-wrap') ||
-                event.target.closest('.editable-cell'))
+                event.target.closest('.editable-cell') ||
+                event.target.closest('.ant-popover'))
             ) {
               return;
             }

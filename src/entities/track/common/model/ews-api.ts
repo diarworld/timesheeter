@@ -20,6 +20,11 @@ export interface IEwsAuthResponse {
   };
 }
 
+export interface IMeetingOrganizer {
+  name?: string;
+  address?: string;
+}
+
 export interface IEwsCalendarResponse {
   success: boolean;
   meetings: Array<{
@@ -31,7 +36,7 @@ export interface IEwsCalendarResponse {
     duration: number;
     isAllDay: boolean;
     isCancelled: boolean;
-    organizer?: string;
+    organizer?: IMeetingOrganizer;
     body?: string;
     categories: string[];
     requiredAttendees: string[];
