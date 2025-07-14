@@ -224,5 +224,9 @@
   "rules.value.required": "Value required",
   "rules.value": "Value",
   "rules.add.action": "Add Action",
-  "calendar.export.error": "Failed to fetch calendar meetings. Please try again."
+  "calendar.export.error": "Failed to fetch calendar meetings. Please try again.",
+  "menu.rules.title.ai.generate": "AI Rule Generation",
+  "rules.ai.generate": "Describe your meeting or rule in natural language",
+  "rules.ai.generate.placeholder": "E.g. 'Skip meetings with less than 2 participants', 'Set task to PM-2 for vacation meetings'",
+  "rules.ai.generate.submit": "Generate Rule"
 }
