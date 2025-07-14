@@ -287,9 +287,21 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
     prevConditionsRef.current = currentConditions.map((c: unknown) => ({ ...(c as object) }));
   };
 
+  const handleAiGeneration = () => {
+    // TODO Add Ai generation of rules here
+  };
+
   return (
     <div>
       {contextHolder}
+      {/* TODO Add Ai generation of rules here */}
+      <Divider orientation="left">{message('menu.rules.title.ai.generate')}</Divider>
+      <Form layout="vertical">
+        <Form.Item name="ai_generation" label={message('rules.ai.generate')}>
+          <Input.TextArea placeholder={message('rules.ai.generate.placeholder')} />
+        </Form.Item>
+        <Button type="primary" onClick={handleAiGeneration}>{message('rules.ai.generate.submit')}</Button>
+      </Form>      
       <Divider orientation="left">{message('menu.rules.title.description')}</Divider>
       <Form
         form={form}
