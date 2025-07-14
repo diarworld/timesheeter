@@ -228,5 +228,7 @@
   "menu.rules.title.ai.generate": "AI Rule Generation",
   "rules.ai.generate": "Describe your meeting or rule in natural language",
   "rules.ai.generate.placeholder": "E.g. 'Skip meetings with less than 2 participants', 'Set task to PM-2 for vacation meetings'",
-  "rules.ai.generate.submit": "Generate Rule"
+  "rules.ai.generate.submit": "Generate Rule",
+  "rules.ai.generate.error": "Failed to generate rule. Please try again.",
+  "rules.ai.generate.usage": "Tokens used: {total_tokens}, request cost: {cost} ₽"
 }
