@@ -594,7 +594,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       {rules.length > 0 && (
         <Collapse
           accordion
-          items={rules.map(rule => ({
+          items={[...rules].reverse().map(rule => ({
             key: rule.id,
             label: (
               <span>
