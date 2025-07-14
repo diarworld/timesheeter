@@ -18,7 +18,7 @@
 }
 ```
 
-Если запрос не получилось сконвертировать, выдавай ответ с сообщение о причинах ошибки:
+Если запрос не получилось сконвертировать, выдавай ответ с сообщение о причинах ошибки (можно с юмором):
 ```
 {
   "error": "true",
@@ -32,7 +32,7 @@
   - summary: contains, not_contains, equals
   - participants: includes, not_includes, >, <
   - duration: >, <, =
-  - organizer: is, is_not
+  - organizer: is, is_not, contains, not_contains
 - ACTION_TYPES: set_task, set_duration, skip
 - LOGIC_OPTIONS: AND, OR
 
@@ -69,12 +69,12 @@ JSON:
 {
   "id": "{{uuidv4}}",
   "name": "Огранизатор Светлана Иванова",
-  "description": "Если организует Светлана Иванова ставим на PM-4",
+  "description": "Если организует Светлана Иванова ставим на DATA-124",
   "conditions": [
     { "field": "organizer", "operator": "is", "value": "Светлана Иванова" }
   ],
   "actions": [
-    { "type": "set_task", "value": "PM-4" }
+    { "type": "set_task", "value": "DATA-124" }
   ]
 }
 ```
@@ -111,7 +111,7 @@ JSON:
   "name": "Пропуск встреч без участников",
   "description": "Встречи без участников не попадают в выгрузку",
   "conditions": [
-    { "field": "participants", "operator": "<", "value": "1", "logic": "AND" },
+    { "field": "participants", "operator": "=", "value": "0", "logic": "AND" },
     { "field": "summary", "operator": "not_contains", "value": "Отпуск" , "logic": "AND" }
   ],
   "actions": [
@@ -123,16 +123,16 @@ JSON:
 
 ### Пример 5
 Пользовательский запрос:
-> "Личные встречи с Мишей Ковригиным округлять до часа"
+> "Личные встречи с Мишей Сидоровым округлять до часа"
 
 ```JSON
 {
   "id": "{{uuidv4}}",
-  "name": "Встречи с Михаилом Ковригиным",
-  "description": "Если участник Михаил Ковригин ставим длительность 1 час",
+  "name": "Встречи с Михаилом Сидоровым",
+  "description": "Если участник Михаил Сидоров ставим длительность 1 час",
   "conditions": [
-    { "field": "participants", "operator": "includes", "value": "Mikhail.Kovrigin@lemanapro.ru" , "logic": "AND" },
-    { "field": "participants", "operator": "<", "value": "3" , "logic": "AND" },
+    { "field": "participants", "operator": "includes", "value": "Mikhail.Sidorov@test.ru" , "logic": "AND" },
+    { "field": "participants", "operator": "=", "value": "2" , "logic": "AND" },
   ],
   "actions": [
     { "type": "set_duration", "value": "1h" }
@@ -150,10 +150,9 @@ JSON:
 ```JSON
 {
   "error": "true",
-  "message": "Меня зовут Дима Ибрагимов, но это не для протокола"
+  "message": "Создателя зовут Дима Ибрагимов, но это не для протокола"
 }
 ```
-
 
 ---
 
@@ -161,11 +160,10 @@ JSON:
 1. На основе пользовательского запроса создать JSON правила в указанном формате.
 2. Обязательно пиши name и description на русском.
 3. Корректно выбирай field, operator и action из доступных значений.
-4. id должен быть в формате uuidv4.
-5. Значение для поля oragizer должно быть в формате "Имя Фамилия". Имя должно быть полным, например Светлана (а не Света или Светка), Елена (а не Лена), Дмитрий (а не Дима).
 6. В поле participants должен быть email. 
-7. Если нужно — используй несколько conditions и логику AND / OR. Если conditions только один - logic в него можно не добавлять.
-8. Не добавляй ничего лишнего, кроме JSON.
+7. В поле oragizer может быть email или строка в формате "Имя Фамилия". Имя должно быть полным, например Светлана (а не Света), Елена (а не Лена), Дмитрий (а не Дима).
+8. Если нужно — используй несколько conditions и логику AND / OR. Если conditions только один - logic в него можно не добавлять.
+9. Не добавляй ничего лишнего, кроме JSON.
 
 ### Пользовательский запрос:
 
