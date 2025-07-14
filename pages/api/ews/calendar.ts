@@ -9,7 +9,8 @@ import {
   CalendarView,
   DateTime,
   AppointmentSchema,
-  PropertySet
+  PropertySet,
+  OAuthCredentials
 } from 'ews-javascript-api';
 
 // Helper to process promises in batches
@@ -24,21 +25,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
+  const { accessToken, startDateTime, endDateTime } = req.body;
+  if (!accessToken) return res.status(401).json({ message: "No access token" });
+  if (!startDateTime || !endDateTime) return res.status(400).json({ message: "Missing date range" });
 
+  // const url = `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=
+  //               ${encodeURIComponent(startDateTime)}&endDateTime=${encodeURIComponent(endDateTime)}`;
+  // const graphRes =
+  //  await fetch(url, {
+  //   headers: {
+  //     Authorization: `Bearer ${accessToken}`,
+  //     "Content-Type": "application/json",
+  //   },
+  // });
+
+  // const data = await graphRes.json();
+  // if (!graphRes.ok) return res.status(graphRes.status).json(data);
+  // res.status(200).json(data);
   try {
-    const { username, token, start_date, end_date } = req.body;
+    // const { start_date, end_date } = req.body;
     
     const service = new ExchangeService(ExchangeVersion.Exchange2016);
-    const usernameOnly = username.split('@')[0];
-    service.Credentials = new WebCredentials(`RU1000\\${usernameOnly}`, token);
+    // const usernameOnly = username.split('@')[0];
+    // service.Credentials = new WebCredentials(`RU1000\\${usernameOnly}`, token);
     service.Url = new Uri("https://owa.lemanapro.ru/EWS/Exchange.asmx");
+    service.Credentials = new OAuthCredentials(accessToken)
     
     // Access calendar
     const calendar = await CalendarFolder.Bind(service, WellKnownFolderName.Calendar);
     
     // Use provided date range
-    const ewsStartDate = new DateTime(new Date(start_date));
-    const ewsEndDate = new DateTime(new Date(end_date));
+    const ewsStartDate = new DateTime(new Date(startDateTime));
+    const ewsEndDate = new DateTime(new Date(endDateTime));
     
     // Create calendar view
     const calendarView = new CalendarView(ewsStartDate, ewsEndDate);
@@ -119,8 +137,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       dateRange: {
         start: ewsStartDate.ToISOString(),
         end: ewsEndDate.ToISOString(),
-        start_date: start_date,
-        end_date: end_date
+        start_date: startDateTime,
+        end_date: endDateTime
       }
     });
   } catch (error) {
@@ -130,4 +148,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: error instanceof Error ? error.message : String(error)
     });
   }
-} 
+}

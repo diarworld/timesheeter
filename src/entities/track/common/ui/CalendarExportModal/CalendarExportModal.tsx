@@ -1,6 +1,6 @@
 import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, Popover } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
-import { IEwsCalendarResponse } from 'entities/track/common/model/ews-api';
+import { IGraphCalendarResponse } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
@@ -32,7 +32,7 @@ interface IDataType {
 interface ICalendarExportModalProps {
   visible: boolean;
   onHidden: () => void;
-  data: IEwsCalendarResponse | null;
+  data: IGraphCalendarResponse | null;
   loading: boolean;
   tracker: TTrackerConfig;
 }
@@ -89,11 +89,11 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
     return regex.test(value);
   };
 
-  const tableData =
-    data?.meetings.map((meeting, index) => ({
-      key: meeting.id ? String(meeting.id) : String(index),
-      ...meeting,
-    })) || [];
+  // const tableData =
+  //   data?.meetings.map((meeting, index) => ({
+  //     key: meeting.id ? String(meeting.id) : String(index),
+  //     ...meeting,
+  //   })) || [];
 
   // Helper: get rules from localStorage
   function getTimesheeterRules() {
@@ -162,7 +162,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
     }
     return !!result;
   }
-
+  const tableData = data?.value || [];
   // Apply rules to all meetings and set issueKeys
   const applyRulesToAll = () => {
     const rules = getTimesheeterRules();
@@ -545,12 +545,15 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
           <Title level={4}>{message('calendar.export.results')}</Title>
           {data && (
             <Text type="secondary">
-              {data.totalMeetings} {message('calendar.export.results.top')}{' '}
-              {message('calendar.export.results.top.from')}{' '}
-              {DateWrapper.getDateFormat(dayjs(data.dateRange.start_date), 'DD MMMM YYYY')}{' '}
-              {message('calendar.export.results.top.to')}{' '}
-              {DateWrapper.getDateFormat(dayjs(data.dateRange.end_date), 'DD MMMM YYYY')}
+              {data.value.length} {message('calendar.export.results.top')}
             </Text>
+            // <Text type="secondary">
+            //   {data.totalMeetings} {message('calendar.export.results.top')}{' '}
+            //   {message('calendar.export.results.top.from')}{' '}
+            //   {DateWrapper.getDateFormat(dayjs(data.dateRange.start_date), 'DD MMMM YYYY')}{' '}
+            //   {message('calendar.export.results.top.to')}{' '}
+            //   {DateWrapper.getDateFormat(dayjs(data.dateRange.end_date), 'DD MMMM YYYY')}
+            // </Text>
           )}
           <Space>
             <Text>{message('calendar.import.issue.key')}</Text>

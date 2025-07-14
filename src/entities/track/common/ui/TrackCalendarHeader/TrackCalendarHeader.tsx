@@ -15,7 +15,7 @@ import {
 import { GlobalFetching } from 'shared/ui/GlobalFetching';
 import { ReactNode, useCallback, useState, useEffect } from 'react';
 import { useMessage } from 'entities/locale/lib/hooks';
-import { useGetCalendarMeetingsMutation, IEwsCalendarResponse } from 'entities/track/common/model/ews-api';
+import { useGetCalendarEventsMutation, IGraphCalendarResponse } from 'entities/track/common/model/ews-api';
 import { useFilters } from 'features/filters/lib/useFilters';
 import { CalendarExportModal } from 'entities/track/common/ui/CalendarExportModal';
 import { TTrackerConfig } from 'entities/tracker/model/types';
@@ -56,15 +56,15 @@ export function TrackCalendarHeader({
   onMenuChange,
 }: ITrackCalendarHeaderProps) {
   const message = useMessage();
-  const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
+  const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarEventsMutation();
   const { from, to } = useFilters();
 
   const [loadings, setLoadings] = useState<boolean[]>([]);
   const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
-  const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
+  const [calendarData, setCalendarData] = useState<IGraphCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
-  const { instance } = useMsal();
+  const { instance, accounts } = useMsal();
   const activeAccount = instance.getActiveAccount();
 
   const dispatch = useAppDispatch();
@@ -91,29 +91,25 @@ export function TrackCalendarHeader({
       });
 
       try {
-        // Get saved credentials from localStorage
-        const savedCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
-
-        if (!savedCredentials.username || !savedCredentials.token) {
-          console.error('No saved credentials found');
+        if (!accounts || accounts.length === 0) {
+          antdMessage.error("Please sign in to export your calendar.");
           return;
         }
-
-        // Get current date range from filters (this will be reactive)
-        const currentFrom = from;
-        const currentTo = to;
-
-        // console.log('Exporting calendar for date range:', { from: currentFrom, to: currentTo });
+        // Get access token for Microsoft Graph
+        const request = {
+          scopes: ["https://graph.microsoft.com/.default"],
+          account: accounts[0],
+        };
+        const tokenResponse = await instance.acquireTokenSilent(request);
 
         // Call the calendar API with current date range from filters
         const result = await getCalendarMeetings({
-          username: savedCredentials.username,
-          token: savedCredentials.token,
-          start_date: currentFrom,
-          end_date: currentTo,
+          accessToken: tokenResponse.accessToken,
+          startDateTime: from,
+          endDateTime: to,
         }).unwrap();
 
-        if (result.success) {
+        if (result) {
           // console.log('Calendar meetings:', result.meetings);
           // console.log('Total meetings:', result.totalMeetings);
           // console.log('Date range used:', result.dateRange);
@@ -136,7 +132,7 @@ export function TrackCalendarHeader({
         });
       }
     },
-    [getCalendarMeetings, from, to],
+    [getCalendarMeetings, from, to, instance, accounts, message],
   );
 
   type TMenuItem = Required<MenuProps>['items'][number];
