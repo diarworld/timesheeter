@@ -135,6 +135,7 @@
   "unauthorizedTracker.changeConfig": "Edit tracker configuration",
   "form.invalid.format": "Invalid format",
   "form.invalid.empty": "Field can't be empty",
+  "form.invalid.maxlength": "Maximum length is {max} characters.",
   "filter.status.placeholder": "Task status",
   "filter.queue.placeholder": "Queue",
   "filter.summary.placeholder": "Task name",
@@ -224,5 +225,11 @@
   "rules.value.required": "Value required",
   "rules.value": "Value",
   "rules.add.action": "Add Action",
-  "calendar.export.error": "Failed to fetch calendar meetings. Please try again."
+  "calendar.export.error": "Failed to fetch calendar meetings. Please try again.",
+  "menu.rules.title.ai.generate": "AI Rule Generation",
+  "rules.ai.generate": "Describe your meeting or rule in natural language",
+  "rules.ai.generate.placeholder": "E.g. Skip meetings with Ivan Petrov, Set task LMWORK-2 for meetings on product synchronization",
+  "rules.ai.generate.submit": "Generate Rule",
+  "rules.ai.generate.error": "Failed to generate rule. Please try again.",
+  "rules.ai.generate.usage": "Tokens used: {total_tokens}, request cost: {cost} ₽"
 }
