@@ -1,4 +1,4 @@
-import { Button, Col, Row, Menu, MenuProps, Modal } from 'antd';
+import { Button, Col, Row, Menu, MenuProps, Modal, Avatar } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import {
   ScheduleFilled,
@@ -9,6 +9,8 @@ import {
   LogoutOutlined,
   FieldTimeOutlined,
   OpenAIOutlined,
+  WindowsOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { GlobalFetching } from 'shared/ui/GlobalFetching';
 import { ReactNode, useCallback, useState, useEffect } from 'react';
@@ -33,6 +35,8 @@ import { TimePeriodStepper } from './TimePeriodStepper';
 import styles from './TrackCalendarHeader.module.scss';
 import { RulesManage } from 'entities/track/common/ui/RulesManage';
 import { message as antdMessage } from 'antd';
+import { useMsal } from '@azure/msal-react';
+import { Text } from 'components';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -60,6 +64,8 @@ export function TrackCalendarHeader({
   const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
+  const { instance } = useMsal();
+  const activeAccount = instance.getActiveAccount();
 
   const dispatch = useAppDispatch();
 
@@ -237,6 +243,12 @@ export function TrackCalendarHeader({
       // disabled: true,
     },
     {
+      key: 'user',
+      label: activeAccount?.name || message('home.login'),
+      icon: <WindowsOutlined />,
+      disabled: !activeAccount,
+    },
+    {
       key: 'logout',
       label: message('home.logout'),
       icon: <LogoutOutlined />,
@@ -258,10 +270,28 @@ export function TrackCalendarHeader({
             onClick={onClick}
             selectedKeys={[currentMenuKey]}
             mode="horizontal"
-            items={items.filter((item) => item?.key !== 'logout')}
+            items={items.filter((item) => item?.key !== 'logout' && item?.key !== 'user')}
             theme="light"
           />
         </Col>
+        {/* <Button icon={<UserOutlined />}>
+          <Text fs={14} fw={700} style={{ textTransform: 'capitalize' }}>
+            {activeAccount?.name}
+          </Text>
+        </Button> */}
+        {activeAccount ? (
+          <>
+            <WindowsOutlined style={{ marginRight: 10 }} />
+            <Text style={{ marginRight: 10 }}>
+              {activeAccount?.name || message('home.login')}
+            </Text>
+          </>
+        ) : null}
+        {/* <Menu
+            mode="vertical"
+            items={items.filter((item) => item?.key === 'user')}
+            theme="light"
+          /> */}
         <Col style={{ marginLeft: 'auto' }}>
           <Menu
             onClick={onClick}
