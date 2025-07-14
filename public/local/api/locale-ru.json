@@ -134,6 +134,7 @@
   "unauthorizedTracker.changeConfig": "Редактировать конфигурацию трекера",
   "form.invalid.format": "Неверный формат",
   "form.invalid.empty": "Поле не должно быть пустым",
+  "form.invalid.maxlength": "Максимальная длина — {max} символов.",
   "filter.status.placeholder": "Статус задачи",
   "filter.queue.placeholder": "Очередь",
   "filter.summary.placeholder": "Название задачи",
@@ -227,7 +228,7 @@
   "calendar.export.error": "Не удалось получить встречи из календаря. Пожалуйста, попробуйте еще раз.",
   "menu.rules.title.ai.generate": "Генерация правил с помощью ИИ",
   "rules.ai.generate": "Опишите встречу или правило на естественном языке",
-  "rules.ai.generate.placeholder": "Например: 'Пропускать встречи с менее чем 2 участниками', 'Установить задачу PM-2 для отпусков'",
+  "rules.ai.generate.placeholder": "Например: Пропускать встречи с Иваном Петровым, Установить задачу LMW-123 для встреч по созданию AI ассистентов",
   "rules.ai.generate.submit": "Сгенерировать правило",
   "rules.ai.generate.error": "Не удалось сгенерировать правило. Пожалуйста, попробуйте еще раз.",
   "rules.ai.generate.usage": "Использовано токенов: {total_tokens}, стоимость запроса: {cost} ₽"
