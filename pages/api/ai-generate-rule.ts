@@ -7,6 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { query, user } = req.body;
   const difyToken = process.env.DIFY_API_TOKEN;
   const difyUrl = process.env.DIFY_URL;
+  const difyCost = Number(process.env.DIFY_COST);
 //   console.log(difyToken);
   if (!difyToken) return res.status(500).json({ error: 'Dify token not configured' });
   if (!difyUrl) return res.status(500).json({ error: 'LLM API url not configured' });
@@ -22,11 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         inputs: { query, uuidv4: uuidv4() },
         response_mode: 'blocking',
         user: user || 'Anonymous',
-        
       }),
     });
 
     const data = await difyRes.json();
+    const totalTokens = data.metadata?.usage?.total_tokens || 0;
+    const cost = (totalTokens * difyCost).toFixed(2);
     // Extract JSON from code block in answer
     const match = data.answer?.match(/```(?:json)?\n?([\s\S]*?)```/i);
     let rule = null;
@@ -35,10 +37,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     //   console.log(rule);
     }
     if (!rule || !rule.name || !rule.conditions || !rule.actions) {
-      res.status(200).json({ error: 'No rule generated', raw: data });
+      res.status(200).json({ error: 'No rule generated', raw: data, cost });
       return;
     }
-    res.status(200).json({ rule, raw: data });
+    res.status(200).json({ rule, raw: data, cost });
   } catch (e) {
     res.status(500).json({ error: 'Failed to generate rule', details: e instanceof Error ? e.message : e });
   }

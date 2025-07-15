@@ -311,9 +311,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, user: displayName }), // Optionally replace with actual user
       });
-      const { rule, error, raw } = await res.json();
+      const { rule, error, raw, cost } = await res.json();
       const totalTokens = raw?.metadata?.usage?.total_tokens || 0;
-      const cost = (totalTokens * 0.00084).toFixed(2);
       if (error || !rule) {
         // Try to extract error message from raw.answer if present
         let errorMsg = message('rules.ai.generate.error');
