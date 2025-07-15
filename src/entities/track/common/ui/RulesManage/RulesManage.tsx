@@ -309,7 +309,12 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       const res = await fetch('/api/ai-generate-rule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, user: displayName }), // Optionally replace with actual user
+        body: JSON.stringify({ 
+          query, 
+          user: displayName,
+          orgId: tracker.type === 'yandex' ? (tracker as any).orgId : undefined,
+          isCloud: tracker.type === 'yandex' ? (tracker as any).isCloud : undefined
+        }),
       });
       const { rule, error, raw, cost } = await res.json();
       const totalTokens = raw?.metadata?.usage?.total_tokens || 0;
