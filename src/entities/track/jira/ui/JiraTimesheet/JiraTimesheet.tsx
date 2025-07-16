@@ -159,7 +159,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
         unpinIssue={unpinIssue}
         isTrackCreateLoading={isTrackCreateLoading}
         createTrack={onCreateTrack}
-        _isTrackDeleteLoading={isTrackDeleteLoading}
         deleteTrack={deleteTrack}
         renderTrackCalendarRowConnected={(props) => (
           <JiraTrackCalendarRowConnected
