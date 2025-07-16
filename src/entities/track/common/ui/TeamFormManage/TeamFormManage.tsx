@@ -65,7 +65,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
   const { data: teamYT } = yandexQueueApi.useGetQueueByKeysQuery(
     { keys: teamQueueYT, tracker },
-    { skip: !teamQueueYT || teamQueueYT.length === 0 },
+    { skip: !teamQueueYT || teamQueueYT.length === 0 }
   );
 
   const [triggerGetUserById, { isLoading: isLoadingUsersFromTeam }] = yandexUserApi.useLazyGetYandexUserByIdQuery();
@@ -84,31 +84,35 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           const filteredUsers = users
             .filter((teamUser) => !teamUser.dismissed)
             .filter((teamUser) => teamUser.login.startsWith('60'));
-          const merged = [...team, ...filteredUsers];
-          const deduped = Array.from(new Map(merged.map((teamUser) => [teamUser.login, teamUser])).values());
-          // Sort by display field (case-insensitive)
-          const sorted = deduped
-            .slice()
-            .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-          const minimalUsers = sorted.map((teamUser) => ({
-            uid: teamUser.uid,
-            login: teamUser.login,
-            display: teamUser.display,
-            email: teamUser.email,
-            position: teamUser.position,
-          }));
-          localStorage.setItem('team', JSON.stringify(minimalUsers));
-          setTeam(sorted);
-          dispatch(track.actions.setTeam(sorted));
+          setTeam((prevTeam) => {
+            const merged = [...prevTeam, ...filteredUsers];
+            const deduped = Array.from(new Map(merged.map((teamUser) => [teamUser.login, teamUser])).values());
+            // Sort by display field (case-insensitive)
+            const sorted = deduped
+              .slice()
+              .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+            const minimalUsers = sorted.map((teamUser) => ({
+              uid: teamUser.uid,
+              login: teamUser.login,
+              display: teamUser.display,
+              email: teamUser.email,
+              position: teamUser.position,
+            }));
+            localStorage.setItem('team', JSON.stringify(minimalUsers));
+            dispatch(track.actions.setTeam(sorted));
+            return sorted;
+          });
         });
       }
     },
-    [team, tracker, triggerGetUserById, dispatch],
+    [tracker, triggerGetUserById, dispatch],
   );
 
   React.useEffect(() => {
-    processTeamData(teamYT);
-  }, [teamYT, processTeamData]);
+    if (teamYT && teamQueueYT.length > 0) {
+      processTeamData(teamYT);
+    }
+  }, [teamYT, processTeamData, teamQueueYT]);
 
   const handleAdd = () => {
     if (userData) {
@@ -166,7 +170,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   };
 
   const handleAddFromTeam = () => {
-    if (teamQueue.length > 0) {
+    if (teamQueue.length > 0 && JSON.stringify(teamQueue) !== JSON.stringify(teamQueueYT)) {
       setTeamQueueYT(teamQueue);
     }
   };
@@ -175,6 +179,42 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   const handleTeamQueueChange = (newQueue: string[]) => {
     setTeamQueue(newQueue);
   };
+
+  // Place syncTeamToDb at the top level, not inside any function
+  const syncTeamToDb = async (teamArr: TYandexUser[]) => {
+    const ldapCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
+    const currentUser = teamArr.find(
+      (user) => user.email === ldapCredentials.username || user.login === ldapCredentials.username
+    );
+    if (!currentUser) return;
+    const teamId = localStorage.getItem('teamId');
+    try {
+      const method = teamId ? 'PATCH' : 'POST';
+      const body = teamId
+        ? JSON.stringify({ teamId, members: teamArr })
+        : JSON.stringify({ members: teamArr });
+      const res = await fetch('/api/team', {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser?.uid?.toString() || '',
+          'x-user-email': currentUser?.email || '',
+        },
+        body,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.teamId) {
+          localStorage.setItem('teamId', data.teamId);
+        }
+      }
+    } catch {}
+  };
+
+  React.useEffect(() => {
+    syncTeamToDb(team);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [team]);
 
   return (
     <>

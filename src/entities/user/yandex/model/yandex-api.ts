@@ -50,7 +50,6 @@ export const yandexUserApi = api.injectEndpoints({
           undefined,
           50,
         );
-
         if (res.data) {
           res.data = res.data.filter((user: TYandexUser) => !user.dismissed && !YA_ROBOTS_IDS.has(user.uid));
         }

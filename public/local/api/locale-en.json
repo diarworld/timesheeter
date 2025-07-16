@@ -207,7 +207,7 @@
   "rules.add.condition": "Add condition",
   "rules.rule.name": "Rule name",
   "rules.rule.description": "Rule description",
-  "rules.rule.create": "Create",
+  "rules.rule.save": "Save",
   "rules.rule.cancel": "Cancel",
   "rules.rule.delete": "Delete",
   "rules.rule.edit": "Edit",
@@ -234,5 +234,9 @@
   "rules.ai.generate.placeholder": "E.g. Skip meetings with Ivan Petrov, Set task LMWORK-2 for meetings on product synchronization",
   "rules.ai.generate.submit": "Generate Rule",
   "rules.ai.generate.error": "Failed to generate rule. Please try again.",
-  "rules.ai.generate.usage": "Tokens used: {total_tokens}, request cost: {cost} ₽"
+  "rules.ai.generate.usage": "Tokens used: {total_tokens}, request cost: {cost} ₽",
+  "rules.rule.delete.confirm.shared": "Are you sure?",
+  "rules.rule.delete.confirm.shared.description": "This action will delete this rule for the whole team!",
+  "rules.current.user.error": "Current user not found",
+  "rules.share.with.team": "Share with team"
 }

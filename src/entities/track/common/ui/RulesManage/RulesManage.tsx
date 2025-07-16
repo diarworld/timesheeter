@@ -1,4 +1,4 @@
-import { Button, Form, Input, Flex, Select, Space, Divider, Typography, message as antdMessage, Switch, Collapse } from 'antd';
+import { Button, Form, Input, Flex, Select, Space, Divider, Typography, message as antdMessage, Switch, Collapse, Popconfirm } from 'antd';
 import Icon, { PlusOutlined, MinusCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useMessage } from 'entities/locale/lib/hooks';
 import React, { FC, useEffect, useState, useRef } from 'react';
@@ -9,6 +9,23 @@ import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssu
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { isYandexTrackerCfg } from 'entities/tracker/model/types';
 import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
+import { TYandexUser } from 'entities/user/yandex/model/types';
+
+const getCurrentUserFromTeam = () => {
+  try {
+    const ldapCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
+    const team = JSON.parse(localStorage.getItem('team') || '[]');
+    if (!ldapCredentials.username || !Array.isArray(team)) return null;
+    // Find by login (username) or email
+    return team.find((user: any) =>
+      user.email === ldapCredentials.username || user.login === ldapCredentials.username
+    );
+  } catch (e) {
+    console.log("e: " + e);
+    return null;
+  }
+};
+
 
 export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const message = useMessage();
@@ -18,6 +35,51 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const [messageApi, contextHolder] = antdMessage.useMessage();
   const [aiLoading, setAiLoading] = useState(false);
   const [aiForm] = Form.useForm();
+  const [sharedRules, setSharedRules] = useState<TRule[]>([]);
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState<string | null>(null);
+  const [userData, setUserData] = useState<TYandexUser | undefined>(undefined);
+  const [userTeams, setUserTeams] = useState<{ id: string, name: string, members: any[] }[]>([]);
+  const [teamNameMap, setTeamNameMap] = useState<{ [id: string]: string }>({});
+
+  // Fetch all teams for the user and build teamId -> teamName map
+  useEffect(() => {
+    const fetchTeams = async () => {
+      const currentUser = getCurrentUserFromTeam();
+      if (!currentUser) return;
+      try {
+        const res = await fetch('/api/team', {
+          headers: { 'x-user-id': currentUser?.uid?.toString() || '', 'x-user-email': currentUser?.email || '' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.teams)) {
+            setUserTeams(data.teams);
+            setTeamNameMap(Object.fromEntries((data.teams as any[]).map((team: any) => [team.id, team.name])));
+          }
+        }
+      } catch {}
+    };
+    fetchTeams();
+  }, []);
+
+  // Fetch all shared rules for all teams
+  useEffect(() => {
+    const currentUser = getCurrentUserFromTeam();
+    if (!currentUser) return;
+    const fetchRules = async () => {
+      try {
+        const res = await fetch(`/api/team-rules`, {
+          headers: { 'x-user-id': currentUser?.uid?.toString() || '', 'x-user-email': currentUser?.email || '' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSharedRules(Array.isArray(data.rules) ? data.rules : []);
+        }
+      } catch {}
+    };
+    fetchRules();
+  }, []);
 
   // Localized constants must be inside the component
   const CONDITION_FIELDS = [
@@ -182,7 +244,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           ]
         },
         ];
-        setRules(defaultRules);
+        setRules(defaultRules as TRule[]);
         localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(defaultRules));
       }
     } catch {}
@@ -221,7 +283,40 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         id: editingRule?.id || uuidv4(),
         conditions: values.conditions || [],
         actions: values.actions || [],
+        teamId: (editingRule as any)?.teamId, // preserve teamId if present
       };
+
+      if (editingRule && sharedRules.some(r => r.id === editingRule.id)) {
+        // Shared rule: update on server
+        const currentUser = getCurrentUserFromTeam();
+        if (!currentUser) {
+          messageApi.error(message('rules.current.user.error'));
+          return;
+        }
+        const res = await fetch('/api/team-rules', {
+          method: 'PUT', // or PATCH, depending on your API
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': currentUser?.uid?.toString() || '',
+            'x-user-email': currentUser?.email || '',
+          },
+          body: JSON.stringify({ id: rule.id, teamId: rule.teamId, rule }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSharedRules(prev =>
+            prev.map(r => (r.id === rule.id ? data.rule : r))
+          );
+          setEditingRule(null);
+          form.resetFields();
+          messageApi.success(message('rules.rule.saved', { name: rule.name }));
+        } else {
+          const err = await res.json();
+          messageApi.error(err.error || 'Update failed');
+        }
+        return;
+      }
+
       let newRules;
       if (editingRule) {
         newRules = rules.map(r => (r.id === editingRule.id ? rule : r));
@@ -247,14 +342,47 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
     setEditingRule(rule);
   };
 
-  const handleDelete = (id: string) => {
-    const newRules = rules.filter(r => r.id !== id);
-    setRules(newRules);
-    localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(newRules));
-    messageApi.success(message('rules.rule.deleted', { name: rules.find(r => r.id === id)?.name }));
-    if (editingRule?.id === id) {
-      setEditingRule(null);
-      form.resetFields();
+  const handleDelete = async (id: string, teamId?: string) => {
+    const ruleName = allRules.find(r => r.id === id)?.name;
+    if (teamId) {
+      if (sharedRules.some(r => r.id === id)) {
+      
+        const currentUser = getCurrentUserFromTeam();
+        if (!currentUser) return;
+        try {
+          const res = await fetch('/api/team-rules', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': currentUser?.uid?.toString() || '',
+              'x-user-email': currentUser?.email || '',
+            },
+            body: JSON.stringify({ id, teamId: teamId }),
+          });
+          if (res.ok) {
+            setSharedRules(prev => prev.filter(r => r.id !== id));
+            messageApi.success(message('rules.rule.deleted', { name: ruleName }));
+          } else {
+            const err = await res.json();
+            messageApi.error(err.error || 'Delete failed');
+          }
+        } catch (e) {
+          messageApi.error('Delete failed');
+        }
+        return;
+      }
+    } else {
+      // Local rule: delete from local state
+      const newRules = rules.filter(r => r.id !== id);
+      setRules(newRules);
+      localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(newRules));
+      messageApi.success(
+        message('rules.rule.deleted', { name: ruleName })
+      );
+      if (editingRule?.id === id) {
+        setEditingRule(null);
+        form.resetFields();
+      }
     }
   };
 
@@ -365,6 +493,72 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const AIIcon = (props: Partial<CustomIconComponentProps>) => (
     <Icon component={AISvg} {...props} />
   );
+
+  // Merge shared and local rules for display
+  const allRules = [...sharedRules,
+    ...rules.filter(localRule => !sharedRules.some(sharedRule => sharedRule.id === localRule.id))];
+
+  // Add share handler
+  const handleShareWithTeam = async (rule: TRule) => {
+    const currentUser = getCurrentUserFromTeam();
+    if (!currentUser) {
+      messageApi.error(message('rules.current.user.error'));
+      return;
+    }
+    setShareLoading(rule.id);
+    try {
+      let teams = userTeams;
+      // If userTeams is empty, create a new team
+      if (!teams || teams.length === 0) {
+        const teamMembers = JSON.parse(localStorage.getItem('team') || '[]');
+        const teamRes = await fetch('/api/team', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': currentUser?.uid?.toString() || '',
+            'x-user-email': currentUser?.email || '',
+          },
+          body: JSON.stringify({ members: teamMembers }),
+        });
+        if (!teamRes.ok) {
+          const err = await teamRes.json();
+          throw new Error(err.error || 'Failed to create team');
+        }
+        const teamData = await teamRes.json();
+        teams = [{ id: teamData.teamId, name: teamData.name || '', members: teamMembers }];
+        setUserTeams(teams); // update state so future shares work
+      }
+      // Now share to all teams
+      const results = await Promise.all(
+        teams.map(async (team) => {
+          // Remove id if present to avoid unique constraint error
+          const { id, ...ruleWithoutId } = rule;
+          const res = await fetch('/api/team-rules', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': currentUser?.uid?.toString() || '',
+              'x-user-email': currentUser?.email || '',
+            },
+            body: JSON.stringify({ teamId: team.id, rule: ruleWithoutId }),
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Share failed');
+          }
+          return res.json();
+        })
+      );
+      // Merge all returned rules into sharedRules
+      const newSharedRules = results.map(r => r.rule).filter(Boolean);
+      setSharedRules(prev => [...prev, ...newSharedRules]);
+      messageApi.success(message('share.save.action'));
+    } catch (e) {
+      messageApi.error(e instanceof Error ? e.message : 'Share failed');
+    } finally {
+      setShareLoading(null);
+    }
+  };
 
   return (
     <div>
@@ -588,21 +782,26 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         </Form.List>
         <Flex gap="middle" justify="space-evenly" style={{ marginTop: 16 }}>
           <Button type="primary" onClick={handleSave}>
-            {message('rules.rule.create')}
+            {message('rules.rule.save')}
           </Button>
           <Button onClick={handleCancel}>{message('rules.rule.cancel')}</Button>
         </Flex>
       </Form>
       <Divider orientation="left">{message('rules.saved_rules')}</Divider>
-      {rules.length === 0 && <Typography.Text type="secondary">{message('rules.no_rules_yet')}</Typography.Text>}
-      {rules.length > 0 && (
+      {allRules.length === 0 && <Typography.Text type="secondary">{message('rules.no_rules_yet')}</Typography.Text>}
+      {allRules.length > 0 && (
         <Collapse
           accordion
-          items={[...rules].reverse().map(rule => ({
+          items={[...allRules].map(rule => ({
             key: rule.id,
             label: (
               <span>
                 <Typography.Text strong>{rule.name}</Typography.Text>
+                {(rule as any).teamId && teamNameMap[(rule as any).teamId] && (
+                  <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
+                    [{teamNameMap[(rule as any).teamId]}]
+                  </Typography.Text>
+                )}
                 {rule.description && (
                   <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
                     {rule.description}
@@ -611,7 +810,12 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
               </span>
             ),
             children: (
-              <>
+              <div style={{
+                border: sharedRules.some(r => r.id === rule.id) ? '2px solid #1890ff' : undefined,
+                background: sharedRules.some(r => r.id === rule.id) ? '#e6f7ff' : undefined,
+                borderRadius: 6,
+                padding: 8,
+              }}>
                 <div style={{ margin: '8px 0' }}>
                   <b>{message('rules.divider.when')}:</b> {(Array.isArray(rule.conditions) ? rule.conditions : []).map((c, i) => {
                     const condStr = `${c.field} ${c.operator} "${c.value}"`;
@@ -624,10 +828,26 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                   <b>{message('rules.divider.then')}:</b> {(Array.isArray(rule.actions) ? rule.actions : []).map(a => `${a.type} = ${a.value}`).join(' AND ')}
                 </div>
                 <Space>
+                  {/* Only show share button for personal rules (not already shared) */}
+                  {!sharedRules.some(r => r.id === rule.id) && (
+                    <Button size="small" loading={shareLoading === rule.id} onClick={() => handleShareWithTeam(rule)}>{message('rules.share.with.team')}</Button>
+                  )}
                   <Button size="small" onClick={() => handleEdit(rule)}>{message('rules.rule.edit')}</Button>
-                  <Button size="small" danger onClick={() => handleDelete(rule.id)}>{message('rules.rule.delete')}</Button>
+                  {sharedRules.some(r => r.id === rule.id) ? (
+                    <Popconfirm
+                      title={message('rules.rule.delete.confirm.shared')}
+                      description={message('rules.rule.delete.confirm.shared.description')}
+                      onConfirm={() => handleDelete(rule.id, (rule as any).teamId)}
+                      okText={message('share.yes.action')}
+                      cancelText={message('share.cancel.action')}
+                    >
+                      <Button size="small" danger>{message('rules.rule.delete')}</Button>
+                    </Popconfirm>
+                  ) : (
+                    <Button size="small" danger onClick={() => handleDelete(rule.id)}>{message('rules.rule.delete')}</Button>
+                  )}
                 </Space>
-              </>
+              </div>
             ),
           }))}
         />
