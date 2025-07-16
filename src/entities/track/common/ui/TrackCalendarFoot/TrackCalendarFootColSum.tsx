@@ -8,12 +8,10 @@ import { Text } from 'components';
 import { useMessage } from 'entities/locale/lib/hooks';
 import styles from './TrackCalendarFootColSum.module.scss';
 
-
 interface ITrackCalendarFootColSumProps {
   tracks: TTrack[];
   range: string[];
 }
-
 
 export const TrackCalendarFootColSum = memo(({ tracks = [], range }: ITrackCalendarFootColSumProps) => {
   const message = useMessage();
@@ -41,13 +39,14 @@ export const TrackCalendarFootColSum = memo(({ tracks = [], range }: ITrackCalen
   const isOvertracked = Boolean(tracks.length) && trackedMs > expectedMs;
 
   return (
-    <th className={styles.col}
+    <th
+      className={styles.col}
       data-is-exact-tracked={isExactTracked}
       data-is-undertracked={isUndertracked}
       data-is-over-tracked={isOvertracked}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 120 }}>
-        <Text fs={13} fw={800} aria-label="total sum" >
+        <Text fs={13} fw={800} aria-label="total sum">
           <DurationFormat duration={msToBusinessDurationData(trackedMs)} />
         </Text>
         <span style={{ color: '#888', fontSize: 10 }}>
@@ -58,12 +57,7 @@ export const TrackCalendarFootColSum = memo(({ tracks = [], range }: ITrackCalen
           )}
         </span>
         {percent > 0 && (
-          <Progress
-            percent={percent}
-            size="small"
-            showInfo={true}
-            strokeColor={percent < 50 ? 'red' : undefined}
-          />
+          <Progress percent={percent} size="small" showInfo strokeColor={percent < 50 ? 'red' : undefined} />
         )}
       </div>
     </th>

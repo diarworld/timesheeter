@@ -28,7 +28,6 @@ type TProps = {
   issueSortingKey: string;
   _isLoading: boolean;
   isTrackCreateLoading: boolean;
-  _isTrackDeleteLoading: boolean;
   renderTrackCalendarRowConnected(
     props: Omit<TTrackCalendarRowProps, 'tracks' | 'date2IssueTracks' | 'updateTrack' | 'getIssueUrl'>,
   ): React.ReactNode;

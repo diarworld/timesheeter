@@ -1,16 +1,15 @@
 import { Text } from 'components';
-import { useMessage } from 'entities/locale/lib/hooks';
+import { useMessage, useCurrentLocale } from 'entities/locale/lib/hooks';
 import calendar from 'entities/track/yandex/ui/YandexTimesheet/calendar.json';
 import { Popover } from 'antd';
 import { isRuLocale } from 'entities/locale/lib/helpers';
-import { useCurrentLocale } from 'entities/locale/lib/hooks';
 import { DATE_FORMAT_MONTH } from 'features/date/lib/constants';
 import { DateWrapper, TDate } from 'features/date/lib/DateWrapper';
 import React, { useMemo } from 'react';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import { clsx } from 'clsx';
-import styles from './TrackCalendarColHead.module.scss';
 import { getExpectedHoursForDay } from 'entities/track/common/lib/hooks/use-expected-hours-for-day';
+import styles from './TrackCalendarColHead.module.scss';
 
 type TProps = {
   date: string;

@@ -19,10 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
     // Return teams with id, name, and members
-    const teams = user.teams.map(team => ({
+    const teams = user.teams.map((team: any) => ({
       id: team.id,
       name: team.name,
-      members: team.members.map(m => ({ id: m.id, email: m.email, display: m.display, position: m.position })),
+      members: team.members.map((m: any) => ({ id: m.id, email: m.email, display: m.display, position: m.position })),
     }));
     return res.json({ teams });
   }
@@ -84,9 +84,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Try to find a team with exactly these members (by email)
   const allTeams = await prisma.team.findMany({ include: { members: true } });
-  let foundTeam = allTeams.find(team => {
-    const teamEmails = team.members.map(m => m.email).sort();
-    return teamEmails.length === emails.length && teamEmails.every((e, i) => e === emails[i]);
+  let foundTeam = allTeams.find((team: any) => {
+    const teamEmails = team.members.map((m: any) => m.email).sort();
+    return teamEmails.length === emails.length && teamEmails.every((e: any, i: number) => e === emails[i]);
   });
 
   if (foundTeam) {

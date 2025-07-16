@@ -1,5 +1,5 @@
-import { Button, Form, Input, Flex } from 'antd';
-import { message as antMessage } from 'antd';
+import { Button, Form, Input, Flex, message as antMessage } from 'antd';
+
 import { useMessage } from 'entities/locale/lib/hooks';
 import React, { FC, useCallback, useEffect } from 'react';
 import { useAppDispatch } from 'shared/lib/hooks';
@@ -42,18 +42,15 @@ export const LdapLoginFormManage: FC = () => {
           // Handle authentication error
           console.error('EWS authentication failed:', result.message);
           antMessage.error(
-            result.message
-              ? `${message('ldap.auth.error')}: ${result.message}`
-              : message('ldap.auth.error')
+            result.message ? `${message('ldap.auth.error')}: ${result.message}` : message('ldap.auth.error'),
           );
         }
       } catch (error) {
         console.error('EWS authentication error:', error);
-        antMessage.error(message('ldap.auth.error')
-        );
+        antMessage.error(message('ldap.auth.error'));
       }
     },
-    [dispatch, authenticateEws],
+    [dispatch, authenticateEws, message],
   );
 
   // Set initial form values from localStorage

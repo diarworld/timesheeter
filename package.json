@@ -36,7 +36,8 @@
     "react-intl": "^6.5.5",
     "react-is": "^18.2.0",
     "react-redux": "^9.0.4",
-    "react-use": "^17.4.2"
+    "react-use": "^17.4.2",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.19.6",

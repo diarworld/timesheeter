@@ -9,10 +9,7 @@ const authenticateEwsMock = jest.fn(() => ({
   unwrap: () => Promise.resolve({ success: true }),
 }));
 jest.mock('entities/track/common/model/ews-api', () => ({
-  useAuthenticateEwsMutation: () => [
-    authenticateEwsMock,
-    { isLoading: false },
-  ],
+  useAuthenticateEwsMutation: () => [authenticateEwsMock, { isLoading: false }],
 }));
 
 // Mock the message hook
@@ -44,14 +41,12 @@ const renderWithProvider = (component: React.ReactElement) => {
 
 describe('LdapLoginFormManage', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue(
-      JSON.stringify({ username: 'test@example.com' })
-    );
+    localStorageMock.getItem.mockReturnValue(JSON.stringify({ username: 'test@example.com' }));
     localStorageMock.setItem.mockClear();
   });
 
   it('should dispatch setHasLdapCredentials when authentication succeeds', async () => {
-    const { getByText, getByLabelText, container } = renderWithProvider(<LdapLoginFormManage />);
+    const { getByLabelText, container } = renderWithProvider(<LdapLoginFormManage />);
 
     const passwordInput = getByLabelText('ldap.auth.password');
     fireEvent.change(passwordInput, { target: { value: 'testpassword' } });

@@ -16,7 +16,6 @@ import { DATE_FORMAT_MONTH } from 'features/date/lib/constants';
 import clsx from 'clsx';
 import { Message } from 'entities/locale/ui/Message';
 import { ExportOutlined } from '@ant-design/icons';
-import calendar from './calendar.json';
 import { getExpectedHoursForDay } from 'entities/track/common/lib/hooks/use-expected-hours-for-day';
 
 import styles from './ReportsTable.module.scss';
