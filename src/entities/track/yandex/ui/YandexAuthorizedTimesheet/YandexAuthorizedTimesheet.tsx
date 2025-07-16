@@ -25,7 +25,21 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
   const dispatch = useAppDispatch();
 
   const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
-
+  useEffect(() => {
+    if (self) {
+      // Call your backend API to upsert the user
+      fetch('/api/upsert-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: self.uid.toString(),
+          email: self.email,
+          display: self.display,
+          position: self.position,
+        }),
+      });
+    }
+  }, [self]);
   let team: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
   // Sort by display field (case-insensitive)
   team = team

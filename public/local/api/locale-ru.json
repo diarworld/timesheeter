@@ -211,7 +211,7 @@
   "rules.add.action": "Добавить действие",
   "rules.rule.name": "Название правила",
   "rules.rule.description": "Описание правила",
-  "rules.rule.create": "Создать",
+  "rules.rule.save": "Сохранить",
   "rules.rule.cancel": "Отмена",
   "rules.rule.delete": "Удалить",
   "rules.rule.edit": "Редактировать",
@@ -234,5 +234,9 @@
   "rules.ai.generate.placeholder": "Например: Пропускать встречи с Иваном Петровым, Установить задачу LMW-123 для встреч по созданию AI ассистентов",
   "rules.ai.generate.submit": "Сгенерировать правило",
   "rules.ai.generate.error": "Не удалось сгенерировать правило. Пожалуйста, попробуйте еще раз.",
-  "rules.ai.generate.usage": "Использовано токенов: {total_tokens}, стоимость запроса: {cost} ₽"
+  "rules.ai.generate.usage": "Использовано токенов: {total_tokens}, стоимость запроса: {cost} ₽",
+  "rules.rule.delete.confirm.shared": "Вы уверены?",
+  "rules.rule.delete.confirm.shared.description": "Это действие удалит правило для всей команды!",
+  "rules.current.user.error": "Текущий пользователь не найден",
+  "rules.share.with.team": "Сделать общим для команды"
 }

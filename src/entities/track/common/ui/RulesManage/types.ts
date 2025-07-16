@@ -16,4 +16,9 @@ export type TRule = {
   description: string;
   conditions: TCondition[];
   actions: TAction[];
+  shared: boolean;
+  teamId: string;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
 };

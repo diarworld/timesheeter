@@ -1,0 +1,48 @@
+// Prisma schema for team-based rule sharing
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  email     String   @unique
+  display   String?
+  position  String?
+  teams     Team[]   @relation("TeamMembers")
+  createdRules Rule[] @relation("CreatedRules")
+  createdTeams Team[] @relation("CreatedTeams")
+  created   DateTime @default(now())
+  lastLogin DateTime @default(now())
+  login_count Int    @default(0)
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  members   User[]   @relation("TeamMembers")
+  rules     Rule[]   @relation("TeamRules")
+  creator   User?    @relation("CreatedTeams", fields: [creatorId], references: [id])
+  creatorId String?
+}
+
+model Rule {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  conditions Json
+  actions    Json
+  shared     Boolean @default(false)
+  team       Team?   @relation("TeamRules", fields: [teamId], references: [id])
+  teamId     String?
+  creator    User?   @relation("CreatedRules", fields: [creatorId], references: [id])
+  creatorId  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+} 
