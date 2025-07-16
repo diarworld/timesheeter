@@ -34,6 +34,8 @@ const getUserIssuesQuery = ({
   );
 
   const assigneeParam = new YandexQParam('Assignee', String(user));
+  const modifierParam = new YandexQParam('Modifier', String(user));
+  const userParam = new QLogic.OR(assigneeParam, modifierParam);
 
   const createdParam = new QLogic.AND(
     new YandexQParam('Created', formattedTo, '<='),
@@ -42,11 +44,12 @@ const getUserIssuesQuery = ({
   const updatedParam = new QLogic.AND(
     new YandexQParam('Updated', formattedFrom, '>='),
     new YandexQParam('Updated', formattedTo, '<='),
+    modifierParam,
   );
 
   const periodParam = new QLogic.OR(createdParam, updatedParam);
 
-  const userIssuesForPeriodParam = new QLogic.AND(assigneeParam, periodParam);
+  const userIssuesForPeriodParam = new QLogic.AND(userParam, periodParam);
 
   const keysParam = new YandexQParam('Key', includeIssues);
 
