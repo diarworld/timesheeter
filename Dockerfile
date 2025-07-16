@@ -34,9 +34,10 @@ COPY --from=build /build/public ./public
 COPY --from=build /build/node_modules ./node_modules
 COPY --from=build /build/package.json ./package.json
 COPY --from=build /build/entrypoint.sh ./entrypoint.sh
-
+COPY --from=build /build/prisma ./prisma
 RUN chmod +x ./entrypoint.sh
 
+RUN npx prisma generate --schema=./prisma/schema.prisma
 FROM application AS development
 
 EXPOSE 3000
