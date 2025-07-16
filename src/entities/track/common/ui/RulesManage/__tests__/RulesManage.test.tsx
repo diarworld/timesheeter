@@ -1,9 +1,8 @@
-import { fireEvent, render, waitFor, act } from '@testing-library/react';
+import { fireEvent, render, waitFor, act, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { track } from 'entities/track/common/model/reducers';
 import { RulesManage } from '../RulesManage';
-import { within } from '@testing-library/react';
 
 // Mock the EWS API hook
 jest.mock('entities/track/common/model/ews-api', () => ({
@@ -59,9 +58,11 @@ describe('RulesManage', () => {
       type: 'ldap',
       name: 'Mock LDAP',
       config: {},
-    } as any;
+    } as unknown as any;
 
-    const { getByText, getByPlaceholderText, getAllByRole, findByText } = renderWithProvider(<RulesManage tracker={mockTracker} />);
+    const { getByText, getByPlaceholderText, getAllByRole, findByText } = renderWithProvider(
+      <RulesManage tracker={mockTracker} />,
+    );
 
     // Fill in the rule name
     await act(async () => {
@@ -106,23 +107,26 @@ describe('RulesManage', () => {
     // Wait for operator options to appear
     await waitFor(() => {
       const operatorOptions = Array.from(document.body.querySelectorAll('.ant-select-item-option')).filter(
-        el => el.textContent && (
-          el.textContent.toLowerCase().includes('contain') ||
-          el.textContent.toLowerCase().includes('equal') ||
-          el.textContent.toLowerCase().includes('not')
-        )
+        (el) =>
+          el.textContent &&
+          (el.textContent.toLowerCase().includes('contain') ||
+            el.textContent.toLowerCase().includes('equal') ||
+            el.textContent.toLowerCase().includes('not')),
       );
       if (operatorOptions.length === 0) {
-        console.log('Available operator options:', Array.from(document.body.querySelectorAll('.ant-select-item-option')).map(el => el.textContent));
+        // console.log(
+        //   'Available operator options:',
+        //   Array.from(document.body.querySelectorAll('.ant-select-item-option')).map((el) => el.textContent),
+        // );
         throw new Error('Operator options not found');
       }
     });
     const operatorOptions = Array.from(document.body.querySelectorAll('.ant-select-item-option')).filter(
-      el => el.textContent && (
-        el.textContent.toLowerCase().includes('contain') ||
-        el.textContent.toLowerCase().includes('equal') ||
-        el.textContent.toLowerCase().includes('not')
-      )
+      (el) =>
+        el.textContent &&
+        (el.textContent.toLowerCase().includes('contain') ||
+          el.textContent.toLowerCase().includes('equal') ||
+          el.textContent.toLowerCase().includes('not')),
     );
     if (operatorOptions.length === 0) throw new Error('Operator options not found');
     await act(async () => {
@@ -161,10 +165,7 @@ describe('RulesManage', () => {
     });
 
     await waitFor(() => {
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'timesheeterRules',
-        expect.stringContaining('Test Rule')
-      );
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('timesheeterRules', expect.stringContaining('Test Rule'));
     });
   });
 });

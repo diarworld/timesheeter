@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { id: teamId },
         include: { members: true, rules: true },
       });
-      if (!team || !team.members.some(m => m.id === userId)) {
+      if (!team || !team.members.some((m: { id: any; }) => m.id === userId)) {
         return res.status(403).json({ error: 'Forbidden' });
       }
       return res.json({ rules: team.rules });
@@ -35,8 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       if (!user) return res.status(404).json({ error: 'User not found' });
       // Flatten and deduplicate rules by id
-      const allRules = user.teams.flatMap(team => team.rules);
-      const uniqueRules = Array.from(new Map(allRules.map(r => [r.id, r])).values());
+      const allRules = user.teams.flatMap((team: { rules: any; }) => team.rules);
+      const uniqueRules = Array.from(new Map(allRules.map((r: { id: any; }) => [r.id, r])).values());
       return res.json({ rules: uniqueRules });
     }
   }
@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: teamId },
       include: { members: true },
     });
-    if (!team || !team.members.some(m => m.id === userId)) {
+    if (!team || !team.members.some((m: { id: any; }) => m.id === userId)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     // Ensure creator exists
@@ -86,7 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: teamId },
       include: { members: true },
     });
-    if (!team || !team.members.some(m => m.id === userId)) {
+    if (!team || !team.members.some((m: { id: any; }) => m.id === userId)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     const updated = await prisma.rule.update({
@@ -116,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: teamId },
       include: { members: true },
     });
-    if (!team || !team.members.some(m => m.id === userId)) {
+    if (!team || !team.members.some((m: { id: any; }) => m.id === userId)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     await prisma.rule.delete({ where: { id } });

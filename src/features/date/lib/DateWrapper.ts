@@ -75,7 +75,7 @@ export class DateWrapper {
     const dayStr = date.format('YYYY-MM-DD');
     return day !== 0 && day !== 6 && (calendar.holidays.includes(dayStr) || calendar.nowork.includes(dayStr));
   }
-  
+
   static isPreholiday(date: TDate) {
     const dayStr = date.format('YYYY-MM-DD');
     return calendar.preholidays.includes(dayStr);

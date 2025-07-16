@@ -1,4 +1,16 @@
-import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, message as antMessage, Popover, Badge } from 'antd';
+import {
+  Modal,
+  Table,
+  Space,
+  Typography,
+  TableProps,
+  Flex,
+  Button,
+  Input,
+  message as antMessage,
+  Popover,
+  Badge,
+} from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { IEwsCalendarResponse, IMeetingOrganizer } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
@@ -29,13 +41,28 @@ interface IDataType {
   organizer?: IMeetingOrganizer;
 }
 
-
 interface ICalendarExportModalProps {
   visible: boolean;
   onHidden: () => void;
   data: IEwsCalendarResponse | null;
   loading: boolean;
   tracker: TTrackerConfig;
+}
+
+// Define types for rule and action
+interface IRuleAction {
+  type: string;
+  value: string;
+}
+interface ITimesheeterRule {
+  conditions: Array<unknown>; // Replace with a more specific type if known
+  actions: IRuleAction[];
+}
+interface ITimesheeterRuleCondition {
+  field: string;
+  operator: string;
+  value: string;
+  logic: string;
 }
 
 export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
@@ -78,12 +105,8 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   const createTrack = isJiraTrackerCfg(tracker) ? jiraTrackHook.createTrack : yandexTrackHook.createTrack;
 
   // handleIssueKeyChange is not used in this component but kept for interface compatibility
-  const handleIssueKeyChange = (key: string, value: string) => {
-    setIssueKeys((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  // 1. Remove unused handleIssueKeyChange
+  // (function is not used, so remove it)
 
   const validateIssueKey = (value: string) => {
     const regex = /^[A-Za-z]+-[0-9]+$/;
@@ -95,6 +118,9 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       key: meeting.id ? String(meeting.id) : String(index),
       ...meeting,
     })) || [];
+
+  // Add state for filtered table data
+  const [filteredTableData, setFilteredTableData] = useState<IDataType[]>(tableData);
 
   // Helper: get rules from localStorage
   function getTimesheeterRules() {
@@ -108,11 +134,11 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   }
 
   // Helper: check if a meeting matches a rule (case-insensitive)
-  function meetingMatchesRule(meeting: IDataType, rule: any) {
+  function meetingMatchesRule(meeting: IDataType, rule: ITimesheeterRule) {
     if (!rule.conditions || rule.conditions.length === 0) return false;
     let result = null;
-    for (let i = 0; i < rule.conditions.length; i++) {
-      const cond = rule.conditions[i];
+    for (let i = 0; i < rule.conditions.length; i += 1) {
+      const cond = rule.conditions[i] as ITimesheeterRuleCondition;
       let condResult = false;
       const op = cond.operator;
       const val = cond.value?.toString() || '';
@@ -125,10 +151,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
           else if (op === '<') condResult = num < cmp;
           else if (op === '=') condResult = num === cmp;
         } else if (op === 'includes' || op === 'not_includes') {
-          const allEmails = [
-            ...(meeting.requiredAttendees || []),
-            ...(meeting.optionalAttendees || [])
-          ];
+          const allEmails = [...(meeting.requiredAttendees || []), ...(meeting.optionalAttendees || [])];
           if (op === 'includes') condResult = allEmails.includes(val);
           else condResult = !allEmails.includes(val);
         }
@@ -149,10 +172,21 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       } else if (cond.field === 'organizer') {
         const fieldName = meeting.organizer?.name || '';
         const fieldEmail = meeting.organizer?.address || '';
-        if (op === 'is') condResult = fieldName.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0 || fieldEmail.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0;
-        else if (op === 'contains') condResult = fieldName.toLowerCase().includes(val.toLowerCase()) || fieldEmail.toLowerCase().includes(val.toLowerCase());
-        else if (op === 'not_contains') condResult = !fieldName.toLowerCase().includes(val.toLowerCase()) && !fieldEmail.toLowerCase().includes(val.toLowerCase());
-        else if (op === 'is_not') condResult = fieldName.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0 && fieldEmail.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0;
+        if (op === 'is')
+          condResult =
+            fieldName.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0 ||
+            fieldEmail.localeCompare(val, undefined, { sensitivity: 'accent' }) === 0;
+        else if (op === 'contains')
+          condResult =
+            fieldName.toLowerCase().includes(val.toLowerCase()) || fieldEmail.toLowerCase().includes(val.toLowerCase());
+        else if (op === 'not_contains')
+          condResult =
+            !fieldName.toLowerCase().includes(val.toLowerCase()) &&
+            !fieldEmail.toLowerCase().includes(val.toLowerCase());
+        else if (op === 'is_not')
+          condResult =
+            fieldName.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0 &&
+            fieldEmail.localeCompare(val, undefined, { sensitivity: 'accent' }) !== 0;
       }
 
       // Logic
@@ -169,24 +203,26 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
 
   // Apply rules to all meetings and set issueKeys
   const applyRulesToAll = () => {
-    const rules = getTimesheeterRules();
+    const rules: ITimesheeterRule[] = getTimesheeterRules();
     const newIssueKeys: Record<string, string> = {};
     const newIssueDurations: Record<string, number> = {};
-    const filteredTableData: IDataType[] = [];
+    const newFilteredTableData: IDataType[] = [];
     tableData.forEach((record: IDataType) => {
       let matchedKey = defaultIssueKey;
       let newDuration = record.duration;
       let skip = false;
       for (const rule of rules) {
-        if (!rule.actions) continue;
+        if (!rule.actions) {
+          continue;
+        }
         if (meetingMatchesRule(record, rule)) {
-          const skipAction = rule.actions.find((a: any) => a.type === 'skip' && a.value === 'true');
+          const skipAction = rule.actions.find((a: IRuleAction) => a.type === 'skip' && a.value === 'true');
           if (skipAction) {
             skip = true;
             break;
           }
-          const setTaskAction = rule.actions.find((a: any) => a.type === 'set_task');
-          const setDurationAction = rule.actions.find((a: any) => a.type === 'set_duration');
+          const setTaskAction = rule.actions.find((a: IRuleAction) => a.type === 'set_task');
+          const setDurationAction = rule.actions.find((a: IRuleAction) => a.type === 'set_duration');
           if (setTaskAction) {
             matchedKey = setTaskAction.value;
           }
@@ -205,16 +241,13 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       if (!skip) {
         newIssueKeys[record.key] = matchedKey;
         newIssueDurations[record.key] = newDuration;
-        filteredTableData.push(record);
+        newFilteredTableData.push(record);
       }
     });
     setIssueKeys(newIssueKeys);
     setIssueDurations(newIssueDurations);
-    setFilteredTableData(filteredTableData);
+    setFilteredTableData(newFilteredTableData);
   };
-
-  // Add state for filtered table data
-  const [filteredTableData, setFilteredTableData] = useState<IDataType[]>(tableData);
 
   // Save default issue key to localStorage whenever it changes
   const handleDefaultIssueKeyChange = (value: string) => {
@@ -273,7 +306,9 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
 
     setIsImporting(true);
     try {
-      const selectedRows = filteredTableData.filter((record: IDataType) => selectedRowKeys.map(String).includes(record.key));
+      const selectedRows = filteredTableData.filter((record: IDataType) =>
+        selectedRowKeys.map(String).includes(record.key),
+      );
       const validRows = selectedRows.filter((row) => {
         const issueKey = issueKeys[String(row.key)] || defaultIssueKey;
         const duration = issueDurations[String(row.key)] || row.duration;
@@ -483,10 +518,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       dataIndex: 'organizer',
       key: 'organizer',
       render: (organizer: IMeetingOrganizer, record: IDataType) => {
-        const attendees = [
-          ...(record.requiredAttendees || []),
-          ...(record.optionalAttendees || [])
-        ];
+        const attendees = [...(record.requiredAttendees || []), ...(record.optionalAttendees || [])];
         // Remove duplicates
         const uniqueAttendees = Array.from(new Set(attendees));
         const showAttendees = uniqueAttendees.slice(0, 10);
@@ -498,7 +530,12 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
               content={
                 <div style={{ maxWidth: 300, maxHeight: 350, overflowY: 'auto' }}>
                   {showAttendees.map((email) => (
-                    <Text key={email} style={{ display: 'block', marginBottom: 4, fontFamily: 'monospace', fontSize: 12 }}>{email}</Text>
+                    <Text
+                      key={email}
+                      style={{ display: 'block', marginBottom: 4, fontFamily: 'monospace', fontSize: 12 }}
+                    >
+                      {email}
+                    </Text>
                   ))}
                   {hasMore && <Text style={{ display: 'block', fontFamily: 'monospace', fontSize: 12 }}>...</Text>}
                 </div>
@@ -527,8 +564,8 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       key: 'duration',
       render: (minutes: number, record: IDataType) => (
         <Text>
-          {message('date.hours.short', { value: (Math.floor((issueDurations[String(record.key)] || minutes) / 60)) })}{' '}
-          {message('date.minutes.short', { value: (Math.floor((issueDurations[String(record.key)] || minutes) % 60)) })}
+          {message('date.hours.short', { value: Math.floor((issueDurations[String(record.key)] || minutes) / 60) })}{' '}
+          {message('date.minutes.short', { value: Math.floor((issueDurations[String(record.key)] || minutes) % 60) })}
         </Text>
       ),
     },

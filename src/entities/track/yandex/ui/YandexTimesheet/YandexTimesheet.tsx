@@ -198,7 +198,6 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
           unpinIssue={unpinIssue}
           isTrackCreateLoading={isTrackCreateLoading}
           createTrack={createTrack}
-          _isTrackDeleteLoading={isTrackDeleteLoading}
           deleteTrack={deleteTrack}
           renderTrackCalendarRowConnected={(props) => (
             <YandexTrackCalendarRowConnected

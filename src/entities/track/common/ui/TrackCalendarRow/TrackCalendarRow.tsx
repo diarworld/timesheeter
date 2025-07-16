@@ -115,40 +115,46 @@ export const TrackCalendarRow = memo(
 
           {/* New columns for domains, productteams, products */}
           <td className={styles.domainsCol}>
-            {'domains' in issue && Array.isArray(issue.domains) && issue.domains.length > 0 ? (
-              issue.domains.map((domain, idx) => {
-                const [firstPart] = domain.split('—');
-                return (
-                  <Tooltip key={idx} placement="top" title={domain}>
-                    <Button type="text" size="small">{firstPart.trim()}</Button>
-                  </Tooltip>
-                );
-              })
-            ) : null}
+            {'domains' in issue && Array.isArray(issue.domains) && issue.domains.length > 0
+              ? issue.domains.map((domain, idx) => {
+                  const [firstPart] = domain.split('—');
+                  return (
+                    <Tooltip key={domain} placement="top" title={domain}>
+                      <Button type="text" size="small">
+                        {firstPart.trim()}
+                      </Button>
+                    </Tooltip>
+                  );
+                })
+              : null}
           </td>
           <td className={styles.productTeamsCol}>
-            {'productteams' in issue && Array.isArray(issue.productteams) && issue.productteams.length > 0 ? (
-              issue.productteams.map((team, idx) => {
-                const [firstPart] = team.split('—');
-                return (
-                  <Tooltip key={idx} placement="top" title={team}>
-                    <Button type="text" size="small">{firstPart.trim()}</Button>
-                  </Tooltip>
-                );
-              })
-            ) : null}
+            {'productteams' in issue && Array.isArray(issue.productteams) && issue.productteams.length > 0
+              ? issue.productteams.map((team, idx) => {
+                  const [firstPart] = team.split('—');
+                  return (
+                    <Tooltip key={team} placement="top" title={team}>
+                      <Button type="text" size="small">
+                        {firstPart.trim()}
+                      </Button>
+                    </Tooltip>
+                  );
+                })
+              : null}
           </td>
           <td className={styles.productsCol}>
-            {'products' in issue && Array.isArray(issue.products) && issue.products.length > 0 ? (
-              issue.products.map((product, idx) => {
-                const [firstPart] = product.split('—');
-                return (
-                  <Tooltip key={idx} placement="top" title={product}>
-                    <Button type="text" size="small">{firstPart.trim()}</Button>
-                  </Tooltip>
-                );
-              })
-            ) : null}
+            {'products' in issue && Array.isArray(issue.products) && issue.products.length > 0
+              ? issue.products.map((product, idx) => {
+                  const [firstPart] = product.split('—');
+                  return (
+                    <Tooltip key={product} placement="top" title={product}>
+                      <Button type="text" size="small">
+                        {firstPart.trim()}
+                      </Button>
+                    </Tooltip>
+                  );
+                })
+              : null}
           </td>
 
           {range.map((date) => (

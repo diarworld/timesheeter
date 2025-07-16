@@ -1,5 +1,5 @@
 # Path to your .env file
-$envFilePath = ".env.local" 
+$envFilePath = ".env" 
 
 # Read the file content
 $envContent = Get-Content $envFilePath

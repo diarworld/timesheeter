@@ -1,15 +1,27 @@
-import { Button, Form, Input, Flex, Select, Space, Divider, Typography, message as antdMessage, Switch, Collapse, Popconfirm } from 'antd';
+import {
+  Button,
+  Form,
+  Input,
+  Flex,
+  Select,
+  Space,
+  Divider,
+  Typography,
+  message as antdMessage,
+  Switch,
+  Collapse,
+  Popconfirm,
+} from 'antd';
 import Icon, { PlusOutlined, MinusCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useMessage } from 'entities/locale/lib/hooks';
 import React, { FC, useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { TRule } from './types';
-import { validateHumanReadableDuration } from '../../lib/validate-human-readable-duration';
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
-import { TTrackerConfig } from 'entities/tracker/model/types';
-import { isYandexTrackerCfg } from 'entities/tracker/model/types';
+import { TTrackerConfig, TYandexTrackerConfig, isYandexTrackerCfg } from 'entities/tracker/model/types';
 import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
 import { TYandexUser } from 'entities/user/yandex/model/types';
+import { validateHumanReadableDuration } from '../../lib/validate-human-readable-duration';
+import { ITimesheeterRuleCondition, TRule } from './types';
 
 const getCurrentUserFromTeam = () => {
   try {
@@ -17,15 +29,14 @@ const getCurrentUserFromTeam = () => {
     const team = JSON.parse(localStorage.getItem('team') || '[]');
     if (!ldapCredentials.username || !Array.isArray(team)) return null;
     // Find by login (username) or email
-    return team.find((user: any) =>
-      user.email === ldapCredentials.username || user.login === ldapCredentials.username
+    return team.find(
+      (user: TYandexUser) => user.email === ldapCredentials.username || user.login === ldapCredentials.username,
     );
   } catch (e) {
-    console.log("e: " + e);
+    console.error('Error getting current user from team:', e);
     return null;
   }
 };
-
 
 export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const message = useMessage();
@@ -36,10 +47,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiForm] = Form.useForm();
   const [sharedRules, setSharedRules] = useState<TRule[]>([]);
-  const [teamId, setTeamId] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState<string | null>(null);
-  const [userData, setUserData] = useState<TYandexUser | undefined>(undefined);
-  const [userTeams, setUserTeams] = useState<{ id: string, name: string, members: any[] }[]>([]);
+  const [userTeams, setUserTeams] = useState<{ id: string; name: string; members: TYandexUser[] }[]>([]);
   const [teamNameMap, setTeamNameMap] = useState<{ [id: string]: string }>({});
 
   // Fetch all teams for the user and build teamId -> teamName map
@@ -55,10 +64,14 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           const data = await res.json();
           if (Array.isArray(data.teams)) {
             setUserTeams(data.teams);
-            setTeamNameMap(Object.fromEntries((data.teams as any[]).map((team: any) => [team.id, team.name])));
+            setTeamNameMap(
+              Object.fromEntries((data.teams as { id: string; name: string }[]).map((team) => [team.id, team.name])),
+            );
           }
         }
-      } catch {}
+      } catch (e) {
+        console.error('Error fetching teams:', e);
+      }
     };
     fetchTeams();
   }, []);
@@ -76,7 +89,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           const data = await res.json();
           setSharedRules(Array.isArray(data.rules) ? data.rules : []);
         }
-      } catch {}
+      } catch (e) {
+        console.error('Error fetching shared rules:', e);
+      }
     };
     fetchRules();
   }, []);
@@ -139,115 +154,103 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         }
       } else {
         // Add default rule if no rules in storage
-        const defaultRules = [{
-          id: uuidv4(),
-          name: 'Отпуск',
-          description: 'Правило по-умолчанию для отпуска',
-          conditions: [
-            { field: 'summary', operator: 'equals', value: 'Отпуск', logic: 'AND' as 'AND' }
-          ],
-          actions: [
-            { type: 'set_task', value: 'PM-2' }
-          ]
-        },
-        {
-          id: uuidv4(),
-          name: 'Обучение',
-          description: 'Правило по-умолчанию для прохождения и проведения обучения',
-          conditions: [
-            { field: 'summary', operator: 'contains', value: 'DE Talks', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'BI Talks', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Meetup', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Обучение', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Тренинг', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Training', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Community', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Meeting', logic: 'OR' as 'OR' },
-          ],
-          actions: [
-            { type: 'set_task', value: 'PM-3' }
-          ]
-        },
-        {
-          id: uuidv4(),
-          name: 'Общие встречи',
-          description: 'Правило по-умолчанию для общих встреч',
-          conditions: [
-            { field: 'participants', operator: '>', value: '100', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'ml.lmtech@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'ml.all.co@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'ml.all.dir@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'allrd@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'ml.co@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'ml.com@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'Products@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'participants', operator: 'includes', value: 'ml.DevCom-Users@lemanapro.ru', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Coffee talk', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Доклады и Докладчики', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Domain Review', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'ТДК', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'TDK', logic: 'OR' as 'OR' }
-          ],
-          actions: [
-            { type: 'set_task', value: 'PM-4' }
-          ]
-        },
-        {
-          id: uuidv4(),
-          name: 'Работа с людьми',
-          description: 'Правило по-умолчанию для работы с людьми (собеседования, интервью, БОРДы, Биланы)',
-          conditions: [
-            { field: 'summary', operator: 'contains', value: 'МежБОРД', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'БОРД', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Билан', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'МежБилан', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Собес', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Interview', logic: 'OR' as 'OR' },
-            { field: 'summary', operator: 'contains', value: 'Интервью', logic: 'OR' as 'OR' },
-          ],
-          actions: [
-            { type: 'set_task', value: 'PM-11' }
-          ]
-        },
-        {
-          id: uuidv4(),
-          name: 'Округление',
-          description: 'Правило по-умолчанию для округления длительности встречи до 30 мин',
-          conditions: [
-            { field: 'duration', operator: '<', value: '30м', logic: 'AND' as 'AND' },
-          ],
-          actions: [
-            { type: 'set_duration', value: '30м' }
-          ]
-        },
-        {
-          id: uuidv4(),
-          name: 'Округление',
-          description: 'Правило по-умолчанию для округления длительности встречи до 1 часа',
-          conditions: [
-            { field: 'duration', operator: '<', value: '1ч', logic: 'AND' as 'AND' },
-          ],
-          actions: [
-            { type: 'set_duration', value: '1ч' }
-          ]
-        },
-        {
-          id: uuidv4(),
-          name: 'Пропуск',
-          description: 'Правило по-умолчанию для пропуска встреч без участников',
-          conditions: [
-            { field: 'participants', operator: '<', value: '1', logic: 'AND' as 'AND' },
-            { field: 'summary', operator: 'not_contains', value: 'Отпуск', logic: 'AND' as 'AND' }
-          ],
-          actions: [
-            { type: 'skip', value: 'true' }
-          ]
-        },
+        const defaultRules = [
+          {
+            id: uuidv4(),
+            name: 'Отпуск',
+            description: 'Правило по-умолчанию для отпуска',
+            conditions: [{ field: 'summary', operator: 'equals', value: 'Отпуск', logic: 'AND' as const }],
+            actions: [{ type: 'set_task', value: 'PM-2' }],
+          },
+          {
+            id: uuidv4(),
+            name: 'Обучение',
+            description: 'Правило по-умолчанию для прохождения и проведения обучения',
+            conditions: [
+              { field: 'summary', operator: 'contains', value: 'DE Talks', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'BI Talks', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Meetup', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Обучение', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Тренинг', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Training', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Community', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Meeting', logic: 'OR' as const },
+            ],
+            actions: [{ type: 'set_task', value: 'PM-3' }],
+          },
+          {
+            id: uuidv4(),
+            name: 'Общие встречи',
+            description: 'Правило по-умолчанию для общих встреч',
+            conditions: [
+              { field: 'participants', operator: '>', value: '100', logic: 'OR' as const },
+              { field: 'participants', operator: 'includes', value: 'ml.lmtech@lemanapro.ru', logic: 'OR' as const },
+              { field: 'participants', operator: 'includes', value: 'ml.all.co@lemanapro.ru', logic: 'OR' as const },
+              { field: 'participants', operator: 'includes', value: 'ml.all.dir@lemanapro.ru', logic: 'OR' as const },
+              { field: 'participants', operator: 'includes', value: 'allrd@lemanapro.ru', logic: 'OR' as const },
+              { field: 'participants', operator: 'includes', value: 'ml.co@lemanapro.ru', logic: 'OR' as const },
+              { field: 'participants', operator: 'includes', value: 'ml.com@lemanapro.ru', logic: 'OR' as const },
+              { field: 'participants', operator: 'includes', value: 'Products@lemanapro.ru', logic: 'OR' as const },
+              {
+                field: 'participants',
+                operator: 'includes',
+                value: 'ml.DevCom-Users@lemanapro.ru',
+                logic: 'OR' as const,
+              },
+              { field: 'summary', operator: 'contains', value: 'Coffee talk', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Доклады и Докладчики', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Domain Review', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'ТДК', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'TDK', logic: 'OR' as const },
+            ],
+            actions: [{ type: 'set_task', value: 'PM-4' }],
+          },
+          {
+            id: uuidv4(),
+            name: 'Работа с людьми',
+            description: 'Правило по-умолчанию для работы с людьми (собеседования, интервью, БОРДы, Биланы)',
+            conditions: [
+              { field: 'summary', operator: 'contains', value: 'МежБОРД', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'БОРД', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Билан', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'МежБилан', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Собес', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Interview', logic: 'OR' as const },
+              { field: 'summary', operator: 'contains', value: 'Интервью', logic: 'OR' as const },
+            ],
+            actions: [{ type: 'set_task', value: 'PM-11' }],
+          },
+          {
+            id: uuidv4(),
+            name: 'Округление',
+            description: 'Правило по-умолчанию для округления длительности встречи до 30 мин',
+            conditions: [{ field: 'duration', operator: '<', value: '30м', logic: 'AND' as const }],
+            actions: [{ type: 'set_duration', value: '30м' }],
+          },
+          {
+            id: uuidv4(),
+            name: 'Округление',
+            description: 'Правило по-умолчанию для округления длительности встречи до 1 часа',
+            conditions: [{ field: 'duration', operator: '<', value: '1ч', logic: 'AND' as const }],
+            actions: [{ type: 'set_duration', value: '1ч' }],
+          },
+          {
+            id: uuidv4(),
+            name: 'Пропуск',
+            description: 'Правило по-умолчанию для пропуска встреч без участников',
+            conditions: [
+              { field: 'participants', operator: '<', value: '1', logic: 'AND' as const },
+              { field: 'summary', operator: 'not_contains', value: 'Отпуск', logic: 'AND' as const },
+            ],
+            actions: [{ type: 'skip', value: 'true' }],
+          },
         ];
         setRules(defaultRules as TRule[]);
         localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(defaultRules));
       }
-    } catch {}
+    } catch (e) {
+      console.error('Error loading default rules:', e);
+    }
   }, []);
 
   // If editing, set form values
@@ -272,7 +275,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         return;
       }
       // Validation: only one of each action type
-      const actionTypes = values.actions.map(a => a.type);
+      const actionTypes = values.actions.map((a) => a.type);
       const uniqueActionTypes = new Set(actionTypes);
       if (actionTypes.length !== uniqueActionTypes.size) {
         messageApi.error(message('rules.rule.error.duplicate_action_type'));
@@ -283,10 +286,10 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         id: editingRule?.id || uuidv4(),
         conditions: values.conditions || [],
         actions: values.actions || [],
-        teamId: (editingRule as any)?.teamId, // preserve teamId if present
+        teamId: (editingRule as TRule)?.teamId, // preserve teamId if present
       };
 
-      if (editingRule && sharedRules.some(r => r.id === editingRule.id)) {
+      if (editingRule && sharedRules.some((r) => r.id === editingRule.id)) {
         // Shared rule: update on server
         const currentUser = getCurrentUserFromTeam();
         if (!currentUser) {
@@ -304,9 +307,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         });
         if (res.ok) {
           const data = await res.json();
-          setSharedRules(prev =>
-            prev.map(r => (r.id === rule.id ? data.rule : r))
-          );
+          setSharedRules((prev) => prev.map((r) => (r.id === rule.id ? data.rule : r)));
           setEditingRule(null);
           form.resetFields();
           messageApi.success(message('rules.rule.saved', { name: rule.name }));
@@ -319,7 +320,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
 
       let newRules;
       if (editingRule) {
-        newRules = rules.map(r => (r.id === editingRule.id ? rule : r));
+        newRules = rules.map((r) => (r.id === editingRule.id ? rule : r));
       } else {
         newRules = [...rules, rule];
       }
@@ -329,7 +330,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       form.resetFields();
       messageApi.success(message('rules.rule.saved', { name: rule.name }));
     } catch (err) {
-      console.log('Validation error', JSON.stringify(err, null, 2));
+      // console.log('Validation error', JSON.stringify(err, null, 2));
     }
   };
 
@@ -341,12 +342,16 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const handleEdit = (rule: TRule) => {
     setEditingRule(rule);
   };
+  // Merge shared and local rules for display
+  const allRules = [
+    ...sharedRules,
+    ...rules.filter((localRule) => !sharedRules.some((sharedRule) => sharedRule.id === localRule.id)),
+  ];
 
   const handleDelete = async (id: string, teamId?: string) => {
-    const ruleName = allRules.find(r => r.id === id)?.name;
+    const ruleName = allRules.find((r) => r.id === id)?.name;
     if (teamId) {
-      if (sharedRules.some(r => r.id === id)) {
-      
+      if (sharedRules.some((r) => r.id === id)) {
         const currentUser = getCurrentUserFromTeam();
         if (!currentUser) return;
         try {
@@ -357,10 +362,10 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
               'x-user-id': currentUser?.uid?.toString() || '',
               'x-user-email': currentUser?.email || '',
             },
-            body: JSON.stringify({ id, teamId: teamId }),
+            body: JSON.stringify({ id, teamId }),
           });
           if (res.ok) {
-            setSharedRules(prev => prev.filter(r => r.id !== id));
+            setSharedRules((prev) => prev.filter((r) => r.id !== id));
             messageApi.success(message('rules.rule.deleted', { name: ruleName }));
           } else {
             const err = await res.json();
@@ -369,16 +374,13 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         } catch (e) {
           messageApi.error('Delete failed');
         }
-        return;
       }
     } else {
       // Local rule: delete from local state
-      const newRules = rules.filter(r => r.id !== id);
+      const newRules = rules.filter((r) => r.id !== id);
       setRules(newRules);
       localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(newRules));
-      messageApi.success(
-        message('rules.rule.deleted', { name: ruleName })
-      );
+      messageApi.success(message('rules.rule.deleted', { name: ruleName }));
       if (editingRule?.id === id) {
         setEditingRule(null);
         form.resetFields();
@@ -390,9 +392,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const [operatorRerenderKey, setOperatorRerenderKey] = useState(0);
 
   // Track previous conditions to detect field changes
-  const prevConditionsRef = useRef<any[]>([]);
+  const prevConditionsRef = useRef<ITimesheeterRuleCondition[]>([]);
 
-  const handleValuesChange = (changed: any, all: any) => {
+  const handleValuesChange = (changed: Partial<TRule>, all: TRule) => {
     const prevConditions = prevConditionsRef.current;
     const currentConditions = all.conditions || [];
 
@@ -402,23 +404,21 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       Array.isArray(currentConditions) &&
       prevConditions.length === currentConditions.length
     ) {
-      for (let i = 0; i < currentConditions.length; i++) {
-        if (
-          prevConditions[i] &&
-          currentConditions[i] &&
-          prevConditions[i].field !== currentConditions[i].field
-        ) {
+      for (let i = 0; i < currentConditions.length; i += 1) {
+        if (prevConditions[i] && currentConditions[i] && prevConditions[i].field !== currentConditions[i].field) {
           // Reset operator for this condition
           const newConditions = [...currentConditions];
-          newConditions[i] = { ...newConditions[i], operator: undefined };
+          newConditions[i] = { ...newConditions[i], operator: '' };
           form.setFieldsValue({ conditions: newConditions });
-          setOperatorRerenderKey(prev => prev + 1);
+          setOperatorRerenderKey((prev) => prev + 1);
           break;
         }
       }
     }
     // Update ref for next change
-    prevConditionsRef.current = currentConditions.map((c: unknown) => ({ ...(c as object) }));
+    prevConditionsRef.current = Array.isArray(currentConditions)
+      ? currentConditions.map((c) => ({ ...(c as ITimesheeterRuleCondition) }))
+      : [];
   };
 
   const handleAiGeneration = async () => {
@@ -437,11 +437,11 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       const res = await fetch('/api/ai-generate-rule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          query, 
+        body: JSON.stringify({
+          query,
           user: displayName,
-          orgId: tracker.type === 'yandex' ? (tracker as any).orgId : undefined,
-          isCloud: tracker.type === 'yandex' ? (tracker as any).isCloud : undefined
+          orgId: tracker.type === 'yandex' ? (tracker as TYandexTrackerConfig).orgId : undefined,
+          isCloud: tracker.type === 'yandex' ? (tracker as TYandexTrackerConfig).isCloud : undefined,
         }),
       });
       const { rule, error, raw, cost } = await res.json();
@@ -461,7 +461,10 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           errorMsg = raw.error;
         }
         // messageApi.error(errorMsg);
-        messageApi.warning({duration: 10, content: message('rules.ai.generate.usage', { total_tokens: totalTokens, cost })});
+        messageApi.warning({
+          duration: 10,
+          content: message('rules.ai.generate.usage', { total_tokens: totalTokens, cost }),
+        });
         throw new Error(errorMsg);
       }
 
@@ -472,31 +475,37 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         actions: Array.isArray(rule.actions) ? rule.actions : [],
       };
 
-      setRules(prev => [...prev, safeRule]);
+      setRules((prev) => [...prev, safeRule]);
       localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify([...rules, safeRule]));
       messageApi.success(message('rules.rule.saved', { name: rule.name }));
       aiForm.resetFields();
-      messageApi.warning({duration: 10, content: message('rules.ai.generate.usage', { total_tokens: totalTokens, cost })});
+      messageApi.warning({
+        duration: 10,
+        content: message('rules.ai.generate.usage', { total_tokens: totalTokens, cost }),
+      });
     } catch (e) {
-      messageApi.error({duration: 10, content: e instanceof Error ? e.message : message('rules.ai.generate.error')});
+      messageApi.error({ duration: 10, content: e instanceof Error ? e.message : message('rules.ai.generate.error') });
     } finally {
       setAiLoading(false);
     }
   };
   const AISvg = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" viewBox="0 0 100 100" >
-      <path fill="#262626" d="m85.188 44.582c-16.801-4.6406-20.297-8.1367-24.934-24.938-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-4.6406 16.801-8.1367 20.297-24.938 24.938-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 16.801 4.6406 20.297 8.1328 24.938 24.934 0.19531 0.70312 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 4.6406-16.801 8.1328-20.297 24.934-24.934 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"/>
-      <path fill="#262626" d="m20.023 23.164c7.5938 2.0977 8.9375 3.4375 11.031 11.031 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.0977-7.5938 3.4375-8.9375 11.031-11.031 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625-7.5938-2.0977-8.9336-3.4375-11.031-11.031-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.0977 7.5938-3.4375 8.9375-11.031 11.031-0.70313 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625z"/>
-      <path fill="#262626" d="m46.957 73.906c-9.8828-2.7266-11.781-4.6289-14.508-14.508-0.19531-0.70313-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.7266 9.8828-4.625 11.781-14.508 14.508-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 9.8828 2.7266 11.781 4.6289 14.508 14.508 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.7266-9.8828 4.6289-11.781 14.508-14.508 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" viewBox="0 0 100 100">
+      <path
+        fill="#262626"
+        d="m85.188 44.582c-16.801-4.6406-20.297-8.1367-24.934-24.938-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-4.6406 16.801-8.1367 20.297-24.938 24.938-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 16.801 4.6406 20.297 8.1328 24.938 24.934 0.19531 0.70312 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 4.6406-16.801 8.1328-20.297 24.934-24.934 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"
+      />
+      <path
+        fill="#262626"
+        d="m20.023 23.164c7.5938 2.0977 8.9375 3.4375 11.031 11.031 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.0977-7.5938 3.4375-8.9375 11.031-11.031 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625-7.5938-2.0977-8.9336-3.4375-11.031-11.031-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.0977 7.5938-3.4375 8.9375-11.031 11.031-0.70313 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625z"
+      />
+      <path
+        fill="#262626"
+        d="m46.957 73.906c-9.8828-2.7266-11.781-4.6289-14.508-14.508-0.19531-0.70313-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.7266 9.8828-4.625 11.781-14.508 14.508-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 9.8828 2.7266 11.781 4.6289 14.508 14.508 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.7266-9.8828 4.6289-11.781 14.508-14.508 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"
+      />
     </svg>
   );
-  const AIIcon = (props: Partial<CustomIconComponentProps>) => (
-    <Icon component={AISvg} {...props} />
-  );
-
-  // Merge shared and local rules for display
-  const allRules = [...sharedRules,
-    ...rules.filter(localRule => !sharedRules.some(sharedRule => sharedRule.id === localRule.id))];
+  const AIIcon = (props: Partial<CustomIconComponentProps>) => <Icon component={AISvg} {...props} />;
 
   // Add share handler
   const handleShareWithTeam = async (rule: TRule) => {
@@ -505,7 +514,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       messageApi.error(message('rules.current.user.error'));
       return;
     }
-    setShareLoading(rule.id);
+    setShareLoading((rule.id as string) || '');
     try {
       let teams = userTeams;
       // If userTeams is empty, create a new team
@@ -547,11 +556,11 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
             throw new Error(err.error || 'Share failed');
           }
           return res.json();
-        })
+        }),
       );
       // Merge all returned rules into sharedRules
-      const newSharedRules = results.map(r => r.rule).filter(Boolean);
-      setSharedRules(prev => [...prev, ...newSharedRules]);
+      const newSharedRules = results.map((r) => r.rule).filter(Boolean);
+      setSharedRules((prev) => [...prev, ...newSharedRules]);
       messageApi.success(message('share.save.action'));
     } catch (e) {
       messageApi.error(e instanceof Error ? e.message : 'Share failed');
@@ -564,7 +573,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
     <div>
       {contextHolder}
       {/* TODO Add Ai generation of rules here */}
-      <Divider orientation="left">{message('menu.rules.title.ai.generate')} <AIIcon style={{ position: 'relative', top: 2, marginLeft: 2 }} /></Divider>
+      <Divider orientation="left">
+        {message('menu.rules.title.ai.generate')} <AIIcon style={{ position: 'relative', top: 2, marginLeft: 2 }} />
+      </Divider>
       <Form layout="vertical" form={aiForm}>
         <Form.Item name="ai_generation" label={message('rules.ai.generate')}>
           <Input.TextArea maxLength={250} showCount placeholder={message('rules.ai.generate.placeholder')} />
@@ -573,7 +584,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         <Button type="primary" onClick={handleAiGeneration} loading={aiLoading}>
           {message('rules.ai.generate.submit')}
         </Button>
-      </Form>      
+      </Form>
       <Divider orientation="left">{message('menu.rules.title.description')}</Divider>
       <Form
         form={form}
@@ -589,7 +600,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
         >
           <Input placeholder={message('rules.rule.name')} />
         </Form.Item>
-        <Form.Item name="description" label={message('rules.rule.description')}> 
+        <Form.Item name="description" label={message('rules.rule.description')}>
           <Input.TextArea placeholder={message('rules.rule.description')} />
         </Form.Item>
         <Divider orientation="left">{message('rules.divider.when')}</Divider>
@@ -597,7 +608,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           {(fields, { add, remove }) => (
             <>
               {fields.length === 0 && (
-                <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>{message('rules.add.condition')}</Button>
+                <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>
+                  {message('rules.add.condition')}
+                </Button>
               )}
               {fields.map((field, idx) => {
                 const { key, ...fieldProps } = field;
@@ -628,16 +641,16 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                       style={{ minWidth: 130 }}
                     >
                       <Select
-                        key={operatorRerenderKey + '-' + key}
-                        options={
-                          [
-                            ...(
-                              CONDITION_OPERATORS[
-                                (form.getFieldValue(['conditions', field.name, 'field']) as keyof typeof CONDITION_OPERATORS) || 'summary'
-                              ] || []
-                            )
-                          ]
-                        }
+                        key={`${operatorRerenderKey}-${key}`}
+                        options={[
+                          ...(CONDITION_OPERATORS[
+                            (form.getFieldValue([
+                              'conditions',
+                              field.name,
+                              'field',
+                            ]) as keyof typeof CONDITION_OPERATORS) || 'summary'
+                          ] || []),
+                        ]}
                         placeholder={message('rules.op.placeholder')}
                       />
                     </Form.Item>
@@ -651,8 +664,11 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                             const fieldVal = getFieldValue(['conditions', field.name, 'field']);
                             const operatorVal = getFieldValue(['conditions', field.name, 'operator']);
                             // If operator is >, <, or =, value must be a positive number
-                            if ((operatorVal === '>' || operatorVal === '<' || operatorVal === '=') && fieldVal === 'participants') {
-                              if (isNaN(Number(value)) || Number(value) < 0) {
+                            if (
+                              (operatorVal === '>' || operatorVal === '<' || operatorVal === '=') &&
+                              fieldVal === 'participants'
+                            ) {
+                              if (Number.isNaN(Number(value)) || Number(value) < 0) {
                                 return Promise.reject(message('form.invalid.positive_number'));
                               }
                             }
@@ -669,15 +685,15 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                     >
                       <Input placeholder={message('rules.value')} />
                     </Form.Item>
-                    {fields.length > 1 && (
-                      <MinusCircleOutlined onClick={() => remove(field.name)} />
-                    )}
+                    {fields.length > 1 && <MinusCircleOutlined onClick={() => remove(field.name)} />}
                   </Space>
                 );
               })}
               {fields.length > 0 && (
                 <Form.Item>
-                  <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>{message('rules.add.condition')}</Button>
+                  <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>
+                    {message('rules.add.condition')}
+                  </Button>
                 </Form.Item>
               )}
             </>
@@ -688,7 +704,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           {(fields, { add, remove }) => (
             <>
               {fields.length === 0 && (
-                <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>{message('rules.add.action')}</Button>
+                <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>
+                  {message('rules.add.action')}
+                </Button>
               )}
               {fields.map((field, idx) => {
                 const { key, ...fieldProps } = field;
@@ -719,8 +737,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                               { required: true, message: message('rules.value.required') },
                               ({ getFieldValue }) => ({
                                 validator(_, value) {
-                                  const typeVal = getFieldValue(['actions', field.name, 'type']);
-                                  if (typeVal === 'set_duration' && value) {
+                                  const typeValInner = getFieldValue(['actions', field.name, 'type']);
+                                  if (typeValInner === 'set_duration' && value) {
                                     if (!validateHumanReadableDuration(value)) {
                                       return Promise.reject(message('form.invalid.format'));
                                     }
@@ -730,51 +748,57 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                               }),
                             ]}
                           >
-                            {typeVal === 'skip' ? (
-                              <Switch
-                                checkedChildren={<CheckOutlined />}
-                                unCheckedChildren={<CloseOutlined />}
-                                onChange={checked =>
-                                  form.setFieldsValue({
-                                    actions: form.getFieldValue('actions').map((a: any, i: number) =>
-                                      i === field.name ? { ...a, value: checked ? 'true' : 'false' } : a
-                                    ),
-                                  })
-                                }
-                              />
-                            ) : typeVal === 'set_task' && isYandexTrackerCfg(tracker) ? (
-                              <YandexIssuesSearchConnected
-                                value={form.getFieldValue(['actions', field.name, 'value'])}
-                                onChange={val =>
-                                  form.setFieldsValue({
-                                    actions: form.getFieldValue('actions').map((a: any, i: number) =>
-                                      i === field.name ? { ...a, value: val } : a
-                                    ),
-                                  })
-                                }
-                                name={`issueKey-rule-${key}`}
-                                onBlur={() => {}}
-                                onFocus={() => {}}
-                                placeholder={message('rules.value')}
-                                style={{ width: 380 }}
-                                tracker={tracker}
-                              />
-                            ) : (
-                              <Input placeholder={message('rules.value')} />
-                            )}
+                            {(() => {
+                              if (typeVal === 'skip') {
+                                return (
+                                  <Switch
+                                    checkedChildren={<CheckOutlined />}
+                                    unCheckedChildren={<CloseOutlined />}
+                                    onChange={(checked) =>
+                                      form.setFieldsValue({
+                                        actions: form.getFieldValue('actions').map((a: { [key: string]: unknown }, i: number) =>
+                                          i === field.name ? { ...a, value: checked ? 'true' : 'false' } : a,
+                                        ),
+                                      })
+                                    }
+                                  />
+                                );
+                              } else if (typeVal === 'set_task' && isYandexTrackerCfg(tracker)) {
+                                return (
+                                  <YandexIssuesSearchConnected
+                                    value={form.getFieldValue(['actions', field.name, 'value'])}
+                                    onChange={(val) =>
+                                      form.setFieldsValue({
+                                        actions: form.getFieldValue('actions').map((a: { [key: string]: unknown }, i: number) =>
+                                          i === field.name ? { ...a, value: val } : a,
+                                        ),
+                                      })
+                                    }
+                                    name={`issueKey-rule-${key}`}
+                                    onBlur={() => {}}
+                                    onFocus={() => {}}
+                                    placeholder={message('rules.value')}
+                                    style={{ width: 380 }}
+                                    tracker={tracker}
+                                  />
+                                );
+                              } else {
+                                return <Input placeholder={message('rules.value')} />;
+                              }
+                            })()}
                           </Form.Item>
                         );
                       }}
                     </Form.Item>
-                    {fields.length > 1 && (
-                      <MinusCircleOutlined onClick={() => remove(field.name)} />
-                    )}
+                    {fields.length > 1 && <MinusCircleOutlined onClick={() => remove(field.name)} />}
                   </Space>
                 );
               })}
               {fields.length > 0 && (
                 <Form.Item>
-                  <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>{message('rules.add.action')}</Button>
+                  <Button type="dashed" onClick={() => add({ key: uuidv4() })} icon={<PlusOutlined />}>
+                    {message('rules.add.action')}
+                  </Button>
                 </Form.Item>
               )}
             </>
@@ -792,14 +816,14 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       {allRules.length > 0 && (
         <Collapse
           accordion
-          items={[...allRules].map(rule => ({
+          items={[...allRules].map((rule) => ({
             key: rule.id,
             label: (
               <span>
                 <Typography.Text strong>{rule.name}</Typography.Text>
-                {(rule as any).teamId && teamNameMap[(rule as any).teamId] && (
+                {(rule as TRule).teamId && teamNameMap[(rule as TRule).teamId] && (
                   <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
-                    [{teamNameMap[(rule as any).teamId]}]
+                    [{teamNameMap[(rule as TRule).teamId]}]
                   </Typography.Text>
                 )}
                 {rule.description && (
@@ -810,41 +834,55 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
               </span>
             ),
             children: (
-              <div style={{
-                border: sharedRules.some(r => r.id === rule.id) ? '2px solid #1890ff' : undefined,
-                background: sharedRules.some(r => r.id === rule.id) ? '#e6f7ff' : undefined,
-                borderRadius: 6,
-                padding: 8,
-              }}>
+              <div
+                style={{
+                  border: sharedRules.some((r) => r.id === rule.id) ? '2px solid #1890ff' : undefined,
+                  background: sharedRules.some((r) => r.id === rule.id) ? '#e6f7ff' : undefined,
+                  borderRadius: 6,
+                  padding: 8,
+                }}
+              >
                 <div style={{ margin: '8px 0' }}>
-                  <b>{message('rules.divider.when')}:</b> {(Array.isArray(rule.conditions) ? rule.conditions : []).map((c, i) => {
-                    const condStr = `${c.field} ${c.operator} "${c.value}"`;
-                    if (i === 0) return condStr;
-                    const prevLogic = rule.conditions[i].logic || 'AND';
-                    return ` ${prevLogic} ${condStr}`;
-                  }).join('')}
+                  <b>{message('rules.divider.when')}:</b>{' '}
+                  {(Array.isArray(rule.conditions) ? rule.conditions : [])
+                    .map((c, i) => {
+                      const condStr = `${c.field} ${c.operator} "${c.value}"`;
+                      if (i === 0) return condStr;
+                      const prevLogic = rule.conditions[i].logic || 'AND';
+                      return ` ${prevLogic} ${condStr}`;
+                    })
+                    .join('')}
                 </div>
                 <div style={{ margin: '8px 0' }}>
-                  <b>{message('rules.divider.then')}:</b> {(Array.isArray(rule.actions) ? rule.actions : []).map(a => `${a.type} = ${a.value}`).join(' AND ')}
+                  <b>{message('rules.divider.then')}:</b>{' '}
+                  {(Array.isArray(rule.actions) ? rule.actions : []).map((a) => `${a.type} = ${a.value}`).join(' AND ')}
                 </div>
                 <Space>
                   {/* Only show share button for personal rules (not already shared) */}
-                  {!sharedRules.some(r => r.id === rule.id) && (
-                    <Button size="small" loading={shareLoading === rule.id} onClick={() => handleShareWithTeam(rule)}>{message('rules.share.with.team')}</Button>
+                  {!sharedRules.some((r) => r.id === rule.id) && (
+                    <Button size="small" loading={shareLoading === rule.id} onClick={() => handleShareWithTeam(rule)}>
+                      {message('rules.share.with.team')}
+                    </Button>
                   )}
-                  <Button size="small" onClick={() => handleEdit(rule)}>{message('rules.rule.edit')}</Button>
-                  {sharedRules.some(r => r.id === rule.id) ? (
+                  <Button size="small" onClick={() => handleEdit(rule)}>
+                    {message('rules.rule.edit')}
+                  </Button>
+                  {sharedRules.some((r) => r.id === rule.id) ? (
                     <Popconfirm
                       title={message('rules.rule.delete.confirm.shared')}
                       description={message('rules.rule.delete.confirm.shared.description')}
-                      onConfirm={() => handleDelete(rule.id, (rule as any).teamId)}
+                      onConfirm={() => handleDelete(rule.id, (rule as TRule).teamId)}
                       okText={message('share.yes.action')}
                       cancelText={message('share.cancel.action')}
                     >
-                      <Button size="small" danger>{message('rules.rule.delete')}</Button>
+                      <Button size="small" danger>
+                        {message('rules.rule.delete')}
+                      </Button>
                     </Popconfirm>
                   ) : (
-                    <Button size="small" danger onClick={() => handleDelete(rule.id)}>{message('rules.rule.delete')}</Button>
+                    <Button size="small" danger onClick={() => handleDelete(rule.id)}>
+                      {message('rules.rule.delete')}
+                    </Button>
                   )}
                 </Space>
               </div>

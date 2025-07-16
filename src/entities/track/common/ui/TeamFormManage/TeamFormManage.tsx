@@ -65,7 +65,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
   const { data: teamYT } = yandexQueueApi.useGetQueueByKeysQuery(
     { keys: teamQueueYT, tracker },
-    { skip: !teamQueueYT || teamQueueYT.length === 0 }
+    { skip: !teamQueueYT || teamQueueYT.length === 0 },
   );
 
   const [triggerGetUserById, { isLoading: isLoadingUsersFromTeam }] = yandexUserApi.useLazyGetYandexUserByIdQuery();
@@ -184,15 +184,13 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   const syncTeamToDb = async (teamArr: TYandexUser[]) => {
     const ldapCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
     const currentUser = teamArr.find(
-      (user) => user.email === ldapCredentials.username || user.login === ldapCredentials.username
+      (teamMember) => teamMember.email === ldapCredentials.username || teamMember.login === ldapCredentials.username,
     );
     if (!currentUser) return;
     const teamId = localStorage.getItem('teamId');
     try {
       const method = teamId ? 'PATCH' : 'POST';
-      const body = teamId
-        ? JSON.stringify({ teamId, members: teamArr })
-        : JSON.stringify({ members: teamArr });
+      const body = teamId ? JSON.stringify({ teamId, members: teamArr }) : JSON.stringify({ members: teamArr });
       const res = await fetch('/api/team', {
         method,
         headers: {
@@ -208,7 +206,9 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           localStorage.setItem('teamId', data.teamId);
         }
       }
-    } catch {}
+    } catch (e) {
+      /* ignore */
+    }
   };
 
   React.useEffect(() => {

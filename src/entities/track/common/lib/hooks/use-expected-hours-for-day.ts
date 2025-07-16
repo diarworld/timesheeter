@@ -13,16 +13,18 @@ export function getExpectedHoursForDay(day: string): number {
     // Try to parse as ISO string
     try {
       const d = new Date(day);
-      if (!isNaN(d.getTime())) {
+      if (!Number.isNaN(d.getTime())) {
         // Get YYYY-MM-DD in local time
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const date = String(d.getDate()).padStart(2, '0');
         dayStr = `${year}-${month}-${date}`;
       }
-    } catch {}
+    } catch (e) {
+      // Ignore parse error
+    }
   }
   if (calendar.holidays.includes(dayStr) || calendar.nowork.includes(dayStr)) return 0;
   if (calendar.preholidays.includes(dayStr)) return 7;
   return 8;
-} 
+}

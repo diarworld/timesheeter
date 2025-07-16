@@ -22,3 +22,10 @@ export type TRule = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type ITimesheeterRuleCondition = {
+  field: string;
+  operator: string;
+  value: string;
+  logic: string;
+};
