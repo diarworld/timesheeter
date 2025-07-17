@@ -215,6 +215,7 @@
   "rules.rule.no_skip": "Don't skip",
   "rules.rule.deleted": "Rule \"{name}\" deleted",
   "rules.rule.saved": "Rule \"{name}\" saved",
+  "rules.rule.shared": "Rule \"{name}\" shared with team \"{team}\"",
   "rules.rule.error.no_conditions": "At least one condition is required",
   "rules.rule.error.no_actions": "At least one action is required",
   "rules.rule.error.duplicate_action_type": "Only one action of each type is allowed.",
@@ -238,5 +239,6 @@
   "rules.rule.delete.confirm.shared": "Are you sure?",
   "rules.rule.delete.confirm.shared.description": "This action will delete this rule for the whole team!",
   "rules.current.user.error": "Current user not found",
-  "rules.share.with.team": "Share with team"
+  "rules.share.with.team": "Share with team",
+  "rules.select.team": "Select team"
 }

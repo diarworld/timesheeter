@@ -8,6 +8,8 @@ import { UserLoadFail } from 'entities/auth/ui/UserLoadFail/UserLoadFail';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useSetTrackerUsername } from 'entities/tracker/lib/useSetTrackerUsername';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
+import { syncTeamToDb } from 'entities/track/common/lib/sync-team';
+
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
@@ -31,33 +33,74 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
       fetch('/api/upsert-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: self.uid.toString(),
-          email: self.email,
-          display: self.display,
-          position: self.position,
-        }),
+        body: JSON.stringify(self),
       });
     }
   }, [self]);
-  let team: TYandexUser[] = JSON.parse(localStorage.getItem('team') || '[]');
+  let team: TYandexUser[] = [];
+  try {
+    const stored = localStorage.getItem('team');
+    team = stored ? JSON.parse(stored) : [];
+  } catch {
+    team = [];
+  }
   // Sort by display field (case-insensitive)
   team = team
     .slice()
     .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-  const ldapCredentials = localStorage.getItem('ldapCredentials');
+  useEffect(() => {
+    if (team.length <= 1 && self) {
+      fetch('/api/team', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': self?.uid?.toString() || '',
+          'x-user-email': self?.email || '',
+          'x-user-display': self?.display ? encodeURIComponent(self.display) : '',
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          team = data.members;
+          // console.log('team', team);
+          const updateTeam = data.team?.members;
+          if (updateTeam) {
+            localStorage.setItem('team', JSON.stringify(updateTeam));
+            localStorage.setItem('teamId', data.team?.id);
+            dispatch(track.actions.setTeam(updateTeam));
+          } else {
+            // console.log('self', self);
+            // console.log('team', team);
+            // console.log('team?.some((e) => e?.login === self?.login)', team?.some((e) => e?.login === self?.login));
+            if (self && !team?.some((e) => e?.login === self?.login)) {
+              const updatedTeam = [...(Array.isArray(team) ? team : []), {uid: self.uid, display: self.display, email: self.email, login: self.login, position: self.position, lastLoginDate: self.lastLoginDate}]
+                .slice()
+                .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+              localStorage.setItem('team', JSON.stringify(updatedTeam));
+              dispatch(track.actions.setTeam(updatedTeam));
+            }
+          }
+        });
+    } else if (team.length > 1 && self) {
+      // console.log('syncing team to db');
+      // console.log('team', team);
+      syncTeamToDb(team, self);
+    }
+  }, [team, self]);
 
   // Update team in Redux when self is available and not in team
-  useEffect(() => {
-    if (self && !team.some((e) => e?.login === self?.login)) {
-      const updatedTeam = [...team, self]
-        .slice()
-        .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-      localStorage.setItem('team', JSON.stringify(updatedTeam));
-      dispatch(track.actions.setTeam(updatedTeam));
-    }
-  }, [self, team, dispatch]);
+  // useEffect(() => {
+  //   if (self && !team.some((e) => e?.login === self?.login)) {
+  //     const updatedTeam = [...team, self]
+  //     .slice()
+  //     .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+  //     localStorage.setItem('team', JSON.stringify(updatedTeam));
+  //     dispatch(track.actions.setTeam(updatedTeam));
+  //   }
+  // }, [self, team, dispatch]);
 
+
+  const ldapCredentials = localStorage.getItem('ldapCredentials');
   if (self && !ldapCredentials) {
     const credentials = {
       username: self.email,
