@@ -35,7 +35,6 @@
 
   :global(.ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single)::before),
   :global(.ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single)::before) {
-    background-color: #d5efff;
     height: 36px;
   }
 
@@ -54,6 +53,26 @@
 
   :global(.ant-picker-cell-in-view.ant-picker-cell-in-range::before) {
     height: 36px;
+  }
+  
+}
+
+.wrapper_dark {
+  :global(.ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single)::before),
+  :global(.ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single)::before) {
+    background-color: #007aff;
+  }
+  :global(.ant-picker-cell-in-view.ant-picker-cell-in-range::before) {
+    background-color: #007aff;
+  }
+}
+
+.wrapper_light {
+  :global(.ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single)::before),
+  :global(.ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single)::before) {
+    background-color: #d5efff;
+  }
+  :global(.ant-picker-cell-in-view.ant-picker-cell-in-range::before) {
     background-color: #d5efff;
   }
 }

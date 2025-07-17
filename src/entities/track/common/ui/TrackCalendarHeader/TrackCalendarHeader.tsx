@@ -328,7 +328,7 @@ export function TrackCalendarHeader({
           </Col>
         </Row>
         <Row className={styles.durationRow}>
-          <TrackCalendarHeaderControlBar>{filters}</TrackCalendarHeaderControlBar>
+          <TrackCalendarHeaderControlBar isDarkMode={isDarkMode}>{filters}</TrackCalendarHeaderControlBar>
 
           <CalendarExportModal
             visible={modalVisible}
