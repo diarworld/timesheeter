@@ -5,12 +5,13 @@ import { TIssue } from 'entities/issue/common/model/types';
 import { TYandexIssue } from 'entities/issue/yandex/model/types';
 import { msToBusinessDurationData } from 'entities/track/common/lib/ms-to-business-duration-data';
 import { DurationFormat } from 'features/date/ui/DurationFormat';
-import { Progress, Popover } from 'antd';
+import { Progress, Popover, Typography } from 'antd';
 import { Text } from 'components';
 import { useMessage } from 'entities/locale/lib/hooks';
 import styles from './TrackCalendarFoot.module.scss';
 import { TrackCalendarFootColSumDay } from './TrackCalendarFootColSumDay';
 import { TrackCalendarFootColSum } from './TrackCalendarFootColSum';
+import clsx from 'clsx';
 
 export interface ITrackCalendarFootProps {
   range: string[];
@@ -19,10 +20,11 @@ export interface ITrackCalendarFootProps {
   date2Tracks: Record<string, TTrack[]>;
   trackList: TTrack[];
   issues?: (TIssue | TYandexIssue)[];
+  isDarkMode: boolean;
 }
 
 export const TrackCalendarFoot = memo(
-  ({ range, totalIssues, utcOffsetInMinutes, date2Tracks, trackList, issues = [] }: ITrackCalendarFootProps) => {
+  ({ range, totalIssues, utcOffsetInMinutes, date2Tracks, trackList, issues = [], isDarkMode }: ITrackCalendarFootProps) => {
     const message = useMessage();
     // Helper to sum durations for a set of tracks
     const sumTrackMs = (tracks: TTrack[]) =>
@@ -57,23 +59,23 @@ export const TrackCalendarFoot = memo(
     const percentProducts = totalLoggedMs > 0 ? Math.min(100, Math.round((productsMs / totalLoggedMs) * 100)) : 0;
 
     return (
-      <tfoot className={styles.tfoot}>
+      <tfoot className={clsx(styles.tfoot, { [styles.tfoot_dark]: isDarkMode }, { [styles.tfoot_light]: !isDarkMode })}>
         <tr>
-          <th colSpan={2} className={styles.totalCol}>
+          <th colSpan={2} className={clsx(styles.totalCol, { [styles.totalCol_dark]: isDarkMode }, { [styles.totalCol_light]: !isDarkMode })}>
             {!!totalIssues && (
-              <span className={styles.total} aria-label="total issues">
+              <Typography.Text style={{fontSize: 14, fontWeight: 700}} aria-label="total issues">
                 {' '}
                 <Message id="issue.total" />
                 {': '}
-                <span>{totalIssues}</span>
-              </span>
+                {totalIssues}
+              </Typography.Text>
             )}
           </th>
 
           {/* Combined summary cell for domains, product teams, and products */}
           <th />
           <th />
-          <td className={styles.total}>
+          <th className={styles.total}>
             {/* <div style={{ minWidth: 360 }}> */}
             <Popover content={<Message id="track.products.percent.explanation" />}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
@@ -97,7 +99,7 @@ export const TrackCalendarFoot = memo(
               </div>
             </Popover>
             {/* </div> */}
-          </td>
+          </th>
 
           {range.map((date) => (
             <TrackCalendarFootColSumDay
@@ -105,10 +107,11 @@ export const TrackCalendarFoot = memo(
               date={date}
               utcOffsetInMinutes={utcOffsetInMinutes}
               tracks={date2Tracks[date]}
+              isDarkMode={isDarkMode}
             />
           ))}
 
-          <TrackCalendarFootColSum tracks={trackList} range={range} />
+          <TrackCalendarFootColSum tracks={trackList} range={range} isDarkMode={isDarkMode} />
         </tr>
       </tfoot>
     );

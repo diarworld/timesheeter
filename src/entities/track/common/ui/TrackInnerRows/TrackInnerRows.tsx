@@ -11,6 +11,7 @@ interface ITrackInnerProps {
   trackCommentEditDisabledReason?: string;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   deleteTrack(form: { issueIdOrKey: string; trackId: number | string }): void;
+  isDarkMode: boolean;
 }
 
 export const TrackInnerRows = memo(
@@ -23,6 +24,7 @@ export const TrackInnerRows = memo(
     updateTrack,
     trackCommentEditDisabledReason,
     deleteTrack,
+    isDarkMode,
   }: ITrackInnerProps) => {
     if (!tracks || !tracks.length) {
       return null;
@@ -40,7 +42,8 @@ export const TrackInnerRows = memo(
             isEditTrackComment={isEditTrackComment}
             trackCommentEditDisabledReason={trackCommentEditDisabledReason}
             updateTrack={updateTrack}
-            deleteTrack={deleteTrack}
+            deleteTrack={deleteTrack} 
+            isDarkMode={isDarkMode}
           />
         ))}
       </>

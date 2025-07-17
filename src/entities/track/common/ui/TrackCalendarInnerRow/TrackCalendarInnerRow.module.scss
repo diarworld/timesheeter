@@ -1,3 +1,7 @@
-.row td {
+.row_dark td {
+  background: var(--color-ghost-dark);
+}
+
+.row_light td {
   background: var(--color-ghost-white);
 }

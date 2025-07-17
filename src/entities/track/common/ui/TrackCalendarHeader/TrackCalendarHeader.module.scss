@@ -3,8 +3,15 @@
   // padding: 13px 15px 5px 15px;
   // margin-right: auto;
   // margin-left: auto;
+  padding: 5px 15px 5px 15px;
+}
+
+.header_dark {
+  background: var(--color-dark-lilac);
+}
+
+.header_light {
   background: var(--color-white-lilac);
-  padding: 0px 15px 5px 15px;
 }
 
 // .menu{
@@ -30,5 +37,9 @@
   
   :global(.ant-menu-item) {
     padding: 0 16px;
+  }
+
+  :global(.ant-card-body) {
+    padding: 0 8px;
   }
 }

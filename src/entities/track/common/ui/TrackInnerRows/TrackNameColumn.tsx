@@ -6,6 +6,7 @@ import { TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/mo
 import { DeleteRowOutlined } from '@ant-design/icons';
 import { TrackDeleteButton } from './TrackDeleteButton';
 import styles from './TrackNameColumn.module.scss';
+import clsx from 'clsx';
 
 interface ITrackNameColumnProps {
   trackId: number | string;
@@ -16,6 +17,7 @@ interface ITrackNameColumnProps {
   trackCommentEditDisabledReason?: string;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   deleteTrack(form: TTrackInputDelete): void;
+  isDarkMode: boolean;
 }
 
 export const TrackNameColumn = memo(
@@ -28,6 +30,7 @@ export const TrackNameColumn = memo(
     updateTrack,
     deleteTrack,
     trackCommentEditDisabledReason,
+    isDarkMode,
   }: ITrackNameColumnProps) => {
     const message = useMessage();
     const initialValues = {
@@ -56,7 +59,7 @@ export const TrackNameColumn = memo(
     };
 
     return (
-      <td colSpan={5} className={styles.col}>
+      <><td colSpan={2} className={styles.col}>
         <div>
           {isEdit ? (
             <>
@@ -66,9 +69,9 @@ export const TrackNameColumn = memo(
                 onConfirm={() => {
                   // console.log('Popconfirm confirm clicked', { issueId, trackId });
                   deleteTrack({ issueIdOrKey: issueId, trackId });
-                }}
+                } }
               >
-                <TrackDeleteButton />
+                <TrackDeleteButton isDarkMode={isDarkMode} />
               </Popconfirm>
               {isEditTrackComment ? (
                 <Form noValidate className={styles.form} form={form} initialValues={initialValues}>
@@ -76,11 +79,11 @@ export const TrackNameColumn = memo(
                     <TextArea
                       onFocus={handleFocus}
                       onBlur={handleBlur}
-                      className={styles.textarea}
+                      className={clsx(styles.textarea, { [styles.textarea_dark]: isDarkMode }, { [styles.textarea_light]: !isDarkMode })}
                       spellCheck={false}
                       autoSize
-                      readOnly={!isEdit}
-                    />
+                      // style={{ width: '40%' }}
+                      readOnly={!isEdit} />
                   </Form.Item>
                 </Form>
               ) : (
@@ -93,7 +96,7 @@ export const TrackNameColumn = memo(
             <div>{initialValues.comment}</div>
           )}
         </div>
-      </td>
+      </td><td colSpan={3} /></>
     );
   },
 );

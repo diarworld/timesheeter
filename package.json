@@ -36,6 +36,7 @@
     "react-intl": "^6.5.5",
     "react-is": "^18.2.0",
     "react-redux": "^9.0.4",
+    "react-toggle-dark-mode": "^1.1.1",
     "react-use": "^17.4.2",
     "uuid": "^11.1.0"
   },

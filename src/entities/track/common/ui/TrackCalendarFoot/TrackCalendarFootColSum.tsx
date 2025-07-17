@@ -11,9 +11,10 @@ import styles from './TrackCalendarFootColSum.module.scss';
 interface ITrackCalendarFootColSumProps {
   tracks: TTrack[];
   range: string[];
+  isDarkMode: boolean;
 }
 
-export const TrackCalendarFootColSum = memo(({ tracks = [], range }: ITrackCalendarFootColSumProps) => {
+export const TrackCalendarFootColSum = memo(({ tracks = [], range, isDarkMode }: ITrackCalendarFootColSumProps) => {
   const message = useMessage();
   // Calculate total tracked ms
   const trackedMs = tracks.reduce((sum, t) => {
@@ -44,6 +45,7 @@ export const TrackCalendarFootColSum = memo(({ tracks = [], range }: ITrackCalen
       data-is-exact-tracked={isExactTracked}
       data-is-undertracked={isUndertracked}
       data-is-over-tracked={isOvertracked}
+      data-is-dark-mode={isDarkMode}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 120 }}>
         <Text fs={13} fw={800} aria-label="total sum">

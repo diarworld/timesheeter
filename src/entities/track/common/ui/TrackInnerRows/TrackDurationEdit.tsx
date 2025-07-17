@@ -8,15 +8,17 @@ import { TTrack, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { useISOToHumanReadableDuration } from 'entities/track/common/lib/hooks/use-iso-to-human-readable-duration';
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
 import styles from './TrackDurationEdit.module.scss';
+import clsx from 'clsx';
 
 interface ITrackDurationEditProps {
   issueId: string;
   trackItem: TTrack;
   isEdit?: boolean;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
+  isDarkMode: boolean;
 }
 
-export const TrackDurationEdit = memo(({ trackItem, issueId, isEdit, updateTrack }: ITrackDurationEditProps) => {
+export const TrackDurationEdit = memo(({ trackItem, issueId, isEdit, updateTrack, isDarkMode }: ITrackDurationEditProps) => {
   const [form] = Form.useForm();
   const [durationError, setDurationError] = useState(false);
   const duration = trackItem?.duration || DURATION_EMPTY;
@@ -65,7 +67,7 @@ export const TrackDurationEdit = memo(({ trackItem, issueId, isEdit, updateTrack
         <Form noValidate form={form} initialValues={initialValues}>
           <Form.Item noStyle name="duration" rules={durationValidationRules}>
             <Input
-              className={styles.input}
+              className={clsx(styles.input, { [styles.input_dark]: isDarkMode }, { [styles.input_light]: !isDarkMode })}
               onBlur={submitForm}
               onPressEnter={submitForm}
               onFocus={handleFocus}

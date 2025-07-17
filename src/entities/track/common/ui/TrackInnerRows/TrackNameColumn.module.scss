@@ -13,10 +13,37 @@
   z-index: 1;
 }
 
+.col_dark > div {
+  color: var(--color-soft-peach);
+}
+
+.col_light > div {
+  color: var(--color-baltic-sea);
+}
+
 .form {
   width: 100%;
 }
 
 .commentEditDisabled {
   font-size: .8rem;
+}
+
+.textarea_dark {
+  color: var(--color-soft-peach);
+}
+
+.textarea_dark:hover,
+.textarea_dark:focus {
+  border-color: var(--color-dark-blue);
+}
+
+.textarea_dark:focus {
+  background-color: var(--color-dark);
+  box-shadow: none;
+}
+
+.textarea_dark::selection {
+  background-color: var(--color-dark-blue);
+  color: var(--color-white);
 }

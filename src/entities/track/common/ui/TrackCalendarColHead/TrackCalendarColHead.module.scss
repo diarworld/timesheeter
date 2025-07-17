@@ -13,6 +13,10 @@
   background: currentColor;
 }
 
-.col_weekend {
+.col_weekend_light {
   background: var(--color-pale-yellow);
+}
+
+.col_weekend_dark {
+  background: #93750012 !important;
 }

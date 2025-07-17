@@ -21,6 +21,7 @@ export interface ITrackEditProps {
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   spinnerClassName?(isLoading: boolean): string;
   deleteTrack(form: TTrackInputDelete): void;
+  isDarkMode: boolean;
 }
 
 export const TrackEdit = ({
@@ -32,6 +33,7 @@ export const TrackEdit = ({
   deleteTrack,
   isTrackUpdateLoading,
   isEditTrackComment,
+  isDarkMode,
 }: ITrackEditProps) => {
   const { duration, comment, start, id: trackId } = track;
   const message = useMessage();
@@ -97,7 +99,7 @@ export const TrackEdit = ({
             title={`${message('track.delete.title')}?`}
             onConfirm={() => deleteTrack({ issueIdOrKey: issueKey, trackId })}
           >
-            <TrackDeleteButton />
+            <TrackDeleteButton isDarkMode={isDarkMode} />
           </Popconfirm>
           <Spin size="small" spinning className={spinnerClassName?.(isTrackUpdateLoading)} />
         </form>

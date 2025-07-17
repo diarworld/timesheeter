@@ -8,13 +8,15 @@ import { SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons
 import { useFilters } from 'features/filters/lib/useFilters';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import styles from './TrackCalendarHead.module.scss';
+import clsx from 'clsx';
 
 interface ITrackCalendarHeadProps {
   range: string[];
   sortingKey: string;
+  isDarkMode: boolean;
 }
 
-export const TrackCalendarHead = memo(({ range, sortingKey }: ITrackCalendarHeadProps) => {
+export const TrackCalendarHead = memo(({ range, sortingKey, isDarkMode }: ITrackCalendarHeadProps) => {
   const message = useMessage();
   const { sorting, updateSorting, utcOffsetInMinutes } = useFilters();
 
@@ -25,7 +27,7 @@ export const TrackCalendarHead = memo(({ range, sortingKey }: ITrackCalendarHead
   };
 
   return (
-    <thead className={styles.head}>
+    <thead className={clsx(styles.head, { [styles.head_dark]: isDarkMode }, { [styles.head_light]: !isDarkMode })}>
       <tr>
         <th className={styles.issueCol} aria-label={message('issue.title')}>
           <Button type="text" onClick={toggleSorting} className={styles.issueSortBtn}>
@@ -63,7 +65,7 @@ export const TrackCalendarHead = memo(({ range, sortingKey }: ITrackCalendarHead
         </th>
 
         {range.map((date) => (
-          <TrackCalendarColHead date={date} key={date} now={now} />
+          <TrackCalendarColHead date={date} key={date} now={now} isDarkMode={isDarkMode} />
         ))}
 
         <th className={styles.sumCol} aria-label={message('issue.item.summary')}>

@@ -42,6 +42,7 @@ type TReportsTableProps = {
   to: string;
   utcOffsetInMinutes: number | undefined;
   showWeekends: boolean;
+  isDarkMode: boolean;
 };
 
 function sumDurations(tracks: TTransformedTracksByUser[]): TBusinessDurationData {
@@ -49,7 +50,7 @@ function sumDurations(tracks: TTransformedTracksByUser[]): TBusinessDurationData
   return msToBusinessDurationData(ms);
 }
 
-export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showWeekends }: TReportsTableProps) {
+export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showWeekends, isDarkMode }: TReportsTableProps) {
   //   const days = useRange({ from, to, showWeekends, utcOffsetInMinutes });
   //   console.log('days:', days);
   const message = useMessage();
@@ -127,7 +128,7 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       title,
       dataIndex, // use dataIndex here
       key,
-      className: clsx(styles.col, { [styles.col_weekend]: isWeekend || isHoliday }),
+      className: clsx(styles.col, { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode }, { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode  }),
       render: (iso: TBusinessDurationData) => {
         const ms = isoDurationToBusinessMs(businessDurationDataToIso(iso));
         const loggedHours = ms ? Math.floor(ms / (1000 * 60 * 60)) : 0;
@@ -251,7 +252,7 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
         pagination={false}
         scroll={{ x: true, y: `calc(100vh - 302px)` }}
         summary={() => (
-          <Table.Summary.Row className={styles.sticky}>
+          <Table.Summary.Row className={clsx(styles.sticky, { [styles.sticky_dark]: isDarkMode }, { [styles.sticky_light]: !isDarkMode })}>
             <Table.Summary.Cell index={0}>
               <b>{message('track.total.daily')}</b>
             </Table.Summary.Cell>
