@@ -12,10 +12,11 @@ type TProps = Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'> & {
   isEditTrackComment: boolean;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   deleteTrack(form: TTrackInputDelete): void;
+  isDarkMode: boolean;
 };
 
 export const YandexIssueTracksConnected = (props: TProps) => {
-  const { date, issueKey, uId, tracker, deleteTrack } = props;
+  const { date, issueKey, uId, tracker, deleteTrack, isDarkMode } = props;
 
   const { from, to } = useMemo(() => {
     const dateObj = DateWrapper.getDate({ date, utcOffsetInMinutes: undefined });
@@ -28,5 +29,5 @@ export const YandexIssueTracksConnected = (props: TProps) => {
     { skip: !issueKey || !date || !uId },
   );
 
-  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={deleteTrack} />;
+  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={deleteTrack} isDarkMode={isDarkMode} />;
 };

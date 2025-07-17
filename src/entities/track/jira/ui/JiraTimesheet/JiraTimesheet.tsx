@@ -30,6 +30,7 @@ type TProps = {
 };
 
 export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
   // due to how issues and worklogs are loaded from jira, we have to include issue keys for all created tracks here in order
   // to always load issue for the track.
   // otherwise in case user creates track for an issue that hasn't been loaded yet, it wouldn't be loaded
@@ -143,9 +144,12 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
         }
         currentMenuKey=""
         onMenuChange={handleMenuChange}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
       />
       <TrackCalendar
         tracker={tracker}
+        isDarkMode={isDarkMode}
         isEdit={isEdit}
         from={from}
         to={to}
@@ -167,9 +171,10 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
             tracks={tracks}
             updateTrack={updateTrack}
             getIssueUrl={getIssueUrl}
+            isDarkMode={isDarkMode}
           />
         )}
-        renderTrackCalendarFootConnected={(props) => <JiraTrackCalendarFootConnected {...props} tracks={tracks} />}
+        renderTrackCalendarFootConnected={(props) => <JiraTrackCalendarFootConnected {...props} tracks={tracks} isDarkMode={isDarkMode} />}
         renderIssueTracksConnected={(props) => (
           <JiraIssueTracksConnected
             {...props}
@@ -178,7 +183,8 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
             updateTrack={updateTrack}
             isTrackUpdateLoading={isTrackUpdateLoading}
             uId={uId}
-            deleteTrack={deleteTrack}
+            deleteTrack={deleteTrack} 
+            isDarkMode={isDarkMode}
           />
         )}
         renderIssuesSearchConnected={(props) => <JiraIssuesSearchConnected {...props} tracker={tracker} />}

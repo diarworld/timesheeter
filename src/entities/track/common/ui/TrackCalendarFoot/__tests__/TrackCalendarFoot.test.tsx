@@ -34,7 +34,8 @@ describe('total issues', () => {
         utcOffsetInMinutes={undefined}
         totalIssues={5}
         date2Tracks={date2Tracks}
-        trackList={trackList}
+        trackList={trackList} 
+        isDarkMode={false}
       />,
     );
 
@@ -52,6 +53,7 @@ describe('day worklog sum', () => {
         totalIssues={5}
         date2Tracks={date2Tracks}
         trackList={trackList}
+        isDarkMode={false}
       />,
     );
 
@@ -70,6 +72,7 @@ describe('total worklog sum', () => {
         totalIssues={5}
         date2Tracks={date2Tracks}
         trackList={trackList}
+        isDarkMode={false}
       />,
     );
 
