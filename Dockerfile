@@ -17,6 +17,7 @@ WORKDIR /build
 COPY --from=deps /deps/node_modules ./node_modules
 COPY . .
 
+RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 
 FROM base AS application
@@ -37,7 +38,6 @@ COPY --from=build /build/entrypoint.sh ./entrypoint.sh
 COPY --from=build /build/prisma ./prisma
 RUN chmod +x ./entrypoint.sh
 
-RUN npx prisma generate --schema=./prisma/schema.prisma
 FROM application AS development
 
 EXPOSE 3000
