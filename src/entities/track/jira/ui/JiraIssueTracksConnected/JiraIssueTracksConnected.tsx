@@ -12,10 +12,11 @@ type TProps = Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'> & {
   isEditTrackComment: boolean;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   deleteTrack(form: TTrackInputDelete): void;
+  isDarkMode: boolean;
 };
 
 export const JiraIssueTracksConnected = (props: TProps) => {
-  const { date, issueKey, tracker, uId, deleteTrack } = props;
+  const { date, issueKey, tracker, uId, deleteTrack, isDarkMode } = props;
 
   const { from, to, fromTimestamp, toTimestamp } = useMemo(() => {
     const dateObj = DateWrapper.getDate({ date, utcOffsetInMinutes: undefined });
@@ -45,5 +46,5 @@ export const JiraIssueTracksConnected = (props: TProps) => {
     { skip: !issueKey || !date || !uId },
   );
 
-  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={deleteTrack} />;
+  return <IssueTracks {...props} issueTracksForDate={tracks} deleteTrack={deleteTrack} isDarkMode={isDarkMode} />;
 };

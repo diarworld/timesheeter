@@ -225,6 +225,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
               isTrackUpdateLoading={isTrackUpdateLoading}
               uId={uId}
               deleteTrack={deleteTrack}
+              isDarkMode={isDarkMode}
             />
           )}
           renderIssuesSearchConnected={(props) => <YandexIssuesSearchConnected {...props} tracker={tracker} />}

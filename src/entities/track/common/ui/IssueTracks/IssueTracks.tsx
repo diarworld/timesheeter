@@ -19,6 +19,7 @@ export interface IIssueTracksProps {
   className?: string;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   deleteTrack(form: TTrackInputDelete): void;
+  isDarkMode: boolean;
 }
 
 export const IssueTracks = ({
@@ -30,6 +31,7 @@ export const IssueTracks = ({
   deleteTrack,
   isEditTrackComment,
   issueTracksForDate,
+  isDarkMode,
 }: IIssueTracksProps) => {
   const formattedDate = useMemo(
     () => DateWrapper.getDate({ date, utcOffsetInMinutes: undefined }).format(DATE_FORMAT_DATE),
@@ -71,6 +73,7 @@ export const IssueTracks = ({
             updateTrack={updateTrack}
             isEditTrackComment={isEditTrackComment}
             deleteTrack={deleteTrack}
+            isDarkMode={isDarkMode}
           />
         ))}
       </div>
