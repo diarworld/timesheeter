@@ -38,9 +38,11 @@ type TProps = {
   language: TCurrentLocale | undefined;
   uId: number | undefined;
   tracker: TYandexTrackerConfig;
+  isDarkMode: boolean;
+  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
+export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode, setIsDarkMode }) => {
   const [currentMenuKey, setCurrentMenuKey] = useState('tracks');
   const logout = useLogoutTracker(tracker);
   const teamInitializedRef = useRef(false);
@@ -161,6 +163,8 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
             <Message id="home.logout" />
           </Button>
         }
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
         filters={
           <>
             <YandexUserSelectConnected tracker={tracker} userId={userIdFromFilter} login={loginFromFilter} />
@@ -199,6 +203,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
           isTrackCreateLoading={isTrackCreateLoading}
           createTrack={createTrack}
           deleteTrack={deleteTrack}
+          isDarkMode={isDarkMode}
           renderTrackCalendarRowConnected={(props) => (
             <YandexTrackCalendarRowConnected
               {...props}
@@ -234,6 +239,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId }) => {
               to={to}
               utcOffsetInMinutes={utcOffsetInMinutes}
               showWeekends={showWeekends}
+              isDarkMode={isDarkMode}
             />
           </Spin>
         </div>

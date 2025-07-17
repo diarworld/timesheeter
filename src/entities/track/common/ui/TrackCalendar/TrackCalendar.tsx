@@ -16,6 +16,7 @@ import { useScrollToCurrent } from './use-scroll-to-current';
 import { useRange } from './use-range';
 
 import styles from './TrackCalendar.module.scss';
+import clsx from 'clsx';
 
 type TProps = {
   tracker: TTrackerConfig;
@@ -39,6 +40,7 @@ type TProps = {
   createTrack(form: TTrackFormCreateFields): void;
   deleteTrack(form: TTrackInputDelete): void;
   isEdit?: boolean;
+  isDarkMode: boolean;
 };
 
 export const TrackCalendar: FC<TProps> = ({
@@ -61,6 +63,7 @@ export const TrackCalendar: FC<TProps> = ({
   deleteTrack,
   renderIssueTracksConnected,
   issueSortingKey,
+  isDarkMode,
 }) => {
   const range = useRange({ from, to, showWeekends, utcOffsetInMinutes });
 
@@ -70,8 +73,8 @@ export const TrackCalendar: FC<TProps> = ({
     <>
       {/* <Loading isLoading={isLoading}> */}
       <div className={styles.wrapper}>
-        <table className={styles.table} ref={tableRef}>
-          <TrackCalendarHead range={range} sortingKey={issueSortingKey} />
+        <table className={clsx(styles.table, { [styles.table_dark]: isDarkMode })} ref={tableRef}>
+          <TrackCalendarHead range={range} sortingKey={issueSortingKey} isDarkMode={isDarkMode} />
           <tbody>
             {issues.map((issue) => (
               <React.Fragment key={issue.id}>
@@ -83,11 +86,12 @@ export const TrackCalendar: FC<TProps> = ({
                   pinIssue,
                   unpinIssue,
                   deleteTrack,
+                  isDarkMode,
                 })}
               </React.Fragment>
             ))}
           </tbody>
-          {renderTrackCalendarFootConnected({ range, totalIssues: issues.length, utcOffsetInMinutes, issues })}
+          {renderTrackCalendarFootConnected({ range, totalIssues: issues.length, utcOffsetInMinutes, issues, isDarkMode })}
         </table>
         {isEdit && (
           <TrackModalCreate

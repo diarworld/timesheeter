@@ -16,10 +16,11 @@ type TProps = {
   tracks: TTrack[] | undefined;
   date: string;
   utcOffsetInMinutes: number | undefined;
+  isDarkMode: boolean;
 };
 
 // !NOTICE that this memo component has custom compareProps function implementation
-export const TrackCalendarFootColSumDay = memo(({ tracks = [], date, utcOffsetInMinutes }: TProps) => {
+export const TrackCalendarFootColSumDay = memo(({ tracks = [], date, utcOffsetInMinutes, isDarkMode }: TProps) => {
   const durationTotal = useISODurationsToTotalDurationData(tracks);
   const expected = getExpectedHoursForDay(date);
   const message = useMessage();
@@ -37,10 +38,11 @@ export const TrackCalendarFootColSumDay = memo(({ tracks = [], date, utcOffsetIn
 
   return (
     <td
-      className={clsx(styles.col, { [styles.col_weekend]: isWeekend || isHoliday })}
+      className={clsx(styles.col, { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode }, { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode  })}
       data-is-undertracked={isUndertracked}
       data-is-exact-tracked={isExactTracked}
       data-is-over-tracked={isOvertracked}
+      data-is-dark-mode={isDarkMode}
     >
       {/* <span aria-label="total day sum">{tracks.length ? <DurationFormat duration={durationTotal} /> : '—'}</span> */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 120 }}>

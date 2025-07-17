@@ -1,11 +1,17 @@
 .head {
-  --bg-color: var(--color-white-lilac);
   height: 50px;
-
   background-color: var(--bg-color);
   color: #979797;
   z-index: 2;
   line-height: 1;
+}
+.head_dark {
+  --bg-color: var(--color-dark-lilac);
+  background: var(--color-dark-lilac);
+}
+.head_light {
+  --bg-color: var(--color-white-lilac);
+  background: var(--color-white-lilac);
 }
 
 .head th:not(:first-child) {
@@ -35,6 +41,7 @@
   inset-inline-start: calc(var(--th-col-width) + 30px + 1px);
   z-index: 2;
   padding: 0 !important;
+  background-color: var(--bg-color);
 }
 
 .statusCol > div {

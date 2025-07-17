@@ -1,6 +1,6 @@
 .badge {
-  --bg-color: var(--color-white-lilac);
-  --color: var(--color-mountain-mist);
+  // --bg-color: var(--color-white-lilac);
+  // --color: var(--color-mountain-mist);
 
   color: var(--color);
   background-color: var(--bg-color);
@@ -11,6 +11,16 @@
   justify-content: center;
   border-radius: 100px;
   display: inline-block;
+}
+
+.badge_dark {
+  --bg-color: var(--color-dark-lilac);
+  --color: var(--color-white);
+}
+
+.badge_light {
+  --bg-color: var(--color-white-lilac);
+  --color: var(--color-mountain-mist);
 }
 
 .badge[data-key='closed'] {

@@ -3,6 +3,13 @@
   font-weight: 700;
   font-size: 14px;
   line-height: 17px;
+  // color: var(--color-baltic-sea);
+}
+
+.col_dark {
+  color: var(--color-soft-peach);
+}
+.col_light {
   color: var(--color-baltic-sea);
 }
 
@@ -18,6 +25,10 @@
   background: var(--color-soft-peach);
 }
 
-.col_weekend {
+.col_weekend_light {
   background: var(--color-pale-yellow);
+}
+
+.col_weekend_dark {
+  background: #93750012 !important;
 }

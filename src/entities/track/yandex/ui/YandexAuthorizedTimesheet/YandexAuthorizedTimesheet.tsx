@@ -20,9 +20,11 @@ type TProps = {
   tracker: TYandexTrackerConfig;
   // we need this prop only to preserve old UX for yandex tracker on index page
   unauthorizedErrorShouldAppearAsOrgChange: boolean;
+  isDarkMode: boolean;
+  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedErrorShouldAppearAsOrgChange }: TProps) => {
+export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedErrorShouldAppearAsOrgChange, isDarkMode, setIsDarkMode }: TProps) => {
   const { userId, login } = useFilterValues();
   const dispatch = useAppDispatch();
 
@@ -136,7 +138,7 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
 
   return (
     <Loading isLoading={isLoadingSelf}>
-      <YandexTimesheet language={language} tracker={tracker} uId={uId} />
+      <YandexTimesheet language={language} tracker={tracker} uId={uId} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
     </Loading>
   );
 };

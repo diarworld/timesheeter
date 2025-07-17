@@ -3,14 +3,14 @@ import { useMessage } from 'entities/locale/lib/hooks';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { ReactNode, useMemo } from 'react';
 import { Text } from 'components';
-import { ArrowLeft } from 'components/Icons/ArrowLeft';
-import { ArrowRight } from 'components/Icons/ArrowRight';
+// import { ArrowLeft } from 'components/Icons/ArrowLeft';
+// import { ArrowRight } from 'components/Icons/ArrowRight';
 import { useCalculateSelectedPeriod } from 'entities/track/common/ui/TrackCalendarHeader/hooks/useCalculateSelectedPeriod';
 import { useFilters } from 'features/filters/lib/useFilters';
-import { CalendarOutlined } from '@ant-design/icons';
+import { CalendarOutlined, LeftCircleOutlined, RightCircleOutlined } from '@ant-design/icons';
 import styles from './TimePeriodStepper.module.scss';
 
-export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
+export function TimePeriodStepper({ loader, isDarkMode }: { loader?: ReactNode, isDarkMode: boolean }) {
   const message = useMessage();
 
   const periodOptions: CheckboxOptionType[] = useMemo(
@@ -65,12 +65,11 @@ export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
   return (
     <div className={styles.stepper}>
       <Space direction="horizontal" size="small">
-        <CalendarOutlined />
+        <CalendarOutlined style={{ color: isDarkMode ? '#fff' : '#000' }} />
         <Text>{message(`track.calendar.unit.${unit}`)}</Text>
 
         <Space size="small">
-          <Button type="text" shape="circle" style={{ verticalAlign: 'bottom' }} onClick={handleDateNavClick(-1)}>
-            <ArrowLeft />
+          <Button type="text" icon={<LeftCircleOutlined />} shape="circle" onClick={handleDateNavClick(-1)}>
           </Button>
 
           <Text fw={800} fs={20} lh={34} style={{ whiteSpace: 'nowrap' }}>
@@ -79,8 +78,7 @@ export function TimePeriodStepper({ loader }: { loader?: ReactNode }) {
             {DateWrapper.getDateFormat(toDate, 'DD MMMM')}
           </Text>
 
-          <Button type="text" shape="circle" style={{ verticalAlign: 'bottom' }} onClick={handleDateNavClick(1)}>
-            <ArrowRight />
+          <Button type="text" icon={<RightCircleOutlined />} shape="circle" style={{ verticalAlign: 'bottom' }} onClick={handleDateNavClick(1)}>
           </Button>
         </Space>
         {loader}

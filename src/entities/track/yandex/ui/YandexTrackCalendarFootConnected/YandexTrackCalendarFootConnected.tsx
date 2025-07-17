@@ -7,11 +7,12 @@ import { TYandexTrackerConfig } from 'entities/tracker/model/types';
 
 type TProps = Omit<ITrackCalendarFootProps, 'trackList' | 'date2Tracks'> & {
   tracker: TYandexTrackerConfig;
+  isDarkMode: boolean;
 };
 
 export const YandexTrackCalendarFootConnected = (props: TProps) => {
-  const { tracker } = props;
+  const { tracker, isDarkMode } = props;
   const { date2Tracks, trackList } = useCurrentYandexTracks(tracker);
 
-  return <TrackCalendarFoot {...props} date2Tracks={date2Tracks} trackList={trackList} />;
+  return <TrackCalendarFoot {...props} date2Tracks={date2Tracks} trackList={trackList} isDarkMode={isDarkMode}/>;
 };

@@ -9,6 +9,10 @@
   border: 1px solid var(--color-soft-peach);
 }
 
+.table_dark tbody tr {
+  border: 1px solid var(--color-ghost-dark);
+}
+
 .table td:not(:first-child),
 .table th:not(:first-child) {
   padding: 10px 30px;
@@ -31,7 +35,7 @@
 }
 
 .wrapper {
-  max-height: calc(100vh - 230px);
+  max-height: calc(100vh - 200px);
   overflow-x: auto;
   overscroll-behavior-x: none;
 }

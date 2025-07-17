@@ -15,6 +15,7 @@ interface ITrackInnerRowProps {
   trackCommentEditDisabledReason?: string;
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   deleteTrack(form: { issueIdOrKey: string; trackId: number | string }): void;
+  isDarkMode: boolean;
 }
 
 export const TrackInnerRow = memo(
@@ -27,8 +28,9 @@ export const TrackInnerRow = memo(
     isEditTrackComment = isEdit,
     trackCommentEditDisabledReason,
     deleteTrack,
+    isDarkMode,
   }: ITrackInnerRowProps) => (
-    <TrackCalendarInnerRow>
+    <TrackCalendarInnerRow isDarkMode={isDarkMode}>
       <TrackNameColumn
         trackId={track.id}
         trackComment={track.comment}
@@ -38,6 +40,7 @@ export const TrackInnerRow = memo(
         updateTrack={updateTrack}
         trackCommentEditDisabledReason={trackCommentEditDisabledReason}
         deleteTrack={deleteTrack}
+        isDarkMode={isDarkMode}
       />
 
       {range.map((date) => (
@@ -48,6 +51,7 @@ export const TrackInnerRow = memo(
           issueId={issueId}
           isEdit={isEdit}
           updateTrack={updateTrack}
+          isDarkMode={isDarkMode}
         />
       ))}
 

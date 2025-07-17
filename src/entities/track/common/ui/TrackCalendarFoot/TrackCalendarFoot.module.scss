@@ -1,15 +1,16 @@
 .tfoot {
-  background: var(--color-periwinkle);
   font-weight: 700;
   font-size: 14px;
   line-height: 17px;
   z-index: 1;
 }
 
-.total {
-  color: var(--color-baltic-sea);
-  font-weight: 700;
-  // text-align: center;
+.tfoot_dark {
+  background: var(--color-dark);
+}
+
+.tfoot_light {
+  background: var(--color-white);
 }
 
 .tfoot tr {
@@ -20,6 +21,15 @@
   position: sticky;
   inset-inline-start: 0;
   z-index: 1;
-  background: var(--color-periwinkle);
+  // background: var(--color-periwinkle);
+  // box-shadow: 1px 0 0 0 var(--color-soft-peach);
+}
+
+.tfoot_dark > tr > th {
+  background: var(--color-dark-lilac);
+  box-shadow: 1px 0 0 0 var(--color-ghost-dark);
+}
+.tfoot_light > tr > th {
+  background: var(--color-white-lilac);
   box-shadow: 1px 0 0 0 var(--color-soft-peach);
 }

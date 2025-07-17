@@ -14,6 +14,7 @@ import { useMessage } from 'entities/locale/lib/hooks';
 import { TIssue } from 'entities/issue/common/model/types';
 import { TYandexIssue } from 'entities/issue/yandex/model/types';
 import styles from './TrackCalendarRow.module.scss';
+import clsx from 'clsx';
 
 export type TTrackCalendarRowProps = {
   range: string[];
@@ -29,6 +30,7 @@ export type TTrackCalendarRowProps = {
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   getIssueUrl(issueKey: string): string;
   deleteTrack(form: { issueIdOrKey: string; trackId: number | string }): void;
+  isDarkMode: boolean;
 };
 
 const fixedColumnsCount = 3; // 3 = issueKey + status + summary columns
@@ -49,6 +51,7 @@ export const TrackCalendarRow = memo(
     getIssueUrl,
     trackCommentEditDisabledReason,
     deleteTrack,
+    isDarkMode,
   }: TTrackCalendarRowProps) => {
     const message = useMessage();
     const [isExpanded, setIsExpanded] = useState(false);
@@ -74,7 +77,7 @@ export const TrackCalendarRow = memo(
     return (
       <>
         <tr className={styles.row}>
-          <th className={styles.issueCol}>
+          <th className={clsx(styles.issueCol, { [styles.issueCol_dark]: isDarkMode }, { [styles.issueCol_light]: !isDarkMode })}>
             <div>
               <Button
                 type="text"
@@ -89,7 +92,7 @@ export const TrackCalendarRow = memo(
               <div className={styles.issueDescription}>
                 <div className={styles.issueKeyRow}>
                   <a
-                    className={styles.issueKey}
+                    className={clsx(styles.issueKey, { [styles.issueKey_dark]: isDarkMode }, { [styles.issueKey_light]: !isDarkMode })}
                     href={getIssueUrl(issue.key)}
                     target="_blank"
                     rel="nofollow noopener noreferrer"
@@ -97,19 +100,19 @@ export const TrackCalendarRow = memo(
                     {issue.key}
                   </a>
                   {issueIsPinned ? (
-                    <>{unpinIssue && <PushpinFilled className={styles.pinIcon} onClick={handleUnpinIssue} />}</>
+                    <>{unpinIssue && <PushpinFilled className={clsx(styles.pinIcon, { [styles.pinIcon_dark]: isDarkMode }, { [styles.pinIcon_light]: !isDarkMode })} onClick={handleUnpinIssue} />}</>
                   ) : (
-                    <>{pinIssue && <PushpinOutlined className={styles.pinIcon} onClick={handlePinIssue} />}</>
+                    <>{pinIssue && <PushpinOutlined className={clsx(styles.pinIcon, { [styles.pinIcon_dark]: isDarkMode }, { [styles.pinIcon_light]: !isDarkMode })} onClick={handlePinIssue} />}</>
                   )}
                 </div>
-                <div className={styles.issueSummary}>{issue.summary}</div>
+                <div className={clsx(styles.issueSummary, { [styles.issueSummary_dark]: isDarkMode }, { [styles.issueSummary_light]: !isDarkMode })}>{issue.summary}</div>
               </div>
             </div>
           </th>
 
-          <th className={styles.statusCol} aria-label="issue status badge">
+          <th className={clsx(styles.statusCol, { [styles.statusCol_dark]: isDarkMode }, { [styles.statusCol_light]: !isDarkMode })} aria-label="issue status badge">
             <div>
-              <IssueStatusBadge status={issue.status} />
+              <IssueStatusBadge status={issue.status} isDarkMode={isDarkMode} />
             </div>
           </th>
 
@@ -164,18 +167,19 @@ export const TrackCalendarRow = memo(
               date={date}
               tracks={date2IssueTracks[date]}
               issueKey={issueKey}
+              isDarkMode={isDarkMode}
             />
           ))}
 
-          <TrackCalendarColSumIssue tracks={tracks} />
+          <TrackCalendarColSumIssue tracks={tracks} isDarkMode={isDarkMode} />
         </tr>
 
         {isExpanded && (
           <>
             {isEdit && (
-              <TrackCalendarInnerRow>
+              <TrackCalendarInnerRow isDarkMode={isDarkMode}>
                 <td colSpan={rowColSpan} className={styles.newTrackRow} aria-label={message('track.create.add')}>
-                  <AddNewTrackRowButton issueKey={issueKey} />
+                  <AddNewTrackRowButton issueKey={issueKey} isDarkMode={isDarkMode} />
                 </td>
               </TrackCalendarInnerRow>
             )}
@@ -189,6 +193,7 @@ export const TrackCalendarRow = memo(
               trackCommentEditDisabledReason={trackCommentEditDisabledReason}
               updateTrack={updateTrack}
               deleteTrack={deleteTrack}
+              isDarkMode={isDarkMode}
             />
           </>
         )}

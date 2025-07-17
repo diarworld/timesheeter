@@ -7,6 +7,9 @@ import { selectLocaleCurrent } from 'entities/locale/model/selectors';
 import { YandexAuthorizedTimesheet } from 'entities/track/yandex/ui/YandexAuthorizedTimesheet/YandexAuthorizedTimesheet';
 import { AuthRoute } from 'entities/auth/ui/AuthRoute';
 import { JiraAuthorizedTimesheet } from 'entities/track/jira/ui/JiraAuthorizedTimesheet/JiraAuthorizedTimesheet';
+import { ConfigProvider, theme } from 'antd';
+import { useEffect, useState } from 'react';
+import React from 'react';
 
 type TProps = {
   tracker: TTrackerConfig | undefined;
@@ -16,6 +19,17 @@ type TProps = {
 export const TrackerWorklog = ({ tracker, unauthorizedErrorShouldAppearAsOrgChange = false }: TProps) => {
   const message = useMessage();
   const language = useAppSelector(selectLocaleCurrent);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const stored = localStorage.getItem('isDarkMode');
+    return stored === null ? false : stored === 'true';
+  });
+  const { defaultAlgorithm, darkAlgorithm } = theme;
+
+  // Only keep the effect that writes to localStorage and updates body background
+  useEffect(() => {
+    localStorage.setItem('isDarkMode', String(isDarkMode));
+    document.body.style.backgroundColor = isDarkMode ? '#141414' : '#fff';
+  }, [isDarkMode]);
 
   let renderedTracker = <span>No such tracker</span>;
   if (isYandexTrackerCfg(tracker)) {
@@ -25,6 +39,8 @@ export const TrackerWorklog = ({ tracker, unauthorizedErrorShouldAppearAsOrgChan
           language={language}
           tracker={tracker}
           unauthorizedErrorShouldAppearAsOrgChange={unauthorizedErrorShouldAppearAsOrgChange}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
         />
       </AuthRoute>
     );
@@ -33,8 +49,13 @@ export const TrackerWorklog = ({ tracker, unauthorizedErrorShouldAppearAsOrgChan
   }
 
   return (
-    <Layout head={<Head description={message('home.description')} title={tracker?.name ?? 'No tracker found'} />}>
-      {renderedTracker}
-    </Layout>
+    <ConfigProvider theme={{ algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm }}>
+      <Layout
+        head={<Head description={message('home.description')} title={tracker?.name ?? 'No tracker found'} />}
+        isDarkMode={isDarkMode}
+      >
+        {React.cloneElement(renderedTracker, { isDarkMode, setIsDarkMode })}
+      </Layout>
+    </ConfigProvider>
   );
 };

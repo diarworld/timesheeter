@@ -13,7 +13,6 @@ export const Text = ({
   fw = 400,
   fs = 14,
   lh = 17,
-  color = 'inherit',
   style,
   ...restProps
 }: PropsWithChildren<ITextProps>) => (
@@ -23,7 +22,6 @@ export const Text = ({
       fontWeight: fw,
       fontSize: `${fs}px`,
       lineHeight: `${lh}px`,
-      color,
       ...style,
     }}
   />

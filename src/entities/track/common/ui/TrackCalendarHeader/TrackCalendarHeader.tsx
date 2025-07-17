@@ -1,4 +1,4 @@
-import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage } from 'antd';
+import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import Icon, {
   ScheduleFilled,
@@ -32,9 +32,11 @@ import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon'
 import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TimePeriodStepper } from './TimePeriodStepper';
 
+import { DarkModeSwitch } from 'react-toggle-dark-mode';
 import styles from './TrackCalendarHeader.module.scss';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
+import clsx from 'clsx';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -43,6 +45,8 @@ interface ITrackCalendarHeaderProps {
   tracker: TTrackerConfig;
   currentMenuKey: string;
   onMenuChange: (key: string) => void;
+  isDarkMode: boolean;
+  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function TrackCalendarHeader({
@@ -52,6 +56,8 @@ export function TrackCalendarHeader({
   tracker,
   currentMenuKey,
   onMenuChange,
+  isDarkMode,
+  setIsDarkMode,
 }: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
@@ -62,6 +68,7 @@ export function TrackCalendarHeader({
   const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
+  const handleClickTheme = () => setIsDarkMode(prev => !prev);
 
   const dispatch = useAppDispatch();
 
@@ -257,9 +264,8 @@ export function TrackCalendarHeader({
   const displayName = self ? self.display : tracker.username || '';
   // const displayName = user ? user.display : tracker.username || '';
   const YTSvg = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" fill="#000000">
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16">
       <path
-        fill="#000000"
         fillRule="evenodd"
         d="M2.75 2.5a.25.25 0 0 0-.25.25v2.167c0 .138.112.25.25.25h2.417V2.5zm3.917 0v2.667h2.666V2.5zm4.166 0v2.667h2.417a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25zm0 4.167h2.417A1.75 1.75 0 0 0 15 4.917V2.75A1.75 1.75 0 0 0 13.25 1H2.75A1.75 1.75 0 0 0 1 2.75v2.167c0 .966.784 1.75 1.75 1.75h2.417v6.583c0 .966.783 1.75 1.75 1.75h2.166a1.75 1.75 0 0 0 1.75-1.75zm-1.5 0H6.667v2.666h2.666zm0 4.166H6.667v2.417c0 .138.112.25.25.25h2.166a.25.25 0 0 0 .25-.25z"
         clipRule="evenodd"
@@ -281,8 +287,19 @@ export function TrackCalendarHeader({
         </Col>
 
         <Col style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-          <YTIcon style={{ marginRight: 10 }} />
-          <span style={{ marginRight: 10 }}>{displayName}</span>
+            {/* <Button onClick={handleClickTheme} style={{ height: '46px' }}> */}
+              {/* {isDarkMode ? "Light" : "Dark"} */}
+            {/* </Button> */}
+            <DarkModeSwitch
+              style={{ marginRight: '10px', }}
+              checked={isDarkMode}
+              onChange={handleClickTheme}
+              size={22}
+            />
+          <Card style={{ display: 'flex', alignItems: 'center', padding: '0px', height: '46px' }}>
+          <YTIcon style={{ marginRight: 10, fill: isDarkMode ? '#fff' : '#000' }} />
+          <Typography.Text style={{ marginRight: 10 }}>{displayName}</Typography.Text>
+          </Card>
           <Menu
             onClick={onClick}
             mode="horizontal"
@@ -292,7 +309,7 @@ export function TrackCalendarHeader({
           />
         </Col>
       </Row>
-      <div className={styles.header}>
+      <div className={clsx(styles.header, { [styles.header_dark]: isDarkMode }, { [styles.header_light]: !isDarkMode })}>
         <Row className={styles.durationRow}>
           <Button
             type="link"
@@ -307,7 +324,7 @@ export function TrackCalendarHeader({
           <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
           {/* <TodayText /> */}
           <Col flex="auto">
-            <TimePeriodStepper loader={<GlobalFetching />} />
+            <TimePeriodStepper loader={<GlobalFetching />} isDarkMode={isDarkMode} />
           </Col>
         </Row>
         <Row className={styles.durationRow}>

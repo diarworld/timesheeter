@@ -14,9 +14,10 @@ import styles from './TrackCalendarColHead.module.scss';
 type TProps = {
   date: string;
   now: TDate;
+  isDarkMode: boolean;
 };
 // TODO
-export const TrackCalendarColHead = ({ date, now }: TProps) => {
+export const TrackCalendarColHead = ({ date, now, isDarkMode }: TProps) => {
   const currentLocale = useCurrentLocale();
   const { utcOffsetInMinutes } = useFilterValues();
 
@@ -46,7 +47,8 @@ export const TrackCalendarColHead = ({ date, now }: TProps) => {
   }
 
   return (
-    <th className={clsx(styles.col, { [styles.col_weekend]: isWeekend || isHoliday })} data-current={isSamePeriod}>
+    <th className={clsx(styles.col, { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
+       { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })} data-current={isSamePeriod}>
       <div>
         {isHoliday || isPreholiday ? (
           <Popover content={popoverContent}>

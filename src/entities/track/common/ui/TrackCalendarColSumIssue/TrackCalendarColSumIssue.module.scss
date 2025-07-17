@@ -2,13 +2,20 @@
   font-weight: 700;
   font-size: 14px;
   line-height: 17px;
-  color: var(--color-baltic-sea);
   text-align: center;
   position: sticky;
   inset-inline-end: 0;
   z-index: 1;
-  background: var(--color-white);
   padding: 0 !important;
+}
+
+.col_dark {
+  color: var(--color-soft-peach);
+  background: var(--color-dark);
+}
+.col_light {
+  color: var(--color-baltic-sea);
+  background: var(--color-white);
 }
 
 .col > div {
@@ -17,5 +24,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: -1px 0 0 0 var(--color-soft-peach), 1px 0 0 0 var(--white);
+}
+
+.col_dark > div {
+  box-shadow: -1px 0 0 0 var(--color-ghost-dark), 1px 0 0 0 var(--color-ghost-dark);
+}
+.col_light > div {
+  box-shadow: -1px 0 0 0 var(--color-white-lilac), 1px 0 0 0 var(--color-white-lilac);
 }
