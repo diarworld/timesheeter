@@ -41,7 +41,7 @@ export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, 
        { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
        { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })}>
       {isEdit ? (
-        <button type="button" className={styles.button} onClick={handleClick}>
+        <button type="button" className={clsx(styles.button, { [styles.button_dark]: isDarkMode }, { [styles.button_light]: !isDarkMode })} onClick={handleClick}>
           {issueSum}
         </button>
       ) : (

@@ -33,7 +33,7 @@ export type TTrackCalendarRowProps = {
   isDarkMode: boolean;
 };
 
-const fixedColumnsCount = 3; // 3 = issueKey + status + summary columns
+const fixedColumnsCount = 6; // 6 = issueKey + status + summary columns + domains + productteams + products
 
 // !NOTICE that this memo component has custom compareProps function implementation
 export const TrackCalendarRow = memo(

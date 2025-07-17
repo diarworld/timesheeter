@@ -25,6 +25,14 @@
   background: var(--color-soft-peach);
 }
 
+.button_dark:hover {
+  background: var(--color-dark-lilac);
+}
+
+.button_light:hover {
+  background: var(--color-white-lilac);
+}
+
 .col_weekend_light {
   background: var(--color-pale-yellow);
 }
