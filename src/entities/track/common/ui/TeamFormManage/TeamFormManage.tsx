@@ -9,10 +9,15 @@ import { TYandexUser } from 'entities/user/yandex/model/types';
 import { yandexQueueApi } from 'entities/queue/yandex/model/yandex-api';
 import { QueueSelect } from 'entities/queue/common/ui/QueueSelect/QueueSelect';
 import { validateLDAP } from 'entities/track/common/lib/validate-ldap';
+import { syncTeamToDb } from 'entities/track/common/lib/sync-team';
+
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
+import { useRef } from 'react';
 
 import styles from './TeamFormManage.module.scss';
+import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
+import { useFilterValues } from 'features/filters/lib/useFilterValues';
 
 type TProps = {
   tracker: TTrackerConfig;
@@ -26,6 +31,8 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   const [teamQueueYT, setTeamQueueYT] = useState<string[]>([]);
 
   const { currentData: queueList, isFetching: isFetchingQueueList } = yandexQueueApi.useGetQueuesQuery({ tracker });
+  const { userId, login } = useFilterValues();
+  const { self } = useYandexUser(tracker, userId, login);
 
   const message = useMessage();
   const dispatch = useAppDispatch();
@@ -38,7 +45,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   });
   const [ldapValue, setLdapValue] = useState<string>('');
   const [error, setError] = useState('');
-  const [userData, setUserData] = useState<TYandexUser | undefined>(undefined);
+  const [userData, setUserData] = useState<TYandexUser>();
 
   const { data: user, error: queryError } = yandexUserApi.useGetYandexUserByLoginQuery(
     { login: ldapValue ?? '', tracker },
@@ -47,7 +54,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
   React.useEffect(() => {
     if (queryError && 'status' in queryError && queryError.status === 404) {
-      setUserData(undefined);
+      // setUserData(undefined);
       // console.log("User set to undefined");
       setError(
         queryError.data &&
@@ -94,9 +101,13 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
             const minimalUsers = sorted.map((teamUser) => ({
               uid: teamUser.uid,
               login: teamUser.login,
-              display: teamUser.display,
               email: teamUser.email,
+              display: teamUser.display,
               position: teamUser.position,
+              lastLoginDate: teamUser.lastLoginDate,
+              // created: teamUser.created,
+              // lastLogin: teamUser.lastLogin,
+              // login_count: teamUser.login_count,
             }));
             localStorage.setItem('team', JSON.stringify(minimalUsers));
             dispatch(track.actions.setTeam(sorted));
@@ -180,41 +191,16 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
     setTeamQueue(newQueue);
   };
 
-  // Place syncTeamToDb at the top level, not inside any function
-  const syncTeamToDb = async (teamArr: TYandexUser[]) => {
-    const ldapCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
-    const currentUser = teamArr.find(
-      (teamMember) => teamMember.email === ldapCredentials.username || teamMember.login === ldapCredentials.username,
-    );
-    if (!currentUser) return;
-    const teamId = localStorage.getItem('teamId');
-    try {
-      const method = teamId ? 'PATCH' : 'POST';
-      const body = teamId ? JSON.stringify({ teamId, members: teamArr }) : JSON.stringify({ members: teamArr });
-      const res = await fetch('/api/team', {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': currentUser?.uid?.toString() || '',
-          'x-user-email': currentUser?.email || '',
-        },
-        body,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.teamId) {
-          localStorage.setItem('teamId', data.teamId);
-        }
-      }
-    } catch (e) {
-      /* ignore */
-    }
-  };
+  const lastSyncedTeam = useRef<string>("");
 
   React.useEffect(() => {
-    syncTeamToDb(team);
+    const teamString = JSON.stringify(team);
+    if (teamString !== lastSyncedTeam.current && self) {
+      lastSyncedTeam.current = teamString;
+      syncTeamToDb(team, self);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [team]);
+  }, [team, self]);
 
   return (
     <>

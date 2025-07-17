@@ -219,6 +219,7 @@
   "rules.rule.no_skip": "Не пропускать",
   "rules.rule.deleted": "Правило \"{name}\" удалено",
   "rules.rule.saved": "Правило \"{name}\" сохранено",
+  "rules.rule.shared": "Правило \"{name}\" сделано общим для команды \"{team}\"",
   "rules.rule.error.no_conditions": "Требуется хотя бы одно условие",
   "rules.rule.error.no_actions": "Требуется хотя бы одно действие",
   "rules.rule.error.duplicate_action_type": "Разрешено только одно действие каждого типа.",
@@ -238,5 +239,6 @@
   "rules.rule.delete.confirm.shared": "Вы уверены?",
   "rules.rule.delete.confirm.shared.description": "Это действие удалит правило для всей команды!",
   "rules.current.user.error": "Текущий пользователь не найден",
-  "rules.share.with.team": "Сделать общим для команды"
+  "rules.share.with.team": "Сделать общим для команды",
+  "rules.select.team": "Выберите команду"
 }

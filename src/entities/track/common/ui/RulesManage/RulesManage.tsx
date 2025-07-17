@@ -22,21 +22,8 @@ import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon'
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { validateHumanReadableDuration } from '../../lib/validate-human-readable-duration';
 import { ITimesheeterRuleCondition, TRule } from './types';
-
-const getCurrentUserFromTeam = () => {
-  try {
-    const ldapCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
-    const team = JSON.parse(localStorage.getItem('team') || '[]');
-    if (!ldapCredentials.username || !Array.isArray(team)) return null;
-    // Find by login (username) or email
-    return team.find(
-      (user: TYandexUser) => user.email === ldapCredentials.username || user.login === ldapCredentials.username,
-    );
-  } catch (e) {
-    console.error('Error getting current user from team:', e);
-    return null;
-  }
-};
+import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
+import { useFilterValues } from 'features/filters/lib/useFilterValues';
 
 export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const message = useMessage();
@@ -50,15 +37,20 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const [shareLoading, setShareLoading] = useState<string | null>(null);
   const [userTeams, setUserTeams] = useState<{ id: string; name: string; members: TYandexUser[] }[]>([]);
   const [teamNameMap, setTeamNameMap] = useState<{ [id: string]: string }>({});
+  const { userId, login } = useFilterValues();
+  const { self } = useYandexUser(tracker, userId, login);
+  const [selectedShareTeam, setSelectedShareTeam] = useState<string | undefined>();
 
   // Fetch all teams for the user and build teamId -> teamName map
   useEffect(() => {
     const fetchTeams = async () => {
-      const currentUser = getCurrentUserFromTeam();
-      if (!currentUser) return;
+      if (!self) return;
       try {
         const res = await fetch('/api/team', {
-          headers: { 'x-user-id': currentUser?.uid?.toString() || '', 'x-user-email': currentUser?.email || '' },
+          headers: { 
+            'x-user-id': self?.uid?.toString() || ''
+            , 'x-user-email': self?.email || ''
+            , 'x-user-display': self?.display ? encodeURIComponent(self.display) : '', },
         });
         if (res.ok) {
           const data = await res.json();
@@ -78,12 +70,11 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
 
   // Fetch all shared rules for all teams
   useEffect(() => {
-    const currentUser = getCurrentUserFromTeam();
-    if (!currentUser) return;
+    if (!self) return;
     const fetchRules = async () => {
       try {
         const res = await fetch(`/api/team-rules`, {
-          headers: { 'x-user-id': currentUser?.uid?.toString() || '', 'x-user-email': currentUser?.email || '' },
+          headers: { 'x-user-id': self?.uid?.toString() || '', 'x-user-email': self?.email || '' },
         });
         if (res.ok) {
           const data = await res.json();
@@ -291,8 +282,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
 
       if (editingRule && sharedRules.some((r) => r.id === editingRule.id)) {
         // Shared rule: update on server
-        const currentUser = getCurrentUserFromTeam();
-        if (!currentUser) {
+        if (!self) {
           messageApi.error(message('rules.current.user.error'));
           return;
         }
@@ -300,8 +290,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           method: 'PUT', // or PATCH, depending on your API
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': currentUser?.uid?.toString() || '',
-            'x-user-email': currentUser?.email || '',
+            'x-user-id': self?.uid?.toString() || '',
+            'x-user-email': self?.email || '',
           },
           body: JSON.stringify({ id: rule.id, teamId: rule.teamId, rule }),
         });
@@ -352,15 +342,14 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
     const ruleName = allRules.find((r) => r.id === id)?.name;
     if (teamId) {
       if (sharedRules.some((r) => r.id === id)) {
-        const currentUser = getCurrentUserFromTeam();
-        if (!currentUser) return;
+        if (!self) return;
         try {
           const res = await fetch('/api/team-rules', {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
-              'x-user-id': currentUser?.uid?.toString() || '',
-              'x-user-email': currentUser?.email || '',
+              'x-user-id': self?.uid?.toString() || '',
+              'x-user-email': self?.email || '',
             },
             body: JSON.stringify({ id, teamId }),
           });
@@ -508,9 +497,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
   const AIIcon = (props: Partial<CustomIconComponentProps>) => <Icon component={AISvg} {...props} />;
 
   // Add share handler
-  const handleShareWithTeam = async (rule: TRule) => {
-    const currentUser = getCurrentUserFromTeam();
-    if (!currentUser) {
+  const handleShareWithTeam = async (rule: TRule, teamName: string) => {
+    if (!self) {
       messageApi.error(message('rules.current.user.error'));
       return;
     }
@@ -524,8 +512,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': currentUser?.uid?.toString() || '',
-            'x-user-email': currentUser?.email || '',
+            'x-user-id': self?.uid?.toString() || '',
+            'x-user-email': self?.email || '',
+            'x-user-display': self?.display ? encodeURIComponent(self.display) : '',
           },
           body: JSON.stringify({ members: teamMembers }),
         });
@@ -546,8 +535,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-user-id': currentUser?.uid?.toString() || '',
-              'x-user-email': currentUser?.email || '',
+              'x-user-id': self?.uid?.toString() || '',
+              'x-user-email': self?.email || '',
             },
             body: JSON.stringify({ teamId: team.id, rule: ruleWithoutId }),
           });
@@ -561,7 +550,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
       // Merge all returned rules into sharedRules
       const newSharedRules = results.map((r) => r.rule).filter(Boolean);
       setSharedRules((prev) => [...prev, ...newSharedRules]);
-      messageApi.success(message('share.save.action'));
+      messageApi.success(message('rules.rule.shared', { name: rule.name, team: teamName }));
     } catch (e) {
       messageApi.error(e instanceof Error ? e.message : 'Share failed');
     } finally {
@@ -860,9 +849,34 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
                 <Space>
                   {/* Only show share button for personal rules (not already shared) */}
                   {!sharedRules.some((r) => r.id === rule.id) && (
-                    <Button size="small" loading={shareLoading === rule.id} onClick={() => handleShareWithTeam(rule)}>
-                      {message('rules.share.with.team')}
-                    </Button>
+                    userTeams.length > 1 ? (
+                      <>
+                        <Select
+                          style={{ minWidth: 200, marginRight: 8 }}
+                          placeholder={message('rules.select.team')}
+                          options={userTeams.map(team => ({ value: team.id, label: team.name }))}
+                          value={selectedShareTeam}
+                          onChange={setSelectedShareTeam}
+                          size="small"
+                        />
+                        <Button
+                          size="small"
+                          loading={shareLoading === rule.id}
+                          onClick={() => selectedShareTeam && handleShareWithTeam(rule, teamNameMap[selectedShareTeam])}
+                          disabled={!selectedShareTeam}
+                        >
+                          {message('rules.share.with.team')}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="small"
+                        loading={shareLoading === rule.id}
+                        onClick={() => handleShareWithTeam(rule, teamNameMap[(rule as TRule).teamId])}
+                      >
+                        {message('rules.share.with.team')}
+                      </Button>
+                    )
                   )}
                   <Button size="small" onClick={() => handleEdit(rule)}>
                     {message('rules.rule.edit')}

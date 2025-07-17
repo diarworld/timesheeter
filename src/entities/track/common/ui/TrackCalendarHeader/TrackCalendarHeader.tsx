@@ -33,6 +33,8 @@ import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TimePeriodStepper } from './TimePeriodStepper';
 
 import styles from './TrackCalendarHeader.module.scss';
+import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
+import { useFilterValues } from 'features/filters/lib/useFilterValues';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -250,9 +252,10 @@ export function TrackCalendarHeader({
       onMenuChange(e.key);
     }
   };
-  const team = JSON.parse(localStorage.getItem('team') || '[]');
-  const user = team.find((u: { email: string }) => u.email === tracker.username);
-  const displayName = user ? user.display : tracker.username || '';
+  const { userId, login } = useFilterValues();
+  const { self } = useYandexUser(tracker, userId, login);
+  const displayName = self ? self.display : tracker.username || '';
+  // const displayName = user ? user.display : tracker.username || '';
   const YTSvg = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" fill="#000000">
       <path
