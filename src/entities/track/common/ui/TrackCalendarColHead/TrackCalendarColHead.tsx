@@ -65,7 +65,7 @@ export const TrackCalendarColHead = ({ date, now, isDarkMode }: TProps) => {
           </Popover>
         ) : (
           <>
-            <Text fs={13} fw={800} style={{ textTransform: 'capitalize' }}>
+            <Text fs={13} fw={800} style={{ textTransform: 'capitalize', color: isDarkMode ? 'var(--color-soft-peach)' : 'var(--color-baltic-sea)' }}>
               {dayFormat}
             </Text>
             <Text fs={13}> {dateFormat}</Text>

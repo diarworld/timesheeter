@@ -8,21 +8,21 @@
   font-weight: 400;
   font-size: 14px;
   line-height: 17px;
-  color: var(--color-baltic-sea);
-  border-color: var(--color-periwinkle);
+  // color: var(--color-baltic-sea);
+  // border-color: var(--color-periwinkle);
 }
 
 .textarea:hover {
-  box-shadow: 0 0 0 2px var(--color-periwinkle);
+  // box-shadow: 0 0 0 2px var(--color-periwinkle);
   border-right-width: 1px;
   outline: 0;
 }
 
-.textarea:focus {
-  background-color: var(--color-white);
-}
+// .textarea:focus {
+//  background-color: var(--color-white);
+// }
 
-.textarea::selection {
-  background-color: var(--color-periwinkle);
-  color: var(--color-baltic-sea);
-}
+// .textarea::selection {
+//   background-color: var(--color-periwinkle);
+//   color: var(--color-baltic-sea);
+// }

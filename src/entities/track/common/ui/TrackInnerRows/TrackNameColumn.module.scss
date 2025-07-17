@@ -7,7 +7,7 @@
 .col > div {
   display: flex;
   align-items: center;
-  color: var(--color-baltic-sea);
+  // color: var(--color-baltic-sea);
   font-size: 14px;
   line-height: 22px;
   z-index: 1;
@@ -29,6 +29,14 @@
   font-size: .8rem;
 }
 
+.commentEditDisabled_dark {
+  color: var(--color-mountain-mist);
+}
+
+.commentEditDisabled_light {
+  color: var(--color-baltic-sea);
+}
+
 .textarea_dark {
   color: var(--color-soft-peach);
 }
@@ -36,14 +44,34 @@
 .textarea_dark:hover,
 .textarea_dark:focus {
   border-color: var(--color-dark-blue);
+  box-shadow: 0 0 0 2px var(--color-dark-blue);
 }
 
 .textarea_dark:focus {
   background-color: var(--color-dark);
-  box-shadow: none;
+  box-shadow: 0 0 0 2px var(--color-dark-blue);
 }
 
 .textarea_dark::selection {
   background-color: var(--color-dark-blue);
+  box-shadow: 0 0 0 2px var(--color-dark-blue);
   color: var(--color-white);
+}
+
+.textarea_light {
+  color: var(--color-baltic-sea);
+  border-color: var(--color-periwinkle);
+}
+
+.textarea_light:hover {
+  box-shadow: 0 0 0 2px var(--color-periwinkle);
+}
+
+.textarea_light:focus {
+  background-color: var(--color-white);
+}
+
+.textarea_light::selection {
+  background-color: var(--color-periwinkle);
+  color: var(--color-baltic-sea);
 }
