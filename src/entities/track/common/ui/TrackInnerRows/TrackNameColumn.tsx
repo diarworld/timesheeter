@@ -87,13 +87,13 @@ export const TrackNameColumn = memo(
                   </Form.Item>
                 </Form>
               ) : (
-                <Typography.Text disabled className={styles.commentEditDisabled}>
+                <Typography.Text disabled className={clsx(styles.commentEditDisabled, { [styles.commentEditDisabled_dark]: isDarkMode }, { [styles.commentEditDisabled_light]: !isDarkMode })}>
                   {trackCommentEditDisabledReason}
                 </Typography.Text>
               )}
             </>
           ) : (
-            <div>{initialValues.comment}</div>
+            <div className={clsx({ [styles.commentEditDisabled_dark]: isDarkMode }, { [styles.commentEditDisabled_light]: !isDarkMode })}>{initialValues.comment}</div>
           )}
         </div>
       </td><td colSpan={3} /></>
