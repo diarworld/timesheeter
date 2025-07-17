@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../src/lib/prisma';
+import { Team, User } from '@prisma/client';
 
 // Helper: get user id from access_token header (dummy for now)
 function getUserIdFromRequest(req: NextApiRequest): [string | null, string | null, string | null] {
@@ -36,8 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Merge teams (avoid duplicates by id)
       const allTeamsMap = new Map();
-      (user?.teams || []).forEach(team => allTeamsMap.set(team.id, team));
-      (createdTeams || []).forEach(team => allTeamsMap.set(team.id, team));
+      (user?.teams || []).forEach((team: Team & { members: User[] }) => allTeamsMap.set(team.id, team));
+      (createdTeams || []).forEach((team: Team & { members: User[] }) => allTeamsMap.set(team.id, team));
       const allTeams = Array.from(allTeamsMap.values());
 
       // Format teams with all member fields, and convert BigInt to string

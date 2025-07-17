@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../src/lib/prisma';
+import { Team, User, Rule } from '@prisma/client';
 
 // Dummy getUserIdFromRequest for now (replace with real auth)
 function getUserIdFromRequest(req: NextApiRequest): string | null {
@@ -27,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { id: teamId },
         include: { members: true, rules: true },
       });
-      if (!team || !team.members.some((m: { uid: any; }) => m.uid === BigInt(userId))) {
+      if (!team || !team.members.some((m: User) => m.uid === BigInt(userId))) {
         return res.status(403).json({ error: 'Forbidden1' });
       }
       return res.json({ rules: team.rules });
@@ -39,8 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       if (!user) return res.status(404).json({ error: 'User not found' });
       // Flatten and deduplicate rules by id
-      const allRules = user.teams.flatMap((team: { rules: any; }) => team.rules);
-      const uniqueRules = Array.from(new Map(allRules.map((r: { id: any; }) => [r.id, r])).values());
+      const allRules = user.teams.flatMap((team: Team & { rules: Rule[] }) => team.rules);
+      const uniqueRules = Array.from(new Map(allRules.map((r: Rule) => [r.id, r])).values());
       res.setHeader('Content-Type', 'application/json');
       return res.status(200).end(JSON.stringify({ rules: uniqueRules }, replacer));
     }
@@ -57,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: teamId },
       include: { members: true },
     });
-    if (!team || !team.members.some((m: { uid: any; }) => m.uid === BigInt(userId))) {
+    if (!team || !team.members.some((m: User) => m.uid === BigInt(userId))) {
       return res.status(403).json({ error: 'Вы не входите в команду: "' + team?.name + '"' });
     }
     // Ensure creator exists
@@ -93,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: teamId },
       include: { members: true },
     });
-    if (!team || !team.members.some((m: { uid: any; }) => m.uid === BigInt(userId))) {
+    if (!team || !team.members.some((m: User) => m.uid === BigInt(userId))) {
       return res.status(403).json({ error: 'Forbidden3' });
     }
     const updated = await prisma.rule.update({
@@ -123,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: teamId },
       include: { members: true },
     });
-    if (!team || !team.members.some((m: { uid: any; }) => m.uid === BigInt(userId))) {
+    if (!team || !team.members.some((m: User) => m.uid === BigInt(userId))) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     await prisma.rule.delete({ where: { id } });
