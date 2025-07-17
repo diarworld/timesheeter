@@ -25,6 +25,10 @@ import { humanReadableDurationToISO } from 'entities/track/common/lib/human-read
 import './CalendarExportModal.scss';
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
 import { isoDurationToSeconds } from '../../lib/iso-duration-to-seconds';
+import { validateHumanReadableDuration } from 'entities/track/common/lib/validate-human-readable-duration';
+import { DurationFormat } from 'features/date/ui/DurationFormat/DurationFormat';
+import { useFormatDuration } from 'entities/track/common/lib/hooks/use-format-duration';
+import { msToBusinessDurationData } from 'entities/track/common/lib/ms-to-business-duration-data';
 
 const { Text, Title } = Typography;
 
@@ -97,6 +101,11 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   // Add state for editing issueKey
   const [editingIssueKey, setEditingIssueKey] = useState<string | null>(null);
   const [editingIssueKeyValue, setEditingIssueKeyValue] = useState<string>('');
+
+  // Add state for editing duration
+  const [editingDurationKey, setEditingDurationKey] = useState<string | null>(null);
+  const [editingDurationValue, setEditingDurationValue] = useState<string>('');
+  const [editingDurationError, setEditingDurationError] = useState<string>('');
 
   // Get the appropriate track creation hook based on tracker type
   const jiraTrackHook = useCreateJiraTrack(tracker);
@@ -299,6 +308,63 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   const cancelIssueKeyEdit = () => {
     setEditingIssueKey(null);
     setEditingIssueKeyValue('');
+  };
+
+  // Helper to format business duration as string (like DurationFormat)
+  function formatBusinessDurationString(duration: ReturnType<typeof msToBusinessDurationData>) {
+    const parts = [];
+    if (duration.hours) parts.push(`${duration.hours}h`);
+    if (duration.minutes) parts.push(`${duration.minutes}m`);
+    if (duration.seconds && !parts.length) parts.push(`${duration.seconds}s`); // only show seconds if no h/m
+    if (!parts.length) parts.push('0m');
+    return parts.join(' ');
+  }
+
+  const handleEditDuration = (key: string, currentValue: number) => {
+    setEditingDurationKey(key);
+    const ms = currentValue * 60 * 1000;
+    const businessDuration = msToBusinessDurationData(ms);
+    const value = formatBusinessDurationString(businessDuration);
+    setEditingDurationValue(value);
+    setEditingDurationError('');
+  };
+  // Handler for input change
+  const handleDurationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEditingDurationValue(value);
+    if (!validateHumanReadableDuration(value)) {
+      setEditingDurationError(message('form.invalid.format'));
+    } else {
+      setEditingDurationError('');
+    }
+  };
+  // Handler to save edit
+  const saveDurationEdit = (key: string) => {
+    if (!validateHumanReadableDuration(editingDurationValue)) {
+      setEditingDurationError(message('form.invalid.format'));
+      return;
+    }
+    // Convert to ISO, then to minutes
+    const iso = humanReadableDurationToISO(editingDurationValue);
+    if (!iso) {
+      setEditingDurationError(message('form.invalid.format'));
+      return;
+    }
+    const seconds = isoDurationToSeconds(iso);
+    if (typeof seconds !== 'number') {
+      setEditingDurationError(message('form.invalid.format'));
+      return;
+    }
+    setIssueDurations((prev) => ({ ...prev, [key]: seconds / 60 }));
+    setEditingDurationKey(null);
+    setEditingDurationValue('');
+    setEditingDurationError('');
+  };
+  // Handler to cancel edit
+  const cancelDurationEdit = () => {
+    setEditingDurationKey(null);
+    setEditingDurationValue('');
+    setEditingDurationError('');
   };
 
   const handleImportTracks = async () => {
@@ -562,12 +628,57 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       title: message('calendar.export.table.duration'),
       dataIndex: 'duration',
       key: 'duration',
-      render: (minutes: number, record: IDataType) => (
-        <Text>
-          {message('date.hours.short', { value: Math.floor((issueDurations[String(record.key)] || minutes) / 60) })}{' '}
-          {message('date.minutes.short', { value: Math.floor((issueDurations[String(record.key)] || minutes) % 60) })}
-        </Text>
-      ),
+      render: (minutes: number, record: IDataType) => {
+        const key = String(record.key);
+        const value = issueDurations[key] || minutes;
+        if (editingDurationKey === key) {
+          return (
+            <div className="editable-cell">
+              <Input
+                value={editingDurationValue}
+                autoFocus
+                onChange={handleDurationInputChange}
+                onBlur={() => saveDurationEdit(key)}
+                onPressEnter={() => saveDurationEdit(key)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') cancelDurationEdit();
+                }}
+                onFocus={(e) => e.target.select()}
+                size="small"
+                status={editingDurationError ? 'error' : ''}
+                placeholder="1h 30m"
+                style={{ width: 100 }}
+              />
+              {editingDurationError && (
+                <div style={{ color: 'red', fontSize: 12 }}>{editingDurationError}</div>
+              )}
+            </div>
+          );
+        }
+        // Convert minutes to ms, then to business duration
+        const ms = value * 60 * 1000;
+        const businessDuration = msToBusinessDurationData(ms);
+        return (
+          <div className="editable-cell editable-row">
+            <div
+              className="editable-cell-value-wrap"
+              onClick={() => handleEditDuration(key, value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleEditDuration(key, value);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
+              <Text strong style={{ cursor: 'pointer' }}>
+                <DurationFormat duration={businessDuration} />
+              </Text>
+            </div>
+          </div>
+        );
+      },
     },
   ];
 
