@@ -10,7 +10,7 @@ import { useFilters } from 'features/filters/lib/useFilters';
 import { DATE_FORMAT_DATE } from 'features/date/lib/constants';
 import styles from './TrackCalendarHeaderControlBar.module.scss';
 
-export const TrackCalendarHeaderControlBar = memo(({ children }: PropsWithChildren) => {
+export const TrackCalendarHeaderControlBar = memo(({ children, isDarkMode }: PropsWithChildren<{ isDarkMode: boolean }>) => {
   const message = useMessage();
 
   const { from, to, showWeekends, updateRangeFilter, updateWeekendVisibility, utcOffsetInMinutes } = useFilters();
@@ -35,6 +35,7 @@ export const TrackCalendarHeaderControlBar = memo(({ children }: PropsWithChildr
           value={[fromDate, toDate]}
           onChange={handleDateChange}
           format={DATE_FORMAT_DATE}
+          isDarkMode={isDarkMode}
         />
 
         {/* <div className={styles.divider} /> */}
