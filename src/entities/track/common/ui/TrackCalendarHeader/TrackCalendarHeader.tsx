@@ -346,7 +346,7 @@ export function TrackCalendarHeader({
         title={message('menu.rules.title')}
         style={{ minWidth: '800px' }}
       >
-        <RulesManage tracker={tracker} />
+        <RulesManage tracker={tracker} isDarkMode={isDarkMode} />
       </Modal>
     </>
   );
