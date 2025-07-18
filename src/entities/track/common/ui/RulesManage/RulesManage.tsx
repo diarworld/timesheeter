@@ -25,7 +25,7 @@ import { ITimesheeterRuleCondition, TRule } from './types';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 
-export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
+export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> = ({ tracker, isDarkMode }) => {
   const message = useMessage();
   const [form] = Form.useForm<TRule>();
   const [rules, setRules] = useState<TRule[]>([]);
@@ -826,7 +826,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig }> = ({ tracker }) => {
               <div
                 style={{
                   border: sharedRules.some((r) => r.id === rule.id) ? '2px solid #1890ff' : undefined,
-                  background: sharedRules.some((r) => r.id === rule.id) ? '#e6f7ff' : undefined,
+                  background: sharedRules.some((r) => r.id === rule.id) ? isDarkMode ? '#2e2e2e' : '#e6f7ff' : undefined,
                   borderRadius: 6,
                   padding: 8,
                 }}
