@@ -13,7 +13,9 @@ import { syncTeamToDb } from 'entities/track/common/lib/sync-team';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import Tracker from '@openreplay/tracker';
+import trackerAssist from '@openreplay/tracker-assist';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -100,9 +102,29 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
   //     dispatch(track.actions.setTeam(updatedTeam));
   //   }
   // }, [self, team, dispatch]);
+  // OpenReplay Tracker initialization (only once)
+  const trackerRef = useRef<Tracker | null>(null);
+  useEffect(() => {
+    if (!trackerRef.current) {
+      const trackerOpenReplay = new Tracker({
+        projectKey: "k5BEz4HNHVUqjAXHNC2t",
+        ingestPoint: "https://openreplay.apps.data.lmru.tech/ingest",
+      });
+      trackerOpenReplay.use(trackerAssist());
+      trackerOpenReplay.start();
+      trackerRef.current = trackerOpenReplay;
+    }
+  }, []);
 
+  // Set user ID for OpenReplay when self is available
+  useEffect(() => {
+    if (self && trackerRef.current) {
+      trackerRef.current.setUserID(self?.uid?.toString() || '');
+    }
+  }, [self]);
 
   const ldapCredentials = localStorage.getItem('ldapCredentials');
+  
   if (self && !ldapCredentials) {
     const credentials = {
       username: self.email,
