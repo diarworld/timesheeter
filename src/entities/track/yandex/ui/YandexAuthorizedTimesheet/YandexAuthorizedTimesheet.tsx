@@ -119,7 +119,7 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
   // Set user ID for OpenReplay when self is available
   useEffect(() => {
     if (self && trackerRef.current) {
-      trackerRef.current.setUserID(self?.uid?.toString() || '');
+      trackerRef.current.setUserID(self?.display || self?.login || '');
     }
   }, [self]);
 
