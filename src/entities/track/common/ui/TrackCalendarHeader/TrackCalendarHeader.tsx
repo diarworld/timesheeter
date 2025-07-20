@@ -1,4 +1,4 @@
-import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card } from 'antd';
+import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card, Badge, Avatar, Flex } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import Icon, {
   ScheduleFilled,
@@ -31,12 +31,14 @@ import { RulesManage } from 'entities/track/common/ui/RulesManage';
 import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
 import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TimePeriodStepper } from './TimePeriodStepper';
+import { PhotoUploadModal } from '../PhotoUploadModal/PhotoUploadModal';
 
 import { DarkModeSwitch } from 'react-toggle-dark-mode';
 import styles from './TrackCalendarHeader.module.scss';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import clsx from 'clsx';
+import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -68,6 +70,7 @@ export function TrackCalendarHeader({
   const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
+  const [photoUploadModalVisible, setPhotoUploadModalVisible] = useState(false);
   const handleClickTheme = () => setIsDarkMode(prev => !prev);
 
   const dispatch = useAppDispatch();
@@ -262,6 +265,12 @@ export function TrackCalendarHeader({
   const { userId, login } = useFilterValues();
   const { self } = useYandexUser(tracker, userId, login);
   const displayName = self ? self.display : tracker.username || '';
+  
+  // Fetch user extras data for avatar
+  const { data: userExtras, refetch: refetchUserExtras } = useGetUserExtrasQuery(self?.uid || 0, {
+    skip: !self?.uid,
+  });
+  
   // const displayName = user ? user.display : tracker.username || '';
   const YTSvg = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16">
@@ -273,6 +282,103 @@ export function TrackCalendarHeader({
     </svg>
   );
   const YTIcon = (props: Partial<CustomIconComponentProps>) => <Icon component={YTSvg} {...props} />;
+  
+  // Create avatar component
+  const UserAvatar = () => {
+    if (userExtras?.photo) {
+      return (
+        <div
+          style={{ 
+            cursor: 'pointer',
+            border: '2px solid transparent',
+            transition: 'border-color 0.2s',
+            borderRadius: '50%',
+            marginTop: '5px',
+          }}
+          onClick={() => setPhotoUploadModalVisible(true)}
+          onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+            e.currentTarget.style.borderColor = '#1890ff';
+          }}
+          onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+            e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <Avatar 
+            src={`data:image/jpeg;base64,${userExtras.photo}`}
+            size={42}
+          />
+        </div>
+      );
+    }
+    
+    return (
+      <div
+        onClick={() => setPhotoUploadModalVisible(true)}
+        style={{ 
+          cursor: 'pointer',
+          padding: '4px',
+          borderRadius: '50%',
+          border: '2px solid transparent',
+          transition: 'border-color 0.2s',
+        }}
+        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+          e.currentTarget.style.borderColor = '#1890ff';
+        }}
+        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+          e.currentTarget.style.borderColor = 'transparent';
+        }}
+      >
+        <YTIcon 
+          style={{ 
+            fill: isDarkMode ? '#fff' : '#000',
+            fontSize: '20px'
+          }} 
+        />
+      </div>
+    );
+  };
+
+  const handlePhotoUploadSuccess = () => {
+    refetchUserExtras();
+    setPhotoUploadModalVisible(false);
+  };
+
+  // Create user info component
+  const UserInfo = () => {
+    const hasExtras = userExtras?.department || userExtras?.division;
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-10px' }}>
+        {hasExtras && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            {userExtras.department && (
+              <Typography.Text 
+                style={{ 
+                  fontSize: '11px', 
+                  color: isDarkMode ? '#8c8c8c' : '#666',
+                  lineHeight: '1'
+                }}
+              >
+                {userExtras.department}
+              </Typography.Text>
+            )}
+            {userExtras.division && (
+              <Typography.Text 
+                style={{ 
+                  fontSize: '11px', 
+                  color: isDarkMode ? '#8c8c8c' : '#666',
+                  lineHeight: '1'
+                }}
+              >
+                {userExtras.division}
+              </Typography.Text>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+  
   return (
     <>
       <Row className={styles.menu} justify="space-between" align="middle">
@@ -291,14 +397,22 @@ export function TrackCalendarHeader({
               {/* {isDarkMode ? "Light" : "Dark"} */}
             {/* </Button> */}
             <DarkModeSwitch
-              style={{ marginRight: '10px', }}
+              style={{ marginRight: '15px', }}
               checked={isDarkMode}
               onChange={handleClickTheme}
-              size={22}
+              size={32}
             />
-          <Card style={{ display: 'flex', alignItems: 'center', padding: '0px', height: '46px' }}>
-          <YTIcon style={{ marginRight: 10, fill: isDarkMode ? '#fff' : '#000' }} />
-          <Typography.Text style={{ marginRight: 10 }}>{displayName}</Typography.Text>
+          <Card size="small">
+          <Card.Meta
+            style={{ margin: 0, padding: 0 }}
+            avatar={<UserAvatar />}
+            title={
+              <Typography.Text style={{ fontSize: '12px', fontWeight: 800, margin: 0, padding: 0 }}>
+                {displayName}
+              </Typography.Text>
+            }
+            description={<UserInfo />}
+          />
           </Card>
           <Menu
             onClick={onClick}
@@ -348,6 +462,13 @@ export function TrackCalendarHeader({
       >
         <RulesManage tracker={tracker} isDarkMode={isDarkMode} />
       </Modal>
+      <PhotoUploadModal
+        visible={photoUploadModalVisible}
+        onCancel={() => setPhotoUploadModalVisible(false)}
+        onSuccess={handlePhotoUploadSuccess}
+        uid={self?.uid || 0}
+        currentPhoto={userExtras?.photo || null}
+      />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { Button, InputNumber } from 'antd';
+import { Button, InputNumber, Avatar, Flex } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
@@ -10,6 +10,8 @@ import { yandexQueueApi } from 'entities/queue/yandex/model/yandex-api';
 import { QueueSelect } from 'entities/queue/common/ui/QueueSelect/QueueSelect';
 import { validateLDAP } from 'entities/track/common/lib/validate-ldap';
 import { syncTeamToDb } from 'entities/track/common/lib/sync-team';
+import { UserOutlined } from '@ant-design/icons';
+import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
 
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
@@ -18,6 +20,32 @@ import { useRef } from 'react';
 import styles from './TeamFormManage.module.scss';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
+
+// Component for displaying user with photo
+const UserDisplayWithPhoto: React.FC<{ uid: number; login: string; display: string; position?: string }> = ({ uid, login, display, position }) => {
+  const { data: userExtras } = useGetUserExtrasQuery(uid, {
+    skip: !uid,
+  });
+
+  return (
+    <Flex align="center" gap={8}>
+      {userExtras?.photo ? (
+        <Avatar 
+          src={`data:image/jpeg;base64,${userExtras.photo}`} 
+          size={24}
+        />
+      ) : (
+        <Avatar 
+          icon={<UserOutlined />} 
+          size={24}
+        />
+      )}
+      <span>
+        {login} - {display} - {position}
+      </span>
+    </Flex>
+  );
+};
 
 type TProps = {
   tracker: TTrackerConfig;
@@ -268,7 +296,12 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
         {team.map((teamUser) => (
           <li key={teamUser.login} style={{ display: 'flex', marginBottom: 5 }}>
             <span style={{ flex: 1 }}>
-              {teamUser.login} - {teamUser.display} - {teamUser.position}
+              <UserDisplayWithPhoto 
+                uid={teamUser.uid} 
+                login={teamUser.login}
+                display={teamUser.display} 
+                position={teamUser.position}
+              />
             </span>
             <Button
               type="primary"

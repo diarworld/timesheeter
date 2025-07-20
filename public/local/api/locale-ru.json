@@ -240,5 +240,12 @@
   "rules.rule.delete.confirm.shared.description": "Это действие удалит правило для всей команды!",
   "rules.current.user.error": "Текущий пользователь не найден",
   "rules.share.with.team": "Сделать общим для команды",
-  "rules.select.team": "Выберите команду"
+  "rules.select.team": "Выберите команду",
+  "photo.upload.title": "Загрузить фото профиля",
+  "photo.upload.button": "Выбрать фото",
+  "photo.upload.hint": "JPG или PNG, максимум 2МБ",
+  "photo.upload.success": "Фото успешно загружено!",
+  "photo.upload.error": "Не удалось загрузить фото. Попробуйте еще раз.",
+  "photo.upload.format.error": "Пожалуйста, выберите изображение JPG или PNG.",
+  "photo.upload.size.error": "Размер изображения должен быть меньше 2МБ."
 }
