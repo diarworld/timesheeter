@@ -1,4 +1,4 @@
-import { Button, InputNumber, Avatar, Flex } from 'antd';
+import { Button, InputNumber, Avatar, Flex, Select, Spin } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
@@ -20,6 +20,7 @@ import { useRef } from 'react';
 import styles from './TeamFormManage.module.scss';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
+import debounce from 'lodash/debounce';
 
 // Component for displaying user with photo
 const UserDisplayWithPhoto: React.FC<{ uid: number; login: string; display: string; position?: string }> = ({ uid, login, display, position }) => {
@@ -230,6 +231,41 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [team, self]);
 
+  const [teamSearchOptions, setTeamSearchOptions] = useState<any[]>([]);
+  const [teamSearchLoading, setTeamSearchLoading] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | undefined>(undefined);
+
+  const fetchTeams = debounce(async (search: string) => {
+    setTeamSearchLoading(true);
+    try {
+      const res = await fetch(`/api/team?creatorId=1&search=${encodeURIComponent(search)}`);
+      const data = await res.json();
+      setTeamSearchOptions(
+        (data.teams || []).map((t: any) => ({
+          value: t.id,
+          label: t.name,
+          members: t.members,
+        }))
+      );
+    } finally {
+      setTeamSearchLoading(false);
+    }
+  }, 400);
+
+  const handleTeamSelect = (teamId: string) => {
+    const team = teamSearchOptions.find((t) => t.value === teamId);
+    if (team) {
+      // Merge and dedupe by uid (as string)
+      setTeam((prev) => {
+        const merged = [...prev, ...team.members];
+        const deduped = Array.from(new Map(merged.map((u) => [String(u.uid), u])).values());
+        localStorage.setItem('team', JSON.stringify(deduped));
+        dispatch(track.actions.setTeam(deduped));
+        return deduped;
+      });
+    }
+  };
+
   return (
     <>
       <ul style={{ padding: '0px' }}>
@@ -253,6 +289,34 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
             htmlType="button"
             onClick={handleAddFromTeam}
             loading={isLoadingUsersFromTeam}
+          >
+            <Message id="manage.team.add" />
+          </Button>
+        </li>
+        <li style={{ display: 'flex', marginBottom: 5 }}>
+          <span style={{ flex: 1 }}>
+            <Select
+              showSearch
+              allowClear
+              className={styles.input}
+              placeholder={message('manage.team.search') || 'Search team by name'}
+              filterOption={false}
+              onSearch={fetchTeams}
+              onSelect={setSelectedTeamId}
+              value={selectedTeamId}
+              notFoundContent={teamSearchLoading ? <Spin size="small" /> : null}
+              style={{ width: '100%' }}
+              options={teamSearchOptions}
+            />
+          </span>
+          <Button
+            className={styles.input}
+            style={{ marginLeft: 8 }}
+            disabled={!selectedTeamId}
+            type="primary"
+            name="addTeam"
+            htmlType="button"
+            onClick={() => selectedTeamId && handleTeamSelect(selectedTeamId)}
           >
             <Message id="manage.team.add" />
           </Button>

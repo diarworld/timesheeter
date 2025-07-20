@@ -852,7 +852,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
                     userTeams.length > 1 ? (
                       <>
                         <Select
-                          style={{ minWidth: 200, marginRight: 8 }}
+                          style={{ minWidth: 250, maxWidth: 250, marginRight: 8 }}
                           placeholder={message('rules.select.team')}
                           options={userTeams.map(team => ({ value: team.id, label: team.name }))}
                           value={selectedShareTeam}
