@@ -16,10 +16,11 @@ type TProps = {
   issueKey: string;
   isEdit?: boolean;
   isDarkMode: boolean;
+  as?: 'td' | 'div';
 };
 
 // !NOTICE that this memo component has custom compareProps function implementation
-export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, isEdit, isDarkMode }: TProps) => {
+export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, isEdit, isDarkMode, as = 'td' }: TProps) => {
   const addNewTrack = useAddNewTrackAction(issueKey);
   const { utcOffsetInMinutes } = useFilterValues();
 
@@ -35,8 +36,25 @@ export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, 
 
   const issueSum = dashIsEmpty(tracks, <TrackCalendarSum tracksOrTrack={tracks} />);
 
+  if (as === 'td') {
+    return (
+      <td className={clsx(styles.col, { [styles.col_dark]: isDarkMode },
+         { [styles.col_light]: !isDarkMode },
+         { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
+         { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })}>
+        {isEdit ? (
+          <button type="button" className={clsx(styles.button, { [styles.button_dark]: isDarkMode }, { [styles.button_light]: !isDarkMode })} onClick={handleClick}>
+            {issueSum}
+          </button>
+        ) : (
+          issueSum
+        )}
+      </td>
+    );
+  }
+
   return (
-    <td className={clsx(styles.col, { [styles.col_dark]: isDarkMode },
+    <div className={clsx(styles.col, { [styles.col_dark]: isDarkMode },
        { [styles.col_light]: !isDarkMode },
        { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
        { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })}>
@@ -47,7 +65,7 @@ export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, 
       ) : (
         issueSum
       )}
-    </td>
+    </div>
   );
 }, comparePropsWithTracks);
 

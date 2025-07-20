@@ -127,7 +127,7 @@ export const MonthCalendar: React.FC<Props> = ({ tracksData, isDarkMode, from, t
         )}
         {!hasTracks && !isWeekend && isInPeriod && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <TrackCalendarColIssueSumDay
+          <TrackCalendarColIssueSumDay as="div"
             isEdit={isEdit}
             date={dateStr}
             issueKey={''}

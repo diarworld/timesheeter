@@ -38,6 +38,7 @@ import { useISOToHumanReadableDuration } from 'entities/track/common/lib/hooks/u
 
 import { MonthCalendar } from 'entities/track/common/ui/MonthCalendar/MonthCalendar';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate/TrackModalCreate';
+import { PeriodInitializer } from 'features/filters/lib/PeriodInitializer';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -200,6 +201,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
 
   return (
     <div>
+      <PeriodInitializer defaultPeriod="week" />
       <TrackCalendarHeader
         isEdit={isEdit}
         tracker={tracker}
