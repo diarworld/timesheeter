@@ -10,7 +10,7 @@ import { useFilters } from 'features/filters/lib/useFilters';
 import { DATE_FORMAT_DATE } from 'features/date/lib/constants';
 import styles from './TrackCalendarHeaderControlBar.module.scss';
 
-export const TrackCalendarHeaderControlBar = memo(({ children, isDarkMode }: PropsWithChildren<{ isDarkMode: boolean }>) => {
+export const TrackCalendarHeaderControlBar = memo(({ children, isDarkMode, currentMenuKey, disableShowWeekends }: PropsWithChildren<{ isDarkMode: boolean, currentMenuKey?: string, disableShowWeekends?: boolean }>) => {
   const message = useMessage();
 
   const { from, to, showWeekends, updateRangeFilter, updateWeekendVisibility, utcOffsetInMinutes } = useFilters();
@@ -36,13 +36,14 @@ export const TrackCalendarHeaderControlBar = memo(({ children, isDarkMode }: Pro
           onChange={handleDateChange}
           format={DATE_FORMAT_DATE}
           isDarkMode={isDarkMode}
+          disabled={currentMenuKey === 'calendar'}
         />
 
         {/* <div className={styles.divider} /> */}
         {children}
       </div>
       <Text fs={13} style={{ padding: '0 10px' }}>
-        <Checkbox checked={showWeekends} onChange={handleWeekendsVisibilityChange}>
+        <Checkbox checked={disableShowWeekends ? true : showWeekends} onChange={handleWeekendsVisibilityChange} disabled={disableShowWeekends}>
           <Typography.Text type="secondary">{message('track.calendar.showWeekends')}</Typography.Text>
         </Checkbox>
       </Text>

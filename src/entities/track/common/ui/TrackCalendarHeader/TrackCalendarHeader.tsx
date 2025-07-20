@@ -9,6 +9,7 @@ import Icon, {
   LogoutOutlined,
   FieldTimeOutlined,
   OpenAIOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import { GlobalFetching } from 'shared/ui/GlobalFetching';
 import { ReactNode, useCallback, useState, useEffect } from 'react';
@@ -39,6 +40,7 @@ import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import clsx from 'clsx';
 import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
+import { YandexTracker } from 'components/Icons/YandexTracker';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -63,7 +65,7 @@ export function TrackCalendarHeader({
 }: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
-  const { from, to } = useFilters();
+  const { from, to, updateWeekendVisibility } = useFilters();
 
   const [loadings, setLoadings] = useState<boolean[]>([]);
   const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
@@ -243,6 +245,12 @@ export function TrackCalendarHeader({
       icon: <FieldTimeOutlined />,
     },
     {
+      label: message('menu.calendar'),
+      key: 'calendar',
+      icon: <CalendarOutlined />,
+      // disabled: true,
+    },
+    {
       label: message('menu.reports'),
       key: 'reports',
       icon: <DashboardOutlined />,
@@ -258,8 +266,11 @@ export function TrackCalendarHeader({
   ];
 
   const onClick: MenuProps['onClick'] = (e) => {
-    if (e.key === 'tracks' || e.key === 'reports') {
+    if (e.key === 'tracks' || e.key === 'reports' || e.key === 'calendar') {
       onMenuChange(e.key);
+      if (e.key === 'calendar') {
+        updateWeekendVisibility('true');
+      }
     }
   };
   const { userId, login } = useFilterValues();
@@ -270,18 +281,6 @@ export function TrackCalendarHeader({
   const { data: userExtras, refetch: refetchUserExtras } = useGetUserExtrasQuery(self?.uid || 0, {
     skip: !self?.uid,
   });
-  
-  // const displayName = user ? user.display : tracker.username || '';
-  const YTSvg = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16">
-      <path
-        fillRule="evenodd"
-        d="M2.75 2.5a.25.25 0 0 0-.25.25v2.167c0 .138.112.25.25.25h2.417V2.5zm3.917 0v2.667h2.666V2.5zm4.166 0v2.667h2.417a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25zm0 4.167h2.417A1.75 1.75 0 0 0 15 4.917V2.75A1.75 1.75 0 0 0 13.25 1H2.75A1.75 1.75 0 0 0 1 2.75v2.167c0 .966.784 1.75 1.75 1.75h2.417v6.583c0 .966.783 1.75 1.75 1.75h2.166a1.75 1.75 0 0 0 1.75-1.75zm-1.5 0H6.667v2.666h2.666zm0 4.166H6.667v2.417c0 .138.112.25.25.25h2.166a.25.25 0 0 0 .25-.25z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-  const YTIcon = (props: Partial<CustomIconComponentProps>) => <Icon component={YTSvg} {...props} />;
   
   // Create avatar component
   const UserAvatar = () => {
@@ -328,7 +327,7 @@ export function TrackCalendarHeader({
           e.currentTarget.style.borderColor = 'transparent';
         }}
       >
-        <YTIcon 
+        <YandexTracker 
           style={{ 
             fill: isDarkMode ? '#fff' : '#000',
             fontSize: '20px'
@@ -393,9 +392,6 @@ export function TrackCalendarHeader({
         </Col>
 
         <Col style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-            {/* <Button onClick={handleClickTheme} style={{ height: '46px' }}> */}
-              {/* {isDarkMode ? "Light" : "Dark"} */}
-            {/* </Button> */}
             <DarkModeSwitch
               style={{ marginRight: '15px', }}
               checked={isDarkMode}
@@ -436,13 +432,12 @@ export function TrackCalendarHeader({
             {message('calendar.export')}
           </Button>
           <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
-          {/* <TodayText /> */}
           <Col flex="auto">
-            <TimePeriodStepper loader={<GlobalFetching />} isDarkMode={isDarkMode} />
+            <TimePeriodStepper loader={<GlobalFetching />} isDarkMode={isDarkMode} currentMenuKey={currentMenuKey} />
           </Col>
         </Row>
         <Row className={styles.durationRow}>
-          <TrackCalendarHeaderControlBar isDarkMode={isDarkMode}>{filters}</TrackCalendarHeaderControlBar>
+          <TrackCalendarHeaderControlBar isDarkMode={isDarkMode} currentMenuKey={currentMenuKey} disableShowWeekends={currentMenuKey === 'calendar'}>{filters}</TrackCalendarHeaderControlBar>
 
           <CalendarExportModal
             visible={modalVisible}

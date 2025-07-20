@@ -93,15 +93,6 @@ export const TrackCalendar: FC<TProps> = ({
           </tbody>
           {renderTrackCalendarFootConnected({ range, totalIssues: issues.length, utcOffsetInMinutes, issues, isDarkMode })}
         </table>
-        {isEdit && (
-          <TrackModalCreate
-            tracker={tracker}
-            isTrackCreateLoading={isTrackCreateLoading}
-            createTrack={createTrack}
-            renderIssueTracksConnected={renderIssueTracksConnected}
-            renderIssuesSearchConnected={renderIssuesSearchConnected}
-          />
-        )}
       </div>
       {/* </Loading> */}
       {/* <TeamModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
