@@ -15,6 +15,9 @@ import clsx from 'clsx';
 import { YandexTracker } from 'components/Icons/YandexTracker';
 import { TrackCalendarColIssueSumDay } from '../TrackCalendarColIssueSumDay/TrackCalendarColIssueSumDay';
 import { TrackTimeButton } from '../TrackCalendarHeader/TrackTimeButton';
+import { DateWrapper } from 'features/date/lib/DateWrapper';
+import { useMessage } from 'entities/locale/lib/hooks';
+import { msToBusinessDurationData } from '../../lib/ms-to-business-duration-data';
 
 interface Props {
   tracksData: any;
@@ -53,7 +56,7 @@ function expectedPercent(tracks: TTrack[], expected: number): number {
 
 export const MonthCalendar: React.FC<Props> = ({ tracksData, isDarkMode, from, to, getIssueUrl, issueMap, isEdit, onPeriodChange }) => {
   const [calendarModal, setCalendarModal] = useState<{ visible: boolean; date: Dayjs | null }>({ visible: false, date: null });
-
+  const message = useMessage();
   const tracksByDate = useMemo(() => {
     const map: Record<string, TTrack[]> = {};
     if (tracksData?.date2Tracks) {
@@ -65,16 +68,75 @@ export const MonthCalendar: React.FC<Props> = ({ tracksData, isDarkMode, from, t
     return map;
   }, [tracksData]);
 
+  const today = dayjs().format('YYYY-MM-DD');
+
+  const allDatesInPeriod = useMemo(() => {
+    const dates: string[] = [];
+    let current = dayjs(from);
+    const end = dayjs(to);
+    while (current.isSameOrBefore(end)) {
+      dates.push(current.format('YYYY-MM-DD'));
+      current = current.add(1, 'day');
+    }
+    return dates;
+  }, [from, to]);
+
+  // Only include days <= today
+  const allDatesUpToToday = useMemo(() => {
+    return allDatesInPeriod.filter(date => dayjs(date).isSameOrBefore(dayjs(), 'day'));
+  }, [allDatesInPeriod]);
+
+  const totalLoggedMs = useMemo(() => {
+    return allDatesUpToToday.reduce((sum, date) => {
+      const tracks = tracksByDate[date] || [];
+      return sum + tracks.reduce((trackSum, t) => {
+        if ((t as TTrack).duration) {
+          try {
+            const { isoDurationToBusinessMs } = require('entities/track/common/lib/iso-duration-to-business-ms');
+            return trackSum + isoDurationToBusinessMs((t as TTrack).duration);
+          } catch {
+            return trackSum;
+          }
+        }
+        return trackSum;
+      }, 0);
+    }, 0);
+  }, [allDatesUpToToday, tracksByDate]);
+
+  const totalExpectedHours = useMemo(() => {
+    return allDatesUpToToday.reduce((sum, date) => sum + getExpectedHoursForDay(date), 0);
+  }, [allDatesUpToToday]);
+
+  const headerRender = useCallback((from: string, to: string, totalExpectedHours: number, totalLoggedMs: number) => {
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Typography.Text style={{ fontSize: 14, color: '#888', fontWeight: 800 }}>
+        {dayjs(from).format('DD MMMM YYYY') + ' - ' + dayjs(to).format('DD MMMM YYYY') }
+      </Typography.Text>
+      <Typography.Text style={{ fontSize: 14, fontWeight: 800 }}>
+        <span>{message('track.total.daily')}: </span>&nbsp;
+        <Progress
+          percent={totalExpectedHours > 0 ? Math.min(100, Math.round((totalLoggedMs / (totalExpectedHours * 60 * 60 * 1000)) * 100)) : 0}
+          type="circle" size={30}
+          showInfo
+        />
+        &nbsp;<DurationFormat duration={msToBusinessDurationData(totalLoggedMs)} /> / <DurationFormat duration={msToBusinessDurationData(totalExpectedHours * 60 * 60 * 1000)} />
+      </Typography.Text>
+    </div>;
+  }, [from, to, totalExpectedHours, totalLoggedMs, message]);
+
   const cellRender = useCallback((value: Dayjs) => {
     const dateStr = value.format('YYYY-MM-DD');
     const tracks = tracksByDate[dateStr] || [];
     const hasTracks = tracks.length > 0;
-    const isWeekend = value.day() === 0 || value.day() === 6;
+    // const isWeekend = value.day() === 0 || value.day() === 6;
+    const isWeekend = DateWrapper.isWeekend(value);
+    const isHoliday = DateWrapper.isHoliday(value);
     const isInPeriod = dayjs(dateStr).isSameOrAfter(dayjs(from)) && dayjs(dateStr).isSameOrBefore(dayjs(to));
+
 
     return (
       <div
-        className={clsx(styles.wrapper, { [styles.wrapper_has_tracks]: hasTracks }, { [styles.col_weekend_light]: value.day() === 0 || value.day() === 6 }, { [styles.col_weekend_dark]: value.day() === 0 || value.day() === 6 && isDarkMode })}
+        className={clsx(styles.wrapper, { [styles.wrapper_has_tracks]: hasTracks }, { [styles.col_weekend_light]: isWeekend || isHoliday }, { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })}
         style={{
           background: hasTracks ? (isDarkMode ? '#222' : '#e6f7ff') : undefined,
           borderRadius: hasTracks ? 6 : undefined,
@@ -125,7 +187,7 @@ export const MonthCalendar: React.FC<Props> = ({ tracksData, isDarkMode, from, t
             </Flex>
           </>
         )}
-        {!hasTracks && !isWeekend && isInPeriod && (
+        {!hasTracks && !isWeekend && !isHoliday && isInPeriod && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <TrackCalendarColIssueSumDay as="div"
             isEdit={isEdit}
@@ -195,11 +257,11 @@ export const MonthCalendar: React.FC<Props> = ({ tracksData, isDarkMode, from, t
           <TrackTimeButton isEdit={isEdit} />
         </div>
         <Typography.Text strong>
-          Total: <DurationFormat
+          {message('track.total.logged')}: <DurationFormat
             duration={sumIsoDurations(
               tracks.map(t => (t as TTrack).duration)
-            )}
-          />
+            )} 
+          /> / {message('date.hours.short', { value: getExpectedHoursForDay(dateStr) })} 
         </Typography.Text>
         
         <div style={{ marginTop: 8 }}>
@@ -215,14 +277,15 @@ export const MonthCalendar: React.FC<Props> = ({ tracksData, isDarkMode, from, t
     );
   };
 
-
   return (
     <>
       <Calendar
         className={clsx(styles.wrapper)}
         cellRender={cellRender}
         value={dayjs(from)}
-        headerRender={() => null}
+        
+        headerRender={() => headerRender(from, to, totalExpectedHours, totalLoggedMs)}
+        // headerRender={() => null}
         onPanelChange={(date, mode) => {
           if (mode === 'month' && onPeriodChange) {
             onPeriodChange(
