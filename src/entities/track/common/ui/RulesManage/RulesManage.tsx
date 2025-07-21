@@ -222,7 +222,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
             id: uuidv4(),
             name: 'Округление',
             description: 'Правило по-умолчанию для округления длительности встречи до 1 часа',
-            conditions: [{ field: 'duration', operator: '<', value: '1ч', logic: 'AND' as const }],
+            conditions: [{ field: 'duration', operator: '<', value: '1ч', logic: 'AND' as const }, { field: 'duration', operator: '>', value: '30м', logic: 'AND' as const }],
             actions: [{ type: 'set_duration', value: '1ч' }],
           },
           {

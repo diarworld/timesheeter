@@ -249,5 +249,8 @@
   "photo.upload.success": "Фото успешно загружено!",
   "photo.upload.error": "Не удалось загрузить фото. Попробуйте еще раз.",
   "photo.upload.format.error": "Пожалуйста, выберите изображение JPG или PNG.",
-  "photo.upload.size.error": "Размер изображения должен быть меньше 2МБ."
+  "photo.upload.size.error": "Размер изображения должен быть меньше 2МБ.",
+  "calendar.export.rules.fired": "Сработавшие правила",
+  "calendar.export.rules.none": "Нет сработавших правил",
+  "calendar.export.rules.info": "Информация о правилах"
 }

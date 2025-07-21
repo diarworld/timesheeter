@@ -249,5 +249,8 @@
   "rules.rule.delete.confirm.shared.description": "This action will delete this rule for the whole team!",
   "rules.current.user.error": "Current user not found",
   "rules.share.with.team": "Share with team",
-  "rules.select.team": "Select team"
+  "rules.select.team": "Select team",
+  "calendar.export.rules.fired": "Rules fired",
+  "calendar.export.rules.none": "No rule fired",
+  "calendar.export.rules.info": "Rule Info"
 }
