@@ -222,7 +222,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
             id: uuidv4(),
             name: 'Округление',
             description: 'Правило по-умолчанию для округления длительности встречи до 1 часа',
-            conditions: [{ field: 'duration', operator: '<', value: '1ч', logic: 'AND' as const }],
+            conditions: [{ field: 'duration', operator: '<', value: '1ч', logic: 'AND' as const }, { field: 'duration', operator: '>', value: '30м', logic: 'AND' as const }],
             actions: [{ type: 'set_duration', value: '1ч' }],
           },
           {
@@ -852,7 +852,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
                     userTeams.length > 1 ? (
                       <>
                         <Select
-                          style={{ minWidth: 200, marginRight: 8 }}
+                          style={{ minWidth: 250, maxWidth: 250, marginRight: 8 }}
                           placeholder={message('rules.select.team')}
                           options={userTeams.map(team => ({ value: team.id, label: team.name }))}
                           value={selectedShareTeam}

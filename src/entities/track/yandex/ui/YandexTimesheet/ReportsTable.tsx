@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Progress, Badge, Popover, Row, Flex, Button } from 'antd';
+import { Table, Progress, Badge, Popover, Row, Flex, Button, Avatar } from 'antd';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { TTransformedTracksByUser, TBusinessDurationData } from 'entities/track/common/model/types';
@@ -15,10 +15,35 @@ import { useCurrentLocale, useMessage } from 'entities/locale/lib/hooks';
 import { DATE_FORMAT_MONTH } from 'features/date/lib/constants';
 import clsx from 'clsx';
 import { Message } from 'entities/locale/ui/Message';
-import { ExportOutlined } from '@ant-design/icons';
+import { ExportOutlined, UserOutlined } from '@ant-design/icons';
 import { getExpectedHoursForDay } from 'entities/track/common/lib/hooks/use-expected-hours-for-day';
+import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
 
 import styles from './ReportsTable.module.scss';
+
+// Component for displaying user with photo
+const UserDisplayWithPhoto: React.FC<{ uid: number; display: string }> = ({ uid, display }) => {
+  const { data: userExtras } = useGetUserExtrasQuery(uid, {
+    skip: !uid,
+  });
+
+  return (
+    <Flex align="center" gap={8}>
+      {userExtras?.photo ? (
+        <Avatar 
+          src={`data:image/jpeg;base64,${userExtras.photo}`} 
+          size={24}
+        />
+      ) : (
+        <Avatar 
+          icon={<UserOutlined />} 
+          size={24}
+        />
+      )}
+      <Text style={{ minWidth: 200, display: 'inline-block' }}>{display}</Text>
+    </Flex>
+  );
+};
 
 function getDaysArray(from: string, to: string, utcOffsetInMinutes: number | undefined, showWeekends: boolean = false) {
   const start = DateWrapper.getDate({ date: from, utcOffsetInMinutes });
@@ -122,7 +147,12 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       // onHeaderCell: () => ({ style: { width: 250 } }),
       sorter: (a: Record<string, unknown>, b: Record<string, unknown>) =>
         String(a.display).localeCompare(String(b.display)),
-      render: (display: string) => <Text style={{ minWidth: 200, display: 'inline-block' }}>{display}</Text>,
+      render: (display: string, record: Record<string, unknown>) => {
+        const user = team.find((u) => u.uid === (record as any).key);
+        if (!user) return <Text style={{ minWidth: 200, display: 'inline-block' }}>{display}</Text>;
+        
+        return <UserDisplayWithPhoto uid={user.uid} display={display} />;
+      },
     },
     ...dayHeaders.map(({ key, title, dataIndex, isWeekend, isHoliday, expectedHours }) => ({
       title,

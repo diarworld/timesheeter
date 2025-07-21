@@ -61,7 +61,7 @@ describe('RulesManage', () => {
     } as unknown as any;
 
     const { getByText, getByPlaceholderText, getAllByRole, findByText } = renderWithProvider(
-      <RulesManage tracker={mockTracker} />,
+      <RulesManage tracker={mockTracker} isDarkMode={false} />,
     );
 
     // Fill in the rule name

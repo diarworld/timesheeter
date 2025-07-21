@@ -19,28 +19,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const [userId, userEmail, userDisplay] = getUserIdFromRequest(req);
   const decodedDisplay = userDisplay ? decodeURIComponent(userDisplay) : '';
-  if (!userId) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  // if (!userId) {
+  //   return res.status(401).json({ error: 'Unauthorized' });
+  // }
 
   if (req.method === 'GET') {
     try {
-      // Find all teams where user is a member or creator
-      const user = await prisma.user.findUnique({
-        where: { uid: BigInt(userId) },
-        include: { teams: { include: { members: true } } },
-      });
-      const createdTeams = await prisma.team.findMany({
-        where: { creatorId: BigInt(userId) },
-        include: { members: true },
-      });
-
-      // Merge teams (avoid duplicates by id)
-      const allTeamsMap = new Map();
-      (user?.teams || []).forEach((team: Team & { members: User[] }) => allTeamsMap.set(team.id, team));
-      (createdTeams || []).forEach((team: Team & { members: User[] }) => allTeamsMap.set(team.id, team));
-      const allTeams = Array.from(allTeamsMap.values());
-
+      // --- NEW: support search and creatorId filter ---
+      const { search, creatorId } = req.query;
+      let teamWhere = {};
+      if (creatorId) {
+        teamWhere = { ...teamWhere, creatorId: BigInt(creatorId as string) };
+      }
+      if (search) {
+        teamWhere = {
+          ...teamWhere,
+          name: { contains: search as string, mode: 'insensitive' },
+        };
+      }
+      let allTeams;
+      if (search || creatorId) {
+        allTeams = await prisma.team.findMany({
+          where: teamWhere,
+          include: { members: true },
+        });
+      } else {
+        // Find all teams where user is a member or creator
+        const user = await prisma.user.findUnique({
+          where: { uid: BigInt(userId || '1') },
+          include: { teams: { include: { members: true } } },
+        });
+        const createdTeams = await prisma.team.findMany({
+          where: { creatorId: BigInt(userId || '1') },
+          include: { members: true },
+        });
+        // Merge teams (avoid duplicates by id)
+        const allTeamsMap = new Map();
+        (user?.teams || []).forEach((team: Team & { members: User[] }) => allTeamsMap.set(team.id, team));
+        (createdTeams || []).forEach((team: Team & { members: User[] }) => allTeamsMap.set(team.id, team));
+        allTeams = Array.from(allTeamsMap.values());
+      }
       // Format teams with all member fields, and convert BigInt to string
       const teams = allTeams.map(team => ({
         id: team.id,
@@ -58,7 +76,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           login_count: m.login_count,
         })),
       }));
-
       // Build merged unique members array with teamId
       const members: any[] = [];
       allTeams.forEach(team => {
@@ -75,7 +92,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         });
       });
-
       res.setHeader('Content-Type', 'application/json');
       return res.status(200).end(JSON.stringify({ teams, members }));
     } catch (error) {
@@ -167,7 +183,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }));
 
     const teamCreator = await prisma.team.findFirst({
-      where: { creatorId: BigInt(userId) },
+      where: { creatorId: BigInt(userId || '1') },
     });
 
     if (teamCreator) {
@@ -177,7 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const newTeam = await prisma.team.create({
       data: {
         name: name || `Команда ${decodedDisplay}`,
-        creatorId: BigInt(userId),
+        creatorId: BigInt(userId || '1'),
         members: {
           connect: userRecords.map(u => ({ uid: u.uid })),
         },

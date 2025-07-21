@@ -1,0 +1,19 @@
+.wrapper * {
+    cursor: default;
+  }
+  
+.wrapper_has_tracks * {
+cursor: pointer !important;
+}
+
+.col_weekend_light {
+    background: var(--color-pale-yellow);
+    height: 100%;
+    width: 100%;
+}
+
+.col_weekend_dark {
+background: #93750012 !important;
+height: 100%;
+width: 100%;
+}

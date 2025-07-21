@@ -1,0 +1,59 @@
+// Prisma schema for team-based rule sharing
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  uid                   BigInt      @id
+  login                 String      @unique
+  email                 String      @unique
+  display               String?
+  position              String?
+  lastLoginDate         DateTime?   @db.Timestamptz(3)
+  created               DateTime    @default(now()) @db.Timestamptz(3)
+  lastLogin             DateTime?   @db.Timestamptz(3)
+  login_count           Int         @default(0)
+  teams                 Team[]      @relation("TeamMembers")
+  createdRules          Rule[]      @relation("CreatedRules")
+  createdTeams          Team[]      @relation("CreatedTeams")
+  extras                UserExtras?
+}
+
+model UserExtras {
+  uid        BigInt @id
+  department String?
+  division   String?
+  photo      String?
+  user       User   @relation(fields: [uid], references: [uid], onDelete: Cascade)
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  members   User[]   @relation("TeamMembers")
+  rules     Rule[]   @relation("TeamRules")
+  creator   User    @relation("CreatedTeams", fields: [creatorId], references: [uid])
+  creatorId BigInt
+}
+
+model Rule {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  conditions Json
+  actions    Json
+  shared     Boolean @default(false)
+  team       Team?   @relation("TeamRules", fields: [teamId], references: [id])
+  teamId     String?
+  creator    User?   @relation("CreatedRules", fields: [creatorId], references: [uid])
+  creatorId  BigInt?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+} 

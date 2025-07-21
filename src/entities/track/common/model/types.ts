@@ -94,6 +94,9 @@ export type TTrackInputEditParam = {
 };
 
 export type TBusinessDurationData = {
+  years?: number;
+  months?: number;
+  days?: number;
   hours: number;
   minutes: number;
   seconds: number;

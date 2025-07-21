@@ -1,4 +1,4 @@
-import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card } from 'antd';
+import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card, Badge, Avatar, Flex } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import Icon, {
   ScheduleFilled,
@@ -9,6 +9,7 @@ import Icon, {
   LogoutOutlined,
   FieldTimeOutlined,
   OpenAIOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import { GlobalFetching } from 'shared/ui/GlobalFetching';
 import { ReactNode, useCallback, useState, useEffect } from 'react';
@@ -31,12 +32,15 @@ import { RulesManage } from 'entities/track/common/ui/RulesManage';
 import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
 import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 import { TimePeriodStepper } from './TimePeriodStepper';
+import { PhotoUploadModal } from '../PhotoUploadModal/PhotoUploadModal';
 
 import { DarkModeSwitch } from 'react-toggle-dark-mode';
 import styles from './TrackCalendarHeader.module.scss';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import clsx from 'clsx';
+import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
+import { YandexTracker } from 'components/Icons/YandexTracker';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
@@ -61,13 +65,14 @@ export function TrackCalendarHeader({
 }: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
-  const { from, to } = useFilters();
+  const { from, to, updateWeekendVisibility } = useFilters();
 
   const [loadings, setLoadings] = useState<boolean[]>([]);
   const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
   const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
+  const [photoUploadModalVisible, setPhotoUploadModalVisible] = useState(false);
   const handleClickTheme = () => setIsDarkMode(prev => !prev);
 
   const dispatch = useAppDispatch();
@@ -240,6 +245,12 @@ export function TrackCalendarHeader({
       icon: <FieldTimeOutlined />,
     },
     {
+      label: message('menu.calendar'),
+      key: 'calendar',
+      icon: <CalendarOutlined />,
+      // disabled: true,
+    },
+    {
       label: message('menu.reports'),
       key: 'reports',
       icon: <DashboardOutlined />,
@@ -255,24 +266,118 @@ export function TrackCalendarHeader({
   ];
 
   const onClick: MenuProps['onClick'] = (e) => {
-    if (e.key === 'tracks' || e.key === 'reports') {
+    if (e.key === 'tracks' || e.key === 'reports' || e.key === 'calendar') {
       onMenuChange(e.key);
+      if (e.key === 'calendar') {
+        updateWeekendVisibility('true');
+      }
     }
   };
   const { userId, login } = useFilterValues();
   const { self } = useYandexUser(tracker, userId, login);
   const displayName = self ? self.display : tracker.username || '';
-  // const displayName = user ? user.display : tracker.username || '';
-  const YTSvg = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16">
-      <path
-        fillRule="evenodd"
-        d="M2.75 2.5a.25.25 0 0 0-.25.25v2.167c0 .138.112.25.25.25h2.417V2.5zm3.917 0v2.667h2.666V2.5zm4.166 0v2.667h2.417a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25zm0 4.167h2.417A1.75 1.75 0 0 0 15 4.917V2.75A1.75 1.75 0 0 0 13.25 1H2.75A1.75 1.75 0 0 0 1 2.75v2.167c0 .966.784 1.75 1.75 1.75h2.417v6.583c0 .966.783 1.75 1.75 1.75h2.166a1.75 1.75 0 0 0 1.75-1.75zm-1.5 0H6.667v2.666h2.666zm0 4.166H6.667v2.417c0 .138.112.25.25.25h2.166a.25.25 0 0 0 .25-.25z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-  const YTIcon = (props: Partial<CustomIconComponentProps>) => <Icon component={YTSvg} {...props} />;
+  
+  // Fetch user extras data for avatar
+  const { data: userExtras, refetch: refetchUserExtras } = useGetUserExtrasQuery(self?.uid || 0, {
+    skip: !self?.uid,
+  });
+  
+  // Create avatar component
+  const UserAvatar = () => {
+    if (userExtras?.photo) {
+      return (
+        <div
+          style={{ 
+            cursor: 'pointer',
+            border: '2px solid transparent',
+            transition: 'border-color 0.2s',
+            borderRadius: '50%',
+            marginTop: '5px',
+          }}
+          onClick={() => setPhotoUploadModalVisible(true)}
+          onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+            e.currentTarget.style.borderColor = '#1890ff';
+          }}
+          onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+            e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <Avatar 
+            src={`data:image/jpeg;base64,${userExtras.photo}`}
+            size={42}
+          />
+        </div>
+      );
+    }
+    
+    return (
+      <div
+        onClick={() => setPhotoUploadModalVisible(true)}
+        style={{ 
+          cursor: 'pointer',
+          padding: '4px',
+          borderRadius: '50%',
+          border: '2px solid transparent',
+          transition: 'border-color 0.2s',
+        }}
+        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+          e.currentTarget.style.borderColor = '#1890ff';
+        }}
+        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+          e.currentTarget.style.borderColor = 'transparent';
+        }}
+      >
+        <YandexTracker 
+          style={{ 
+            fill: isDarkMode ? '#fff' : '#000',
+            fontSize: '20px'
+          }} 
+        />
+      </div>
+    );
+  };
+
+  const handlePhotoUploadSuccess = () => {
+    refetchUserExtras();
+    setPhotoUploadModalVisible(false);
+  };
+
+  // Create user info component
+  const UserInfo = () => {
+    const hasExtras = userExtras?.department || userExtras?.division;
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-10px' }}>
+        {hasExtras && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            {userExtras.department && (
+              <Typography.Text 
+                style={{ 
+                  fontSize: '11px', 
+                  color: isDarkMode ? '#8c8c8c' : '#666',
+                  lineHeight: '1'
+                }}
+              >
+                {userExtras.department}
+              </Typography.Text>
+            )}
+            {userExtras.division && (
+              <Typography.Text 
+                style={{ 
+                  fontSize: '11px', 
+                  color: isDarkMode ? '#8c8c8c' : '#666',
+                  lineHeight: '1'
+                }}
+              >
+                {userExtras.division}
+              </Typography.Text>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+  
   return (
     <>
       <Row className={styles.menu} justify="space-between" align="middle">
@@ -287,18 +392,23 @@ export function TrackCalendarHeader({
         </Col>
 
         <Col style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-            {/* <Button onClick={handleClickTheme} style={{ height: '46px' }}> */}
-              {/* {isDarkMode ? "Light" : "Dark"} */}
-            {/* </Button> */}
             <DarkModeSwitch
-              style={{ marginRight: '10px', }}
+              style={{ marginRight: '15px', }}
               checked={isDarkMode}
               onChange={handleClickTheme}
-              size={22}
+              size={32}
             />
-          <Card style={{ display: 'flex', alignItems: 'center', padding: '0px', height: '46px' }}>
-          <YTIcon style={{ marginRight: 10, fill: isDarkMode ? '#fff' : '#000' }} />
-          <Typography.Text style={{ marginRight: 10 }}>{displayName}</Typography.Text>
+          <Card size="small">
+          <Card.Meta
+            style={{ margin: 0, padding: 0 }}
+            avatar={<UserAvatar />}
+            title={
+              <Typography.Text style={{ fontSize: '12px', fontWeight: 800, margin: 0, padding: 0 }}>
+                {displayName}
+              </Typography.Text>
+            }
+            description={<UserInfo />}
+          />
           </Card>
           <Menu
             onClick={onClick}
@@ -322,13 +432,12 @@ export function TrackCalendarHeader({
             {message('calendar.export')}
           </Button>
           <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
-          {/* <TodayText /> */}
           <Col flex="auto">
-            <TimePeriodStepper loader={<GlobalFetching />} isDarkMode={isDarkMode} />
+            <TimePeriodStepper loader={<GlobalFetching />} isDarkMode={isDarkMode} currentMenuKey={currentMenuKey} />
           </Col>
         </Row>
         <Row className={styles.durationRow}>
-          <TrackCalendarHeaderControlBar isDarkMode={isDarkMode}>{filters}</TrackCalendarHeaderControlBar>
+          <TrackCalendarHeaderControlBar isDarkMode={isDarkMode} currentMenuKey={currentMenuKey} disableShowWeekends={currentMenuKey === 'calendar'}>{filters}</TrackCalendarHeaderControlBar>
 
           <CalendarExportModal
             visible={modalVisible}
@@ -348,6 +457,13 @@ export function TrackCalendarHeader({
       >
         <RulesManage tracker={tracker} isDarkMode={isDarkMode} />
       </Modal>
+      <PhotoUploadModal
+        visible={photoUploadModalVisible}
+        onCancel={() => setPhotoUploadModalVisible(false)}
+        onSuccess={handlePhotoUploadSuccess}
+        uid={self?.uid || 0}
+        currentPhoto={userExtras?.photo || null}
+      />
     </>
   );
 }

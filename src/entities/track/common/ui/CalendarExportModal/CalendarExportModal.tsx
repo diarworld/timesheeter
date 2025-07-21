@@ -29,6 +29,9 @@ import { validateHumanReadableDuration } from 'entities/track/common/lib/validat
 import { DurationFormat } from 'features/date/ui/DurationFormat/DurationFormat';
 import { useFormatDuration } from 'entities/track/common/lib/hooks/use-format-duration';
 import { msToBusinessDurationData } from 'entities/track/common/lib/ms-to-business-duration-data';
+import { TCondition, TAction, TRule } from '../RulesManage/types';
+import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
+import { useFilterValues } from 'features/filters/lib/useFilterValues';
 
 const { Text, Title } = Typography;
 
@@ -53,21 +56,7 @@ interface ICalendarExportModalProps {
   tracker: TTrackerConfig;
 }
 
-// Define types for rule and action
-interface IRuleAction {
-  type: string;
-  value: string;
-}
-interface ITimesheeterRule {
-  conditions: Array<unknown>; // Replace with a more specific type if known
-  actions: IRuleAction[];
-}
-interface ITimesheeterRuleCondition {
-  field: string;
-  operator: string;
-  value: string;
-  logic: string;
-}
+
 
 export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   visible,
@@ -80,6 +69,8 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [issueKeys, setIssueKeys] = useState<Record<string, string>>({});
   const [issueDurations, setIssueDurations] = useState<Record<string, number>>({});
+  const { userId, login } = useFilterValues();
+  const { self } = useYandexUser(tracker, userId, login);
 
   // Load default issue key from localStorage on component mount
   const [defaultIssueKey, setDefaultIssueKey] = useState<string>(() => {
@@ -107,9 +98,32 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   const [editingDurationValue, setEditingDurationValue] = useState<string>('');
   const [editingDurationError, setEditingDurationError] = useState<string>('');
 
+  // Add state for rule matches
+  const [issueKeyRuleMatches, setIssueKeyRuleMatches] = useState<Record<string, TRule[]>>({});
+  // Get all shared rules for all teams
+  const [sharedRules, setSharedRules] = useState<TRule[]>([]);
+
   // Get the appropriate track creation hook based on tracker type
   const jiraTrackHook = useCreateJiraTrack(tracker);
   const yandexTrackHook = useCreateYandexTrack(tracker);
+  // Fetch all shared rules for all teams
+  useEffect(() => {
+    if (!self) return;
+    const fetchRules = async () => {
+      try {
+        const res = await fetch(`/api/team-rules`, {
+          headers: { 'x-user-id': self?.uid?.toString() || '', 'x-user-email': self?.email || '' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSharedRules(Array.isArray(data.rules) ? data.rules : []);
+        }
+      } catch (e) {
+        console.error('Error fetching shared rules:', e);
+      }
+    };
+    fetchRules();
+  }, []);
 
   const createTrack = isJiraTrackerCfg(tracker) ? jiraTrackHook.createTrack : yandexTrackHook.createTrack;
 
@@ -131,23 +145,58 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   // Add state for filtered table data
   const [filteredTableData, setFilteredTableData] = useState<IDataType[]>(tableData);
 
+  // Helper to stable stringify objects (sort keys)
+  function stableStringify(obj: any): string {
+    if (Array.isArray(obj)) {
+      return '[' + obj.map(stableStringify).join(',') + ']';
+    } else if (obj && typeof obj === 'object') {
+      const keys = Object.keys(obj).sort();
+      return '{' + keys.map(k => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',') + '}';
+    } else {
+      return JSON.stringify(obj);
+    }
+  }
+
   // Helper: get rules from localStorage
   function getTimesheeterRules() {
     try {
-      const rulesStr = localStorage.getItem('timesheeterRules');
-      if (!rulesStr) return [];
-      return JSON.parse(rulesStr);
+      const rules = JSON.parse(localStorage.getItem('timesheeterRules') || '[]');
+      const allRules = [...rules, ...sharedRules];
+      // Deduplicate: unique if actions[] and conditions[] (with omitted .key) are unique, regardless of field order
+      const seen = new Set();
+      const uniqueRules = [];
+      for (const rule of allRules) {
+        if (!rule) continue;
+        const actions: TAction[] = Array.isArray(rule.actions)
+          ? rule.actions.map((a: any) => {
+              const { key, ...restA } = a;
+              return restA;
+            })
+          : rule.actions;
+        const conditions: TCondition[] = Array.isArray(rule.conditions)
+          ? rule.conditions.map((c: any) => {
+              const { key, ...restC } = c;
+              return restC;
+            })
+          : rule.conditions;
+        const compareKey = stableStringify({ actions, conditions });
+        if (!seen.has(compareKey)) {
+          seen.add(compareKey);
+          uniqueRules.push(rule);
+        }
+      }
+      return uniqueRules;      
     } catch {
       return [];
     }
   }
 
   // Helper: check if a meeting matches a rule (case-insensitive)
-  function meetingMatchesRule(meeting: IDataType, rule: ITimesheeterRule) {
+  function meetingMatchesRule(meeting: IDataType, rule: TRule) {
     if (!rule.conditions || rule.conditions.length === 0) return false;
     let result = null;
     for (let i = 0; i < rule.conditions.length; i += 1) {
-      const cond = rule.conditions[i] as ITimesheeterRuleCondition;
+      const cond = rule.conditions[i] as TCondition;
       let condResult = false;
       const op = cond.operator;
       const val = cond.value?.toString() || '';
@@ -212,29 +261,30 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
 
   // Apply rules to all meetings and set issueKeys
   const applyRulesToAll = () => {
-    const rules: ITimesheeterRule[] = getTimesheeterRules();
+    const rules: TRule[] = getTimesheeterRules();
     const newIssueKeys: Record<string, string> = {};
     const newIssueDurations: Record<string, number> = {};
     const newFilteredTableData: IDataType[] = [];
+    const newRuleMatches: Record<string, TRule[]> = {};
+
     tableData.forEach((record: IDataType) => {
       let matchedKey = defaultIssueKey;
       let newDuration = record.duration;
       let skip = false;
+      const matchedRules: TRule[] = [];
+
       for (const rule of rules) {
-        if (!rule.actions) {
-          continue;
-        }
+        if (!rule.actions) continue;
         if (meetingMatchesRule(record, rule)) {
-          const skipAction = rule.actions.find((a: IRuleAction) => a.type === 'skip' && a.value === 'true');
+          matchedRules.push(rule);
+          const skipAction = rule.actions.find((a: TAction) => a.type === 'skip' && a.value === 'true');
           if (skipAction) {
             skip = true;
             break;
           }
-          const setTaskAction = rule.actions.find((a: IRuleAction) => a.type === 'set_task');
-          const setDurationAction = rule.actions.find((a: IRuleAction) => a.type === 'set_duration');
-          if (setTaskAction) {
-            matchedKey = setTaskAction.value;
-          }
+          const setTaskAction = rule.actions.find((a: TAction) => a.type === 'set_task');
+          const setDurationAction = rule.actions.find((a: TAction) => a.type === 'set_duration');
+          if (setTaskAction) matchedKey = setTaskAction.value;
           if (setDurationAction) {
             const duration = setDurationAction.value;
             const isoDuration = humanReadableDurationToISO(duration);
@@ -245,17 +295,20 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
               }
             }
           }
+          // Do not break here; collect all matching rules
         }
       }
       if (!skip) {
         newIssueKeys[record.key] = matchedKey;
         newIssueDurations[record.key] = newDuration;
         newFilteredTableData.push(record);
+        newRuleMatches[record.key] = matchedRules;
       }
     });
     setIssueKeys(newIssueKeys);
     setIssueDurations(newIssueDurations);
     setFilteredTableData(newFilteredTableData);
+    setIssueKeyRuleMatches(newRuleMatches);
   };
 
   // Save default issue key to localStorage whenever it changes
@@ -467,8 +520,26 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       render: (text: string, record: IDataType) => {
         const key = String(record.key);
         const value = issueKeys[key] || defaultIssueKey;
-        if (editingIssueKey === key) {
-          return (
+        const matchedRules = issueKeyRuleMatches[key] || [];
+
+        const rulePopoverContent = matchedRules.length > 0 ? (
+          <div style={{ maxWidth: 450 }}>
+            <div>
+              <b>{message('calendar.export.rules.fired')}</b>
+            </div>
+            <ul style={{ paddingLeft: 16 }}>
+              {matchedRules.map((rule) => (
+                <li key={rule.id}>
+                  <b>{rule.name}</b>: {rule.description}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <span>{message('calendar.export.rules.none')}</span>
+        );
+
+        const cellContent = editingIssueKey === key ? (
             <div className="editable-cell">
               {isYandexTrackerCfg(tracker) ? (
                 <YandexIssuesSearchConnected
@@ -483,7 +554,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
                   autoFocus
                   name={`issueKey-${key}`}
                   onFocus={() => {}}
-                  style={{ width: '250px' }}
+                  style={{ width: '220px' }}
                 />
               ) : (
                 // Fallback: plain Input or JiraIssuesSearchConnected for Jira
@@ -504,31 +575,37 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
                 />
               )}
             </div>
-          );
-        }
-        return (
-          <div className="editable-cell editable-row">
-            <div
-              className="editable-cell-value-wrap"
-              onClick={() => handleEditIssueKey(key, value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleEditIssueKey(key, value);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              <Text
-                strong
-                style={{ cursor: 'pointer' }}
-                type={value && !validateIssueKey(value) ? 'danger' : undefined}
+          ) : (
+            <div className="editable-cell editable-row">
+              <div
+                className="editable-cell-value-wrap"
+                onClick={() => handleEditIssueKey(key, value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleEditIssueKey(key, value);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
-                {value}
-              </Text>
+                <Text
+                  strong
+                  style={{ cursor: 'pointer' }}
+                  type={value && !validateIssueKey(value) ? 'danger' : undefined}
+                >
+                  {value}
+                </Text>
+              </div>
             </div>
-          </div>
+          );
+
+        return matchedRules.length > 0 ? (
+          <Popover content={rulePopoverContent} title={message('calendar.export.rules.info')} trigger="hover">
+            {cellContent}
+          </Popover>
+        ) : (
+          cellContent
         );
       },
     },
@@ -536,6 +613,8 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       title: message('calendar.export.table.subject'),
       dataIndex: 'subject',
       key: 'subject',
+      // minWidth: 250,
+      maxWidth: 600,
       render: (text: string, record: IDataType) => {
         const key = String(record.key);
         if (editingSubjectKey === key) {
@@ -583,6 +662,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       title: message('calendar.export.table.organizer'),
       dataIndex: 'organizer',
       key: 'organizer',
+      width: 250,
       render: (organizer: IMeetingOrganizer, record: IDataType) => {
         const attendees = [...(record.requiredAttendees || []), ...(record.optionalAttendees || [])];
         // Remove duplicates
@@ -622,12 +702,14 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       title: message('calendar.export.table.start'),
       dataIndex: 'start',
       key: 'start',
+      width: 160,
       render: (date: string) => <Text>{dayjs(date).format('MMM DD, YYYY HH:mm')}</Text>,
     },
     {
       title: message('calendar.export.table.duration'),
       dataIndex: 'duration',
       key: 'duration',
+      width: 100,
       render: (minutes: number, record: IDataType) => {
         const key = String(record.key);
         const value = issueDurations[key] || minutes;
@@ -671,6 +753,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
               }}
               role="button"
               tabIndex={0}
+              style={{ width: 100 }}
             >
               <Text strong style={{ cursor: 'pointer' }}>
                 <DurationFormat duration={businessDuration} />
@@ -760,7 +843,9 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       open={visible}
       onCancel={onHidden}
       footer={null}
-      width={1200}
+      // width={1200}
+      // style={{ minWidth: '80%' }}
+      width="fit-content"
       destroyOnHidden
     >
       <Table

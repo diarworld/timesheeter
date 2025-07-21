@@ -10,7 +10,7 @@ import { useFilters } from 'features/filters/lib/useFilters';
 import { CalendarOutlined, LeftCircleOutlined, RightCircleOutlined } from '@ant-design/icons';
 import styles from './TimePeriodStepper.module.scss';
 
-export function TimePeriodStepper({ loader, isDarkMode }: { loader?: ReactNode, isDarkMode: boolean }) {
+export function TimePeriodStepper({ loader, isDarkMode, currentMenuKey }: { loader?: ReactNode, isDarkMode: boolean, currentMenuKey?: string }) {
   const message = useMessage();
 
   const periodOptions: CheckboxOptionType[] = useMemo(
@@ -84,7 +84,13 @@ export function TimePeriodStepper({ loader, isDarkMode }: { loader?: ReactNode, 
         {loader}
       </Space>
 
-      <Radio.Group options={periodOptions} optionType="button" value={unit} onChange={handleUnitChange} />
+      <Radio.Group
+        options={periodOptions}
+        optionType="button"
+        value={currentMenuKey === 'calendar' ? 'month' : unit}
+        onChange={handleUnitChange}
+        disabled={currentMenuKey === 'calendar'}
+      />
     </div>
   );
 }
