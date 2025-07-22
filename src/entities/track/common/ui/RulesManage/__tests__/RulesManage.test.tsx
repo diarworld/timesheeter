@@ -2,7 +2,8 @@ import { fireEvent, render, waitFor, act, within } from '@testing-library/react'
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { track } from 'entities/track/common/model/reducers';
-import { RulesManage } from '../RulesManage';
+import { RulesManage } from 'entities/track/common/ui/RulesManage';
+import { TTrackerConfig, Tracker } from 'entities/tracker/model/types';
 
 // Mock the EWS API hook
 jest.mock('entities/track/common/model/ews-api', () => ({
@@ -31,7 +32,9 @@ Object.defineProperty(window, 'localStorage', {
 
 // Mock fetch to silence SSR warning
 beforeAll(() => {
-  global.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve({}) })) as any;
+  global.fetch = jest.fn(() =>
+    Promise.resolve({ json: () => Promise.resolve({}) } as unknown as Response),
+  ) as typeof fetch;
 });
 
 const createTestStore = () =>
@@ -53,14 +56,17 @@ describe('RulesManage', () => {
   });
 
   it('should add a new rule and save it to localStorage', async () => {
-    const mockTracker = {
+    const mockTracker: TTrackerConfig = {
       id: 'mock-id',
-      type: 'ldap',
-      name: 'Mock LDAP',
-      config: {},
-    } as unknown as any;
+      type: Tracker.Yandex,
+      name: 'Mock Yandex',
+      orgId: 'mock-org',
+      url: 'https://mock.yandex',
+      username: 'mockuser',
+      isCloud: false,
+    };
 
-    const { getByText, getByPlaceholderText, getAllByRole, findByText } = renderWithProvider(
+    const { getByText, getByPlaceholderText, getAllByRole } = renderWithProvider(
       <RulesManage tracker={mockTracker} isDarkMode={false} />,
     );
 

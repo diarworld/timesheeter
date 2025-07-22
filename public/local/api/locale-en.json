@@ -61,6 +61,7 @@
   "track.calendar.showWeekends": "Show weekends",
   "track.delete.confirm": "Are you sure you want to delete track?",
   "track.delete.title": "Delete track",
+  "track.details.open": "Open",
   "track.duration.placeholder": "Put your duration here",
   "track.duration.title": "Duration",
   "track.edit.title": "Edit track",

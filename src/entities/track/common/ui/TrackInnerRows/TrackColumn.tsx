@@ -2,9 +2,9 @@ import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { TTrack, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { memo } from 'react';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
+import { Typography } from 'antd';
 import { TrackDurationEdit } from './TrackDurationEdit';
 import styles from './TrackColumn.module.scss';
-import { Typography } from 'antd';
 
 interface ITrackColumnProps {
   track: TTrack;
@@ -27,7 +27,15 @@ export const TrackColumn = memo(({ track, date, issueId, isEdit, updateTrack, is
     );
   }
 
-  return <TrackDurationEdit trackItem={track} issueId={issueId} isEdit={isEdit} updateTrack={updateTrack} isDarkMode={isDarkMode} />;
+  return (
+    <TrackDurationEdit
+      trackItem={track}
+      issueId={issueId}
+      isEdit={isEdit}
+      updateTrack={updateTrack}
+      isDarkMode={isDarkMode}
+    />
+  );
 });
 
 TrackColumn.displayName = 'TrackColumn';

@@ -2,7 +2,7 @@ import { Button, InputNumber, Avatar, Flex, Select, Spin } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamManageCreate } from 'entities/track/common/model/types';
-import React, { FC, useState, useCallback } from 'react';
+import React, { FC, useState, useCallback, useRef } from 'react';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
 import { TYandexUser } from 'entities/user/yandex/model/types';
@@ -15,15 +15,19 @@ import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
 
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
-import { useRef } from 'react';
 
-import styles from './TeamFormManage.module.scss';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
-import debounce from 'lodash/debounce';
+import { debounce } from 'lodash';
+import styles from './TeamFormManage.module.scss';
 
 // Component for displaying user with photo
-const UserDisplayWithPhoto: React.FC<{ uid: number; login: string; display: string; position?: string }> = ({ uid, login, display, position }) => {
+const UserDisplayWithPhoto: React.FC<{ uid: number; login: string; display: string; position?: string }> = ({
+  uid,
+  login,
+  display,
+  position,
+}) => {
   const { data: userExtras } = useGetUserExtrasQuery(uid, {
     skip: !uid,
   });
@@ -31,15 +35,9 @@ const UserDisplayWithPhoto: React.FC<{ uid: number; login: string; display: stri
   return (
     <Flex align="center" gap={8}>
       {userExtras?.photo ? (
-        <Avatar 
-          src={`data:image/jpeg;base64,${userExtras.photo}`} 
-          size={24}
-        />
+        <Avatar src={`data:image/jpeg;base64,${userExtras.photo}`} size={24} />
       ) : (
-        <Avatar 
-          icon={<UserOutlined />} 
-          size={24}
-        />
+        <Avatar icon={<UserOutlined />} size={24} />
       )}
       <span>
         {login} - {display} - {position}
@@ -220,7 +218,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
     setTeamQueue(newQueue);
   };
 
-  const lastSyncedTeam = useRef<string>("");
+  const lastSyncedTeam = useRef<string>('');
 
   React.useEffect(() => {
     const teamString = JSON.stringify(team);
@@ -231,7 +229,9 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [team, self]);
 
-  const [teamSearchOptions, setTeamSearchOptions] = useState<any[]>([]);
+  const [teamSearchOptions, setTeamSearchOptions] = useState<
+    { value: string; label: string; members: TYandexUser[] }[]
+  >([]);
   const [teamSearchLoading, setTeamSearchLoading] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | undefined>(undefined);
 
@@ -241,11 +241,11 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       const res = await fetch(`/api/team?creatorId=1&search=${encodeURIComponent(search)}`);
       const data = await res.json();
       setTeamSearchOptions(
-        (data.teams || []).map((t: any) => ({
+        (data.teams || []).map((t: { id: string; name: string; members: TYandexUser[] }) => ({
           value: t.id,
           label: t.name,
           members: t.members,
-        }))
+        })),
       );
     } finally {
       setTeamSearchLoading(false);
@@ -253,11 +253,11 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   }, 400);
 
   const handleTeamSelect = (teamId: string) => {
-    const team = teamSearchOptions.find((t) => t.value === teamId);
-    if (team) {
+    const selectedTeam = teamSearchOptions.find((t) => t.value === teamId);
+    if (selectedTeam) {
       // Merge and dedupe by uid (as string)
       setTeam((prev) => {
-        const merged = [...prev, ...team.members];
+        const merged = [...prev, ...selectedTeam.members];
         const deduped = Array.from(new Map(merged.map((u) => [String(u.uid), u])).values());
         localStorage.setItem('team', JSON.stringify(deduped));
         dispatch(track.actions.setTeam(deduped));
@@ -360,10 +360,10 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
         {team.map((teamUser) => (
           <li key={teamUser.login} style={{ display: 'flex', marginBottom: 5 }}>
             <span style={{ flex: 1 }}>
-              <UserDisplayWithPhoto 
-                uid={teamUser.uid} 
+              <UserDisplayWithPhoto
+                uid={teamUser.uid}
                 login={teamUser.login}
-                display={teamUser.display} 
+                display={teamUser.display}
                 position={teamUser.position}
               />
             </span>

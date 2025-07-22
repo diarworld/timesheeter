@@ -10,7 +10,15 @@ import { useFilters } from 'features/filters/lib/useFilters';
 import { CalendarOutlined, LeftCircleOutlined, RightCircleOutlined } from '@ant-design/icons';
 import styles from './TimePeriodStepper.module.scss';
 
-export function TimePeriodStepper({ loader, isDarkMode, currentMenuKey }: { loader?: ReactNode, isDarkMode: boolean, currentMenuKey?: string }) {
+export function TimePeriodStepper({
+  loader,
+  isDarkMode,
+  currentMenuKey,
+}: {
+  loader?: ReactNode;
+  isDarkMode: boolean;
+  currentMenuKey?: string;
+}) {
   const message = useMessage();
 
   const periodOptions: CheckboxOptionType[] = useMemo(
@@ -69,8 +77,7 @@ export function TimePeriodStepper({ loader, isDarkMode, currentMenuKey }: { load
         <Text>{message(`track.calendar.unit.${unit}`)}</Text>
 
         <Space size="small">
-          <Button type="text" icon={<LeftCircleOutlined />} shape="circle" onClick={handleDateNavClick(-1)}>
-          </Button>
+          <Button type="text" icon={<LeftCircleOutlined />} shape="circle" onClick={handleDateNavClick(-1)} />
 
           <Text fw={800} fs={20} lh={34} style={{ whiteSpace: 'nowrap' }}>
             {DateWrapper.getDateFormat(fromDate, 'DD MMMM')}
@@ -78,8 +85,13 @@ export function TimePeriodStepper({ loader, isDarkMode, currentMenuKey }: { load
             {DateWrapper.getDateFormat(toDate, 'DD MMMM')}
           </Text>
 
-          <Button type="text" icon={<RightCircleOutlined />} shape="circle" style={{ verticalAlign: 'bottom' }} onClick={handleDateNavClick(1)}>
-          </Button>
+          <Button
+            type="text"
+            icon={<RightCircleOutlined />}
+            shape="circle"
+            style={{ verticalAlign: 'bottom' }}
+            onClick={handleDateNavClick(1)}
+          />
         </Space>
         {loader}
       </Space>

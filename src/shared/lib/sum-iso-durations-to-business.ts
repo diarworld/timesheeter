@@ -5,7 +5,7 @@ import { parse as parseIsoDuration } from 'iso8601-duration';
 export function sumIsoDurations(durations: (TISODuration | undefined)[]): TBusinessDurationData {
   const total = durations
     .filter(Boolean)
-    .map(d => parseIsoDuration(d!))
+    .map((d) => parseIsoDuration(d!))
     .reduce(
       (acc, cur) => ({
         years: (acc.years ?? 0) + (cur.years || 0),
@@ -15,7 +15,7 @@ export function sumIsoDurations(durations: (TISODuration | undefined)[]): TBusin
         minutes: (acc.minutes ?? 0) + (cur.minutes || 0),
         seconds: (acc.seconds ?? 0) + (cur.seconds || 0),
       }),
-      { years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 }
+      { years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 },
     );
 
   // Normalize seconds to minutes
@@ -28,7 +28,6 @@ export function sumIsoDurations(durations: (TISODuration | undefined)[]): TBusin
     total.hours = (total.hours ?? 0) + Math.floor((total.minutes ?? 0) / 60);
     total.minutes = (total.minutes ?? 0) % 60;
   }
-
 
   return total as TBusinessDurationData;
 }

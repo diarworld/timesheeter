@@ -38,7 +38,11 @@ export const TrackCalendarFootColSumDay = memo(({ tracks = [], date, utcOffsetIn
 
   return (
     <td
-      className={clsx(styles.col, { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode }, { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode  })}
+      className={clsx(
+        styles.col,
+        { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
+        { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode },
+      )}
       data-is-undertracked={isUndertracked}
       data-is-exact-tracked={isExactTracked}
       data-is-over-tracked={isOvertracked}

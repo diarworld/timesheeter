@@ -23,7 +23,7 @@ export type TRule = {
   updatedAt: string;
 };
 
-export type ITimesheeterRuleCondition = {
+export type TTimesheeterRuleCondition = {
   field: string;
   operator: string;
   value: string;

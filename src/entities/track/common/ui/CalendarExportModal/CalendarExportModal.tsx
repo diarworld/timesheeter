@@ -24,14 +24,13 @@ import { useCreateYandexTrack } from 'entities/track/yandex/lib/hooks/use-create
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
 import './CalendarExportModal.scss';
 import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
-import { isoDurationToSeconds } from '../../lib/iso-duration-to-seconds';
 import { validateHumanReadableDuration } from 'entities/track/common/lib/validate-human-readable-duration';
 import { DurationFormat } from 'features/date/ui/DurationFormat/DurationFormat';
-import { useFormatDuration } from 'entities/track/common/lib/hooks/use-format-duration';
 import { msToBusinessDurationData } from 'entities/track/common/lib/ms-to-business-duration-data';
-import { TCondition, TAction, TRule } from '../RulesManage/types';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
+import { TCondition, TAction, TRule } from 'entities/track/common/ui/RulesManage/types';
+import { isoDurationToSeconds } from 'entities/track/common/lib/iso-duration-to-seconds';
 
 const { Text, Title } = Typography;
 
@@ -55,8 +54,6 @@ interface ICalendarExportModalProps {
   loading: boolean;
   tracker: TTrackerConfig;
 }
-
-
 
 export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   visible,
@@ -115,15 +112,15 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
           headers: { 'x-user-id': self?.uid?.toString() || '', 'x-user-email': self?.email || '' },
         });
         if (res.ok) {
-          const data = await res.json();
-          setSharedRules(Array.isArray(data.rules) ? data.rules : []);
+          const rulesData = await res.json();
+          setSharedRules(Array.isArray(rulesData.rules) ? rulesData.rules : []);
         }
       } catch (e) {
         console.error('Error fetching shared rules:', e);
       }
     };
     fetchRules();
-  }, []);
+  }, [self]);
 
   const createTrack = isJiraTrackerCfg(tracker) ? jiraTrackHook.createTrack : yandexTrackHook.createTrack;
 
@@ -146,46 +143,49 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   const [filteredTableData, setFilteredTableData] = useState<IDataType[]>(tableData);
 
   // Helper to stable stringify objects (sort keys)
-  function stableStringify(obj: any): string {
+  function stableStringify(obj: unknown): string {
     if (Array.isArray(obj)) {
-      return '[' + obj.map(stableStringify).join(',') + ']';
-    } else if (obj && typeof obj === 'object') {
-      const keys = Object.keys(obj).sort();
-      return '{' + keys.map(k => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',') + '}';
-    } else {
-      return JSON.stringify(obj);
+      return `[${obj.map(stableStringify).join(',')}]`;
     }
+    if (obj && typeof obj === 'object') {
+      const keys = Object.keys(obj).sort();
+      return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify((obj as Record<string, unknown>)[k])}`).join(',')}}`;
+    }
+    return JSON.stringify(obj);
   }
 
   // Helper: get rules from localStorage
   function getTimesheeterRules() {
     try {
       const rules = JSON.parse(localStorage.getItem('timesheeterRules') || '[]');
-      const allRules = [...rules, ...sharedRules];
+      const allData = [...rules, ...sharedRules];
       // Deduplicate: unique if actions[] and conditions[] (with omitted .key) are unique, regardless of field order
       const seen = new Set();
       const uniqueRules = [];
-      for (const rule of allRules) {
-        if (!rule) continue;
-        const actions: TAction[] = Array.isArray(rule.actions)
-          ? rule.actions.map((a: any) => {
-              const { key, ...restA } = a;
-              return restA;
-            })
-          : rule.actions;
-        const conditions: TCondition[] = Array.isArray(rule.conditions)
-          ? rule.conditions.map((c: any) => {
-              const { key, ...restC } = c;
-              return restC;
-            })
-          : rule.conditions;
-        const compareKey = stableStringify({ actions, conditions });
-        if (!seen.has(compareKey)) {
-          seen.add(compareKey);
-          uniqueRules.push(rule);
+      for (const rule of allData) {
+        if (!rule) {
+          // skip this iteration
+        } else {
+          const actions: TAction[] = Array.isArray(rule.actions)
+            ? rule.actions.map((a: Record<string, unknown>) => {
+                const { key: _key, ...restA } = a;
+                return restA as TAction;
+              })
+            : rule.actions;
+          const conditions: TCondition[] = Array.isArray(rule.conditions)
+            ? rule.conditions.map((c: Record<string, unknown>) => {
+                const { key: _key, ...restC } = c;
+                return restC as TCondition;
+              })
+            : rule.conditions;
+          const compareKey = stableStringify({ actions, conditions });
+          if (!seen.has(compareKey)) {
+            seen.add(compareKey);
+            uniqueRules.push(rule);
+          }
         }
       }
-      return uniqueRules;      
+      return uniqueRules;
     } catch {
       return [];
     }
@@ -274,8 +274,9 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       const matchedRules: TRule[] = [];
 
       for (const rule of rules) {
-        if (!rule.actions) continue;
-        if (meetingMatchesRule(record, rule)) {
+        if (!rule.actions) {
+          // skip this iteration
+        } else if (meetingMatchesRule(record, rule)) {
           matchedRules.push(rule);
           const skipAction = rule.actions.find((a: TAction) => a.type === 'skip' && a.value === 'true');
           if (skipAction) {
@@ -383,7 +384,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   };
   // Handler for input change
   const handleDurationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setEditingDurationValue(value);
     if (!validateHumanReadableDuration(value)) {
       setEditingDurationError(message('form.invalid.format'));
@@ -522,24 +523,26 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
         const value = issueKeys[key] || defaultIssueKey;
         const matchedRules = issueKeyRuleMatches[key] || [];
 
-        const rulePopoverContent = matchedRules.length > 0 ? (
-          <div style={{ maxWidth: 450 }}>
-            <div>
-              <b>{message('calendar.export.rules.fired')}</b>
+        const rulePopoverContent =
+          matchedRules.length > 0 ? (
+            <div style={{ maxWidth: 450 }}>
+              <div>
+                <b>{message('calendar.export.rules.fired')}</b>
+              </div>
+              <ul style={{ paddingLeft: 16 }}>
+                {matchedRules.map((rule) => (
+                  <li key={rule.id}>
+                    <b>{rule.name}</b>: {rule.description}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul style={{ paddingLeft: 16 }}>
-              {matchedRules.map((rule) => (
-                <li key={rule.id}>
-                  <b>{rule.name}</b>: {rule.description}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <span>{message('calendar.export.rules.none')}</span>
-        );
+          ) : (
+            <span>{message('calendar.export.rules.none')}</span>
+          );
 
-        const cellContent = editingIssueKey === key ? (
+        const cellContent =
+          editingIssueKey === key ? (
             <div className="editable-cell">
               {isYandexTrackerCfg(tracker) ? (
                 <YandexIssuesSearchConnected
@@ -731,9 +734,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
                 placeholder="1h 30m"
                 style={{ width: 100 }}
               />
-              {editingDurationError && (
-                <div style={{ color: 'red', fontSize: 12 }}>{editingDurationError}</div>
-              )}
+              {editingDurationError && <div style={{ color: 'red', fontSize: 12 }}>{editingDurationError}</div>}
             </div>
           );
         }

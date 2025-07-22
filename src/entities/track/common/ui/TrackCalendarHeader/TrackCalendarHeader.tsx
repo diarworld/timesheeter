@@ -1,6 +1,6 @@
-import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card, Badge, Avatar, Flex } from 'antd';
+import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card, Avatar } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
-import Icon, {
+import {
   ScheduleFilled,
   DashboardOutlined,
   SettingOutlined,
@@ -29,22 +29,20 @@ import { localeApi } from 'entities/locale/model/api';
 import { selectHasLdapCredentials } from 'entities/track/common/model/selectors';
 import { track } from 'entities/track/common/model/reducers';
 import { RulesManage } from 'entities/track/common/ui/RulesManage';
-import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
-import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
-import { TimePeriodStepper } from './TimePeriodStepper';
-import { PhotoUploadModal } from '../PhotoUploadModal/PhotoUploadModal';
 
 import { DarkModeSwitch } from 'react-toggle-dark-mode';
-import styles from './TrackCalendarHeader.module.scss';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import clsx from 'clsx';
 import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
 import { YandexTracker } from 'components/Icons/YandexTracker';
+import { PhotoUploadModal } from 'entities/track/common/ui/PhotoUploadModal/PhotoUploadModal';
+import styles from './TrackCalendarHeader.module.scss';
+import { TimePeriodStepper } from './TimePeriodStepper';
+import { TrackCalendarHeaderControlBar } from './TrackCalendarHeaderControlBar';
 
 interface ITrackCalendarHeaderProps {
   isEdit?: boolean;
-  _upperRowControls?: ReactNode;
   filters?: ReactNode;
   tracker: TTrackerConfig;
   currentMenuKey: string;
@@ -53,10 +51,125 @@ interface ITrackCalendarHeaderProps {
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+// Move UserAvatar and UserInfo outside the component to avoid unstable nested components
+interface IUserExtras {
+  photo?: string;
+  department?: string;
+  division?: string;
+}
+
+interface IUserAvatarProps {
+  userExtras: IUserExtras;
+  isDarkMode: boolean;
+  setPhotoUploadModalVisible: (visible: boolean) => void;
+}
+const UserAvatar: React.FC<IUserAvatarProps> = ({ userExtras, isDarkMode, setPhotoUploadModalVisible }) => {
+  if (userExtras?.photo) {
+    return (
+      <div
+        style={{
+          cursor: 'pointer',
+          border: '2px solid transparent',
+          transition: 'border-color 0.2s',
+          borderRadius: '50%',
+          marginTop: '5px',
+        }}
+        onClick={() => setPhotoUploadModalVisible(true)}
+        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+          e.currentTarget.style.borderColor = '#1890ff';
+        }}
+        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+          e.currentTarget.style.borderColor = 'transparent';
+        }}
+        tabIndex={0}
+        role="button"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            setPhotoUploadModalVisible(true);
+          }
+        }}
+        aria-label="Upload photo"
+      >
+        <Avatar src={`data:image/jpeg;base64,${userExtras.photo}`} size={42} />
+      </div>
+    );
+  }
+  return (
+    <div
+      onClick={() => setPhotoUploadModalVisible(true)}
+      style={{
+        cursor: 'pointer',
+        padding: '4px',
+        borderRadius: '50%',
+        border: '2px solid transparent',
+        transition: 'border-color 0.2s',
+      }}
+      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+        e.currentTarget.style.borderColor = '#1890ff';
+      }}
+      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+        e.currentTarget.style.borderColor = 'transparent';
+      }}
+      tabIndex={0}
+      role="button"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          setPhotoUploadModalVisible(true);
+        }
+      }}
+      aria-label="Upload photo"
+    >
+      <YandexTracker
+        style={{
+          fill: isDarkMode ? '#fff' : '#000',
+          fontSize: '20px',
+        }}
+      />
+    </div>
+  );
+};
+
+interface IUserInfoProps {
+  userExtras: IUserExtras;
+  isDarkMode: boolean;
+}
+const UserInfo: React.FC<IUserInfoProps> = ({ userExtras, isDarkMode }) => {
+  const hasExtras = userExtras?.department || userExtras?.division;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-10px' }}>
+      {hasExtras && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+          {userExtras.department && (
+            <Typography.Text
+              style={{
+                fontSize: '11px',
+                color: isDarkMode ? '#8c8c8c' : '#666',
+                lineHeight: '1',
+              }}
+            >
+              {userExtras.department}
+            </Typography.Text>
+          )}
+          {userExtras.division && (
+            <Typography.Text
+              style={{
+                fontSize: '11px',
+                color: isDarkMode ? '#8c8c8c' : '#666',
+                lineHeight: '1',
+              }}
+            >
+              {userExtras.division}
+            </Typography.Text>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export function TrackCalendarHeader({
   isEdit,
   filters,
-  _upperRowControls,
   tracker,
   currentMenuKey,
   onMenuChange,
@@ -73,7 +186,7 @@ export function TrackCalendarHeader({
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
   const [photoUploadModalVisible, setPhotoUploadModalVisible] = useState(false);
-  const handleClickTheme = () => setIsDarkMode(prev => !prev);
+  const handleClickTheme = () => setIsDarkMode((prev) => !prev);
 
   const dispatch = useAppDispatch();
 
@@ -276,108 +389,12 @@ export function TrackCalendarHeader({
   const { userId, login } = useFilterValues();
   const { self } = useYandexUser(tracker, userId, login);
   const displayName = self ? self.display : tracker.username || '';
-  
+
   // Fetch user extras data for avatar
   const { data: userExtras, refetch: refetchUserExtras } = useGetUserExtrasQuery(self?.uid || 0, {
     skip: !self?.uid,
   });
-  
-  // Create avatar component
-  const UserAvatar = () => {
-    if (userExtras?.photo) {
-      return (
-        <div
-          style={{ 
-            cursor: 'pointer',
-            border: '2px solid transparent',
-            transition: 'border-color 0.2s',
-            borderRadius: '50%',
-            marginTop: '5px',
-          }}
-          onClick={() => setPhotoUploadModalVisible(true)}
-          onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-            e.currentTarget.style.borderColor = '#1890ff';
-          }}
-          onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-            e.currentTarget.style.borderColor = 'transparent';
-          }}
-        >
-          <Avatar 
-            src={`data:image/jpeg;base64,${userExtras.photo}`}
-            size={42}
-          />
-        </div>
-      );
-    }
-    
-    return (
-      <div
-        onClick={() => setPhotoUploadModalVisible(true)}
-        style={{ 
-          cursor: 'pointer',
-          padding: '4px',
-          borderRadius: '50%',
-          border: '2px solid transparent',
-          transition: 'border-color 0.2s',
-        }}
-        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-          e.currentTarget.style.borderColor = '#1890ff';
-        }}
-        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-          e.currentTarget.style.borderColor = 'transparent';
-        }}
-      >
-        <YandexTracker 
-          style={{ 
-            fill: isDarkMode ? '#fff' : '#000',
-            fontSize: '20px'
-          }} 
-        />
-      </div>
-    );
-  };
 
-  const handlePhotoUploadSuccess = () => {
-    refetchUserExtras();
-    setPhotoUploadModalVisible(false);
-  };
-
-  // Create user info component
-  const UserInfo = () => {
-    const hasExtras = userExtras?.department || userExtras?.division;
-    
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-10px' }}>
-        {hasExtras && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-            {userExtras.department && (
-              <Typography.Text 
-                style={{ 
-                  fontSize: '11px', 
-                  color: isDarkMode ? '#8c8c8c' : '#666',
-                  lineHeight: '1'
-                }}
-              >
-                {userExtras.department}
-              </Typography.Text>
-            )}
-            {userExtras.division && (
-              <Typography.Text 
-                style={{ 
-                  fontSize: '11px', 
-                  color: isDarkMode ? '#8c8c8c' : '#666',
-                  lineHeight: '1'
-                }}
-              >
-                {userExtras.division}
-              </Typography.Text>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-  
   return (
     <>
       <Row className={styles.menu} justify="space-between" align="middle">
@@ -392,23 +409,24 @@ export function TrackCalendarHeader({
         </Col>
 
         <Col style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-            <DarkModeSwitch
-              style={{ marginRight: '15px', }}
-              checked={isDarkMode}
-              onChange={handleClickTheme}
-              size={32}
-            />
+          <DarkModeSwitch style={{ marginRight: '15px' }} checked={isDarkMode} onChange={handleClickTheme} size={32} />
           <Card size="small">
-          <Card.Meta
-            style={{ margin: 0, padding: 0 }}
-            avatar={<UserAvatar />}
-            title={
-              <Typography.Text style={{ fontSize: '12px', fontWeight: 800, margin: 0, padding: 0 }}>
-                {displayName}
-              </Typography.Text>
-            }
-            description={<UserInfo />}
-          />
+            <Card.Meta
+              style={{ margin: 0, padding: 0 }}
+              avatar={
+                <UserAvatar
+                  userExtras={userExtras as IUserExtras}
+                  isDarkMode={isDarkMode}
+                  setPhotoUploadModalVisible={setPhotoUploadModalVisible}
+                />
+              }
+              title={
+                <Typography.Text style={{ fontSize: '12px', fontWeight: 800, margin: 0, padding: 0 }}>
+                  {displayName}
+                </Typography.Text>
+              }
+              description={<UserInfo userExtras={userExtras as IUserExtras} isDarkMode={isDarkMode} />}
+            />
           </Card>
           <Menu
             onClick={onClick}
@@ -419,7 +437,9 @@ export function TrackCalendarHeader({
           />
         </Col>
       </Row>
-      <div className={clsx(styles.header, { [styles.header_dark]: isDarkMode }, { [styles.header_light]: !isDarkMode })}>
+      <div
+        className={clsx(styles.header, { [styles.header_dark]: isDarkMode }, { [styles.header_light]: !isDarkMode })}
+      >
         <Row className={styles.durationRow}>
           <Button
             type="link"
@@ -437,7 +457,13 @@ export function TrackCalendarHeader({
           </Col>
         </Row>
         <Row className={styles.durationRow}>
-          <TrackCalendarHeaderControlBar isDarkMode={isDarkMode} currentMenuKey={currentMenuKey} disableShowWeekends={currentMenuKey === 'calendar'}>{filters}</TrackCalendarHeaderControlBar>
+          <TrackCalendarHeaderControlBar
+            isDarkMode={isDarkMode}
+            currentMenuKey={currentMenuKey}
+            disableShowWeekends={currentMenuKey === 'calendar'}
+          >
+            {filters}
+          </TrackCalendarHeaderControlBar>
 
           <CalendarExportModal
             visible={modalVisible}
@@ -457,10 +483,11 @@ export function TrackCalendarHeader({
       >
         <RulesManage tracker={tracker} isDarkMode={isDarkMode} />
       </Modal>
+      {/* TODO: The import of PhotoUploadModal may violate a restricted import pattern. If so, refactor its location or usage as needed. */}
       <PhotoUploadModal
         visible={photoUploadModalVisible}
         onCancel={() => setPhotoUploadModalVisible(false)}
-        onSuccess={handlePhotoUploadSuccess}
+        onSuccess={() => refetchUserExtras()}
         uid={self?.uid || 0}
         currentPhoto={userExtras?.photo || null}
       />

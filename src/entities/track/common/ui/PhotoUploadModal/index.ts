@@ -1,1 +1,1 @@
-export { PhotoUploadModal } from './PhotoUploadModal'; 
+export { PhotoUploadModal } from './PhotoUploadModal';

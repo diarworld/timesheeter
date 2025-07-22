@@ -9,13 +9,7 @@ interface ITextProps extends AntTextProps {
   color?: string;
 }
 
-export const Text = ({
-  fw = 400,
-  fs = 14,
-  lh = 17,
-  style,
-  ...restProps
-}: PropsWithChildren<ITextProps>) => (
+export const Text = ({ fw = 400, fs = 14, lh = 17, style, ...restProps }: PropsWithChildren<ITextProps>) => (
   <Typography.Text
     {...restProps}
     style={{

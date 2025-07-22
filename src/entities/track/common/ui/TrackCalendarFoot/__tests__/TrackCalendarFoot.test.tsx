@@ -34,7 +34,7 @@ describe('total issues', () => {
         utcOffsetInMinutes={undefined}
         totalIssues={5}
         date2Tracks={date2Tracks}
-        trackList={trackList} 
+        trackList={trackList}
         isDarkMode={false}
       />,
     );

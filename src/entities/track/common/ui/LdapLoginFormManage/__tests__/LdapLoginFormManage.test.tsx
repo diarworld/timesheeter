@@ -2,7 +2,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { track } from 'entities/track/common/model/reducers';
-import { LdapLoginFormManage } from '../LdapLoginFormManage';
+import { LdapLoginFormManage } from 'entities/track/common/ui/LdapLoginFormManage';
 
 // Mock the EWS API hook
 const authenticateEwsMock = jest.fn(() => ({

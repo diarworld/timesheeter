@@ -13,8 +13,8 @@ import { TTrack, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { TIssue } from 'entities/issue/common/model/types';
 import { TYandexIssue } from 'entities/issue/yandex/model/types';
-import styles from './TrackCalendarRow.module.scss';
 import clsx from 'clsx';
+import styles from './TrackCalendarRow.module.scss';
 
 export type TTrackCalendarRowProps = {
   range: string[];
@@ -77,7 +77,13 @@ export const TrackCalendarRow = memo(
     return (
       <>
         <tr className={styles.row}>
-          <th className={clsx(styles.issueCol, { [styles.issueCol_dark]: isDarkMode }, { [styles.issueCol_light]: !isDarkMode })}>
+          <th
+            className={clsx(
+              styles.issueCol,
+              { [styles.issueCol_dark]: isDarkMode },
+              { [styles.issueCol_light]: !isDarkMode },
+            )}
+          >
             <div>
               <Button
                 type="text"
@@ -92,7 +98,11 @@ export const TrackCalendarRow = memo(
               <div className={styles.issueDescription}>
                 <div className={styles.issueKeyRow}>
                   <a
-                    className={clsx(styles.issueKey, { [styles.issueKey_dark]: isDarkMode }, { [styles.issueKey_light]: !isDarkMode })}
+                    className={clsx(
+                      styles.issueKey,
+                      { [styles.issueKey_dark]: isDarkMode },
+                      { [styles.issueKey_light]: !isDarkMode },
+                    )}
                     href={getIssueUrl(issue.key)}
                     target="_blank"
                     rel="nofollow noopener noreferrer"
@@ -100,17 +110,54 @@ export const TrackCalendarRow = memo(
                     {issue.key}
                   </a>
                   {issueIsPinned ? (
-                    <>{unpinIssue && <PushpinFilled className={clsx(styles.pinIcon, { [styles.pinIcon_dark]: isDarkMode }, { [styles.pinIcon_light]: !isDarkMode })} onClick={handleUnpinIssue} />}</>
+                    <>
+                      {unpinIssue && (
+                        <PushpinFilled
+                          className={clsx(
+                            styles.pinIcon,
+                            { [styles.pinIcon_dark]: isDarkMode },
+                            { [styles.pinIcon_light]: !isDarkMode },
+                          )}
+                          onClick={handleUnpinIssue}
+                        />
+                      )}
+                    </>
                   ) : (
-                    <>{pinIssue && <PushpinOutlined className={clsx(styles.pinIcon, { [styles.pinIcon_dark]: isDarkMode }, { [styles.pinIcon_light]: !isDarkMode })} onClick={handlePinIssue} />}</>
+                    <>
+                      {pinIssue && (
+                        <PushpinOutlined
+                          className={clsx(
+                            styles.pinIcon,
+                            { [styles.pinIcon_dark]: isDarkMode },
+                            { [styles.pinIcon_light]: !isDarkMode },
+                          )}
+                          onClick={handlePinIssue}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
-                <div className={clsx(styles.issueSummary, { [styles.issueSummary_dark]: isDarkMode }, { [styles.issueSummary_light]: !isDarkMode })}>{issue.summary}</div>
+                <div
+                  className={clsx(
+                    styles.issueSummary,
+                    { [styles.issueSummary_dark]: isDarkMode },
+                    { [styles.issueSummary_light]: !isDarkMode },
+                  )}
+                >
+                  {issue.summary}
+                </div>
               </div>
             </div>
           </th>
 
-          <th className={clsx(styles.statusCol, { [styles.statusCol_dark]: isDarkMode }, { [styles.statusCol_light]: !isDarkMode })} aria-label="issue status badge">
+          <th
+            className={clsx(
+              styles.statusCol,
+              { [styles.statusCol_dark]: isDarkMode },
+              { [styles.statusCol_light]: !isDarkMode },
+            )}
+            aria-label="issue status badge"
+          >
             <div>
               <IssueStatusBadge status={issue.status} isDarkMode={isDarkMode} />
             </div>
@@ -119,7 +166,7 @@ export const TrackCalendarRow = memo(
           {/* New columns for domains, productteams, products */}
           <td className={styles.domainsCol}>
             {'domains' in issue && Array.isArray(issue.domains) && issue.domains.length > 0
-              ? issue.domains.map((domain, idx) => {
+              ? issue.domains.map((domain) => {
                   const [firstPart] = domain.split('—');
                   return (
                     <Tooltip key={domain} placement="top" title={domain}>
@@ -133,7 +180,7 @@ export const TrackCalendarRow = memo(
           </td>
           <td className={styles.productTeamsCol}>
             {'productteams' in issue && Array.isArray(issue.productteams) && issue.productteams.length > 0
-              ? issue.productteams.map((team, idx) => {
+              ? issue.productteams.map((team) => {
                   const [firstPart] = team.split('—');
                   return (
                     <Tooltip key={team} placement="top" title={team}>
@@ -147,7 +194,7 @@ export const TrackCalendarRow = memo(
           </td>
           <td className={styles.productsCol}>
             {'products' in issue && Array.isArray(issue.products) && issue.products.length > 0
-              ? issue.products.map((product, idx) => {
+              ? issue.products.map((product) => {
                   const [firstPart] = product.split('—');
                   return (
                     <Tooltip key={product} placement="top" title={product}>

@@ -14,6 +14,7 @@ import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
 import { useEffect } from 'react';
+import { TTeam } from 'entities/track/common/ui/TeamFormManage/types';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -24,7 +25,13 @@ type TProps = {
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedErrorShouldAppearAsOrgChange, isDarkMode, setIsDarkMode }: TProps) => {
+export const YandexAuthorizedTimesheet = ({
+  language,
+  tracker,
+  unauthorizedErrorShouldAppearAsOrgChange,
+  isDarkMode,
+  setIsDarkMode,
+}: TProps) => {
   const { userId, login } = useFilterValues();
   const dispatch = useAppDispatch();
 
@@ -39,18 +46,18 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
       });
     }
   }, [self]);
-  let team: TYandexUser[] = [];
-  try {
-    const stored = localStorage.getItem('team');
-    team = stored ? JSON.parse(stored) : [];
-  } catch {
-    team = [];
-  }
-  // Sort by display field (case-insensitive)
-  team = team
-    .slice()
-    .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
   useEffect(() => {
+    let team: TYandexUser[] = [];
+    try {
+      const stored = localStorage.getItem('team');
+      team = stored ? JSON.parse(stored) : [];
+    } catch {
+      team = [];
+    }
+    // Sort by display field (case-insensitive)
+    team = team
+      .slice()
+      .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
     if (team.length <= 1 && self) {
       fetch('/api/team', {
         method: 'GET',
@@ -63,44 +70,54 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
       })
         .then((res) => res.json())
         .then((data) => {
-          team = data.members;
-          // console.log('team', team);
-          const updateTeam = data.team?.members;
+          let updateTeam: TYandexUser[] | undefined;
+          let updateTeamId: string | undefined;
+
+          if (Array.isArray(data.teams) && self) {
+            // Find team where creatorId matches current user
+            const myTeam = data.teams.find((teamG: TTeam) => teamG.creatorId === self.uid.toString());
+            if (myTeam) {
+              updateTeam = myTeam.members;
+              updateTeamId = myTeam.id;
+            } else if (data.teams.length > 0) {
+              // Fallback: use members from the first team
+              updateTeam = data.teams[0].members;
+              // updateTeamId = data.teams[0].id;
+            }
+          } else if (Array.isArray(data.members)) {
+            // Legacy/fallback: use members directly
+            updateTeam = data.members;
+          }
+
           if (updateTeam) {
             localStorage.setItem('team', JSON.stringify(updateTeam));
-            localStorage.setItem('teamId', data.team?.id);
-            dispatch(track.actions.setTeam(updateTeam));
-          } else {
-            // console.log('self', self);
-            // console.log('team', team);
-            // console.log('team?.some((e) => e?.login === self?.login)', team?.some((e) => e?.login === self?.login));
-            if (self && !team?.some((e) => e?.login === self?.login)) {
-              const updatedTeam = [...(Array.isArray(team) ? team : []), {uid: self.uid, display: self.display, email: self.email, login: self.login, position: self.position, lastLoginDate: self.lastLoginDate}]
-                .slice()
-                .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-              localStorage.setItem('team', JSON.stringify(updatedTeam));
-              dispatch(track.actions.setTeam(updatedTeam));
+            if (updateTeamId) {
+              localStorage.setItem('teamId', updateTeamId);
             }
+            dispatch(track.actions.setTeam(updateTeam));
+          } else if (self && !team?.some((e) => e?.login === self?.login)) {
+            // Refactored to avoid lonely if
+            const updatedTeam = [
+              ...(Array.isArray(team) ? team : []),
+              {
+                uid: self.uid,
+                display: self.display,
+                email: self.email,
+                login: self.login,
+                position: self.position,
+                lastLoginDate: self.lastLoginDate,
+              },
+            ]
+              .slice()
+              .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+            localStorage.setItem('team', JSON.stringify(updatedTeam));
+            dispatch(track.actions.setTeam(updatedTeam));
           }
         });
     } else if (team.length > 1 && self) {
-      // console.log('syncing team to db');
-      // console.log('team', team);
       syncTeamToDb(team, self);
     }
-  }, [team, self]);
-
-  // Update team in Redux when self is available and not in team
-  // useEffect(() => {
-  //   if (self && !team.some((e) => e?.login === self?.login)) {
-  //     const updatedTeam = [...team, self]
-  //     .slice()
-  //     .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-  //     localStorage.setItem('team', JSON.stringify(updatedTeam));
-  //     dispatch(track.actions.setTeam(updatedTeam));
-  //   }
-  // }, [self, team, dispatch]);
-
+  }, [self, dispatch]);
 
   const ldapCredentials = localStorage.getItem('ldapCredentials');
   if (self && !ldapCredentials) {
@@ -138,7 +155,13 @@ export const YandexAuthorizedTimesheet = ({ language, tracker, unauthorizedError
 
   return (
     <Loading isLoading={isLoadingSelf}>
-      <YandexTimesheet language={language} tracker={tracker} uId={uId} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+      <YandexTimesheet
+        language={language}
+        tracker={tracker}
+        uId={uId}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+      />
     </Loading>
   );
 };

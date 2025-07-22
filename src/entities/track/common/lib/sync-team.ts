@@ -1,18 +1,9 @@
-import { TYandexUser } from "entities/user/yandex/model/types";
+import { TYandexUser } from 'entities/user/yandex/model/types';
 
 export const syncTeamToDb = async (teamArr: TYandexUser[], currentUser: TYandexUser) => {
-  // console.log('syncing team to db');
-  // console.log('teamArr', teamArr);
-  // const ldapCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
-  // const currentUser = teamArr.find(
-  //   (teamMember) => teamMember.email === ldapCredentials.username || teamMember.login === ldapCredentials.username,
-  // );
-  // console.log('currentUser', currentUser);
   if (!currentUser) return;
   let teamId = localStorage.getItem('teamId');
   if (teamId && !teamId.match(/^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$/)) {
-    // return;
-    // console.log('Wrong teamId', teamId);
     localStorage.removeItem('teamId');
     teamId = null;
   }

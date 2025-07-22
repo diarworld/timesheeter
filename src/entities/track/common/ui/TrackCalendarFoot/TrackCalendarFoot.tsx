@@ -8,10 +8,11 @@ import { DurationFormat } from 'features/date/ui/DurationFormat';
 import { Progress, Popover, Typography } from 'antd';
 import { Text } from 'components';
 import { useMessage } from 'entities/locale/lib/hooks';
+import clsx from 'clsx';
+import { isoDurationToBusinessMs } from 'entities/track/common/lib/iso-duration-to-business-ms';
 import styles from './TrackCalendarFoot.module.scss';
 import { TrackCalendarFootColSumDay } from './TrackCalendarFootColSumDay';
 import { TrackCalendarFootColSum } from './TrackCalendarFootColSum';
-import clsx from 'clsx';
 
 export interface ITrackCalendarFootProps {
   range: string[];
@@ -24,18 +25,24 @@ export interface ITrackCalendarFootProps {
 }
 
 export const TrackCalendarFoot = memo(
-  ({ range, totalIssues, utcOffsetInMinutes, date2Tracks, trackList, issues = [], isDarkMode }: ITrackCalendarFootProps) => {
+  ({
+    range,
+    totalIssues,
+    utcOffsetInMinutes,
+    date2Tracks,
+    trackList,
+    issues = [],
+    isDarkMode,
+  }: ITrackCalendarFootProps) => {
     const message = useMessage();
     // Helper to sum durations for a set of tracks
     const sumTrackMs = (tracks: TTrack[]) =>
       tracks.reduce((sum, t) => {
         // Assume t.duration is ISO string, convert to ms
         // If you have a helper, use it here
-        if (t.duration) {
-          // Use isoDurationToBusinessMs if available, else fallback
+        if (typeof t.duration === 'string' && t.duration) {
           try {
-            const { isoDurationToBusinessMs } = require('entities/track/common/lib/iso-duration-to-business-ms');
-            return sum + isoDurationToBusinessMs(t.duration);
+            return sum + (isoDurationToBusinessMs(t.duration) ?? 0);
           } catch {
             return sum;
           }
@@ -61,9 +68,17 @@ export const TrackCalendarFoot = memo(
     return (
       <tfoot className={clsx(styles.tfoot, { [styles.tfoot_dark]: isDarkMode }, { [styles.tfoot_light]: !isDarkMode })}>
         <tr>
-          <th colSpan={2} className={clsx(styles.totalCol, { [styles.totalCol_dark]: isDarkMode }, { [styles.totalCol_light]: !isDarkMode })}>
+          <th
+            colSpan={2}
+            className={clsx(
+              styles.totalCol,
+              { [styles.totalCol_dark]: isDarkMode },
+              { [styles.totalCol_light]: !isDarkMode },
+            )}
+            aria-label="Total issues column"
+          >
             {!!totalIssues && (
-              <Typography.Text style={{fontSize: 14, fontWeight: 700}} aria-label="total issues">
+              <Typography.Text style={{ fontSize: 14, fontWeight: 700 }} aria-label="total issues">
                 {' '}
                 <Message id="issue.total" />
                 {': '}
@@ -73,8 +88,8 @@ export const TrackCalendarFoot = memo(
           </th>
 
           {/* Combined summary cell for domains, product teams, and products */}
-          <th />
-          <th />
+          <th aria-label="Summary cell for domains, product teams, and products" />
+          <th aria-label="Summary cell for domains, product teams, and products" />
           <th className={styles.total}>
             {/* <div style={{ minWidth: 360 }}> */}
             <Popover content={<Message id="track.products.percent.explanation" />}>

@@ -42,7 +42,7 @@ export const TrackInnerRows = memo(
             isEditTrackComment={isEditTrackComment}
             trackCommentEditDisabledReason={trackCommentEditDisabledReason}
             updateTrack={updateTrack}
-            deleteTrack={deleteTrack} 
+            deleteTrack={deleteTrack}
             isDarkMode={isDarkMode}
           />
         ))}

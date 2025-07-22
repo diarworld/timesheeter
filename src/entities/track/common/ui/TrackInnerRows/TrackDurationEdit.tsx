@@ -7,8 +7,8 @@ import { DURATION_EMPTY } from 'entities/track/common/lib/constants';
 import { TTrack, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { useISOToHumanReadableDuration } from 'entities/track/common/lib/hooks/use-iso-to-human-readable-duration';
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
-import styles from './TrackDurationEdit.module.scss';
 import clsx from 'clsx';
+import styles from './TrackDurationEdit.module.scss';
 
 interface ITrackDurationEditProps {
   issueId: string;
@@ -18,68 +18,74 @@ interface ITrackDurationEditProps {
   isDarkMode: boolean;
 }
 
-export const TrackDurationEdit = memo(({ trackItem, issueId, isEdit, updateTrack, isDarkMode }: ITrackDurationEditProps) => {
-  const [form] = Form.useForm();
-  const [durationError, setDurationError] = useState(false);
-  const duration = trackItem?.duration || DURATION_EMPTY;
-  const durationFormat = useISOToHumanReadableDuration(duration);
+export const TrackDurationEdit = memo(
+  ({ trackItem, issueId, isEdit, updateTrack, isDarkMode }: ITrackDurationEditProps) => {
+    const [form] = Form.useForm();
+    const [durationError, setDurationError] = useState(false);
+    const duration = trackItem?.duration || DURATION_EMPTY;
+    const durationFormat = useISOToHumanReadableDuration(duration);
 
-  const initialValues = {
-    duration: durationFormat,
-  } as const;
+    const initialValues = {
+      duration: durationFormat,
+    } as const;
 
-  useEffect(() => {
-    form.setFieldValue('duration', durationFormat);
-  }, [durationFormat, form]);
+    useEffect(() => {
+      form.setFieldValue('duration', durationFormat);
+    }, [durationFormat, form]);
 
-  const handleSubmit = (values: typeof initialValues) => {
-    const durationISO = humanReadableDurationToISO(values.duration);
+    const handleSubmit = (values: typeof initialValues) => {
+      const durationISO = humanReadableDurationToISO(values.duration);
 
-    if (!isEdit || !durationISO || durationISO === trackItem.duration) return;
-    updateTrack(
-      {
-        duration: durationISO,
-      },
-      issueId,
-      trackItem.id,
+      if (!isEdit || !durationISO || durationISO === trackItem.duration) return;
+      updateTrack(
+        {
+          duration: durationISO,
+        },
+        issueId,
+        trackItem.id,
+      );
+    };
+
+    const submitForm = () => {
+      form
+        .validateFields()
+        .then(handleSubmit)
+        .catch((errors: ValidateErrorEntity<typeof initialValues>) => {
+          const durationFieldError = errors.errorFields.find((field) => field.name.includes('duration'));
+          if (durationFieldError?.errors.length) {
+            setDurationError(true);
+          }
+        });
+    };
+
+    const handleFocus: FocusEventHandler<HTMLInputElement> = () => {
+      setDurationError(false);
+    };
+
+    return (
+      <td className={styles.col}>
+        {isEdit ? (
+          <Form noValidate form={form} initialValues={initialValues}>
+            <Form.Item noStyle name="duration" rules={durationValidationRules}>
+              <Input
+                className={clsx(
+                  styles.input,
+                  { [styles.input_dark]: isDarkMode },
+                  { [styles.input_light]: !isDarkMode },
+                )}
+                onBlur={submitForm}
+                onPressEnter={submitForm}
+                onFocus={handleFocus}
+                status={durationError ? 'error' : undefined}
+              />
+            </Form.Item>
+          </Form>
+        ) : (
+          <TrackCalendarSum tracksOrTrack={[trackItem]} />
+        )}
+      </td>
     );
-  };
-
-  const submitForm = () => {
-    form
-      .validateFields()
-      .then(handleSubmit)
-      .catch((errors: ValidateErrorEntity<typeof initialValues>) => {
-        const durationFieldError = errors.errorFields.find((field) => field.name.includes('duration'));
-        if (durationFieldError?.errors.length) {
-          setDurationError(true);
-        }
-      });
-  };
-
-  const handleFocus: FocusEventHandler<HTMLInputElement> = () => {
-    setDurationError(false);
-  };
-
-  return (
-    <td className={styles.col}>
-      {isEdit ? (
-        <Form noValidate form={form} initialValues={initialValues}>
-          <Form.Item noStyle name="duration" rules={durationValidationRules}>
-            <Input
-              className={clsx(styles.input, { [styles.input_dark]: isDarkMode }, { [styles.input_light]: !isDarkMode })}
-              onBlur={submitForm}
-              onPressEnter={submitForm}
-              onFocus={handleFocus}
-              status={durationError ? 'error' : undefined}
-            />
-          </Form.Item>
-        </Form>
-      ) : (
-        <TrackCalendarSum tracksOrTrack={[trackItem]} />
-      )}
-    </td>
-  );
-});
+  },
+);
 
 TrackDurationEdit.displayName = 'TrackDurationEdit';

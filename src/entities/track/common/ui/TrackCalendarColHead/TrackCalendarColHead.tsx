@@ -1,6 +1,5 @@
 import { Text } from 'components';
 import { useMessage, useCurrentLocale } from 'entities/locale/lib/hooks';
-import calendar from 'entities/track/yandex/ui/YandexTimesheet/calendar.json';
 import { Popover } from 'antd';
 import { isRuLocale } from 'entities/locale/lib/helpers';
 import { DATE_FORMAT_MONTH } from 'features/date/lib/constants';
@@ -8,7 +7,6 @@ import { DateWrapper, TDate } from 'features/date/lib/DateWrapper';
 import React, { useMemo } from 'react';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import { clsx } from 'clsx';
-import { getExpectedHoursForDay } from 'entities/track/common/lib/hooks/use-expected-hours-for-day';
 import styles from './TrackCalendarColHead.module.scss';
 
 type TProps = {
@@ -47,8 +45,14 @@ export const TrackCalendarColHead = ({ date, now, isDarkMode }: TProps) => {
   }
 
   return (
-    <th className={clsx(styles.col, { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
-       { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })} data-current={isSamePeriod}>
+    <th
+      className={clsx(
+        styles.col,
+        { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
+        { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode },
+      )}
+      data-current={isSamePeriod}
+    >
       <div>
         {isHoliday || isPreholiday ? (
           <Popover content={popoverContent}>
@@ -65,7 +69,14 @@ export const TrackCalendarColHead = ({ date, now, isDarkMode }: TProps) => {
           </Popover>
         ) : (
           <>
-            <Text fs={13} fw={800} style={{ textTransform: 'capitalize', color: isDarkMode ? 'var(--color-soft-peach)' : 'var(--color-baltic-sea)' }}>
+            <Text
+              fs={13}
+              fw={800}
+              style={{
+                textTransform: 'capitalize',
+                color: isDarkMode ? 'var(--color-soft-peach)' : 'var(--color-baltic-sea)',
+              }}
+            >
               {dayFormat}
             </Text>
             <Text fs={13}> {dateFormat}</Text>

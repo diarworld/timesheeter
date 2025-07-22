@@ -14,5 +14,5 @@ export const YandexTrackCalendarFootConnected = (props: TProps) => {
   const { tracker, isDarkMode } = props;
   const { date2Tracks, trackList } = useCurrentYandexTracks(tracker);
 
-  return <TrackCalendarFoot {...props} date2Tracks={date2Tracks} trackList={trackList} isDarkMode={isDarkMode}/>;
+  return <TrackCalendarFoot {...props} date2Tracks={date2Tracks} trackList={trackList} isDarkMode={isDarkMode} />;
 };

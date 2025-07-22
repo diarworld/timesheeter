@@ -1,18 +1,18 @@
 import { api } from 'shared/api/api';
 
-export interface TUserExtras {
+export interface IUserExtras {
   uid: string; // Comes back as string from API due to BigInt serialization
   department: string | null;
   division: string | null;
   photo: string | null;
 }
 
-export interface TUploadPhotoRequest {
+export interface IUploadPhotoRequest {
   uid: number;
   photo: string; // base64 encoded image
 }
 
-export interface TUpdateUserExtrasRequest {
+export interface IUpdateUserExtrasRequest {
   uid: number;
   department?: string | null;
   division?: string | null;
@@ -20,20 +20,20 @@ export interface TUpdateUserExtrasRequest {
 
 export const userExtrasApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getUserExtras: builder.query<TUserExtras, number>({
+    getUserExtras: builder.query<IUserExtras, number>({
       query: (uid) => ({
         url: `/api/user-extras/${uid}`,
         method: 'GET',
       }),
     }),
-    uploadPhoto: builder.mutation<{ success: boolean; message: string }, TUploadPhotoRequest>({
+    uploadPhoto: builder.mutation<{ success: boolean; message: string }, IUploadPhotoRequest>({
       query: (data) => ({
         url: '/api/user-extras/upload-photo',
         method: 'POST',
         body: data,
       }),
     }),
-    updateUserExtras: builder.mutation<{ success: boolean; message: string }, TUpdateUserExtrasRequest>({
+    updateUserExtras: builder.mutation<{ success: boolean; message: string }, IUpdateUserExtrasRequest>({
       query: (data) => ({
         url: '/api/user-extras/update',
         method: 'PUT',
@@ -43,4 +43,4 @@ export const userExtrasApi = api.injectEndpoints({
   }),
 });
 
-export const { useGetUserExtrasQuery, useUploadPhotoMutation, useUpdateUserExtrasMutation } = userExtrasApi; 
+export const { useGetUserExtrasQuery, useUploadPhotoMutation, useUpdateUserExtrasMutation } = userExtrasApi;

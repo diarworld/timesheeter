@@ -20,53 +20,82 @@ type TProps = {
 };
 
 // !NOTICE that this memo component has custom compareProps function implementation
-export const TrackCalendarColIssueSumDay = memo(({ tracks = [], date, issueKey, isEdit, isDarkMode, as = 'td' }: TProps) => {
-  const addNewTrack = useAddNewTrackAction(issueKey);
-  const { utcOffsetInMinutes } = useFilterValues();
+export const TrackCalendarColIssueSumDay = memo(
+  ({ tracks = [], date, issueKey, isEdit, isDarkMode, as = 'td' }: TProps) => {
+    const addNewTrack = useAddNewTrackAction(issueKey);
+    const { utcOffsetInMinutes } = useFilterValues();
 
-  const dateObj = useMemo(() => DateWrapper.getDate({ date, utcOffsetInMinutes }), [date, utcOffsetInMinutes]);
+    const dateObj = useMemo(() => DateWrapper.getDate({ date, utcOffsetInMinutes }), [date, utcOffsetInMinutes]);
 
-  const isWeekend = useMemo(() => DateWrapper.isWeekend(dateObj), [dateObj]);
-  const isHoliday = useMemo(() => DateWrapper.isHoliday(dateObj), [dateObj]);
+    const isWeekend = useMemo(() => DateWrapper.isWeekend(dateObj), [dateObj]);
+    const isHoliday = useMemo(() => DateWrapper.isHoliday(dateObj), [dateObj]);
 
-  const handleClick = () => {
-    const dateWithStartHour = dateObj.set('hour', STANDARD_WORK_DAY_START_LOCAL_HOUR);
-    addNewTrack(dateWithStartHour);
-  };
+    const handleClick = () => {
+      const dateWithStartHour = dateObj.set('hour', STANDARD_WORK_DAY_START_LOCAL_HOUR);
+      addNewTrack(dateWithStartHour);
+    };
 
-  const issueSum = dashIsEmpty(tracks, <TrackCalendarSum tracksOrTrack={tracks} />);
+    const issueSum = dashIsEmpty(tracks, <TrackCalendarSum tracksOrTrack={tracks} />);
 
-  if (as === 'td') {
+    if (as === 'td') {
+      return (
+        <td
+          className={clsx(
+            styles.col,
+            { [styles.col_dark]: isDarkMode },
+            { [styles.col_light]: !isDarkMode },
+            { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
+            { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode },
+          )}
+        >
+          {isEdit ? (
+            <button
+              type="button"
+              className={clsx(
+                styles.button,
+                { [styles.button_dark]: isDarkMode },
+                { [styles.button_light]: !isDarkMode },
+              )}
+              onClick={handleClick}
+            >
+              {issueSum}
+            </button>
+          ) : (
+            issueSum
+          )}
+        </td>
+      );
+    }
+
     return (
-      <td className={clsx(styles.col, { [styles.col_dark]: isDarkMode },
-         { [styles.col_light]: !isDarkMode },
-         { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
-         { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })}>
+      <div
+        className={clsx(
+          styles.col,
+          { [styles.col_dark]: isDarkMode },
+          { [styles.col_light]: !isDarkMode },
+          { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
+          { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode },
+        )}
+      >
         {isEdit ? (
-          <button type="button" className={clsx(styles.button, { [styles.button_dark]: isDarkMode }, { [styles.button_light]: !isDarkMode })} onClick={handleClick}>
+          <button
+            type="button"
+            className={clsx(
+              styles.button,
+              { [styles.button_dark]: isDarkMode },
+              { [styles.button_light]: !isDarkMode },
+            )}
+            onClick={handleClick}
+          >
             {issueSum}
           </button>
         ) : (
           issueSum
         )}
-      </td>
+      </div>
     );
-  }
-
-  return (
-    <div className={clsx(styles.col, { [styles.col_dark]: isDarkMode },
-       { [styles.col_light]: !isDarkMode },
-       { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
-       { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode })}>
-      {isEdit ? (
-        <button type="button" className={clsx(styles.button, { [styles.button_dark]: isDarkMode }, { [styles.button_light]: !isDarkMode })} onClick={handleClick}>
-          {issueSum}
-        </button>
-      ) : (
-        issueSum
-      )}
-    </div>
-  );
-}, comparePropsWithTracks);
+  },
+  comparePropsWithTracks,
+);
 
 TrackCalendarColIssueSumDay.displayName = 'TrackCalendarColIssueSumDay';

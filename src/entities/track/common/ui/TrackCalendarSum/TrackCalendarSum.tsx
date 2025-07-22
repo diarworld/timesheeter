@@ -18,7 +18,9 @@ export const TrackCalendarSum: FC<TProps> = ({ tracksOrTrack }) => {
 
   return (
     <div className="TrackCalendarSum">
-      <Typography.Text><DurationFormat duration={durationTotal} /></Typography.Text>
+      <Typography.Text>
+        <DurationFormat duration={durationTotal} />
+      </Typography.Text>
     </div>
   );
 };

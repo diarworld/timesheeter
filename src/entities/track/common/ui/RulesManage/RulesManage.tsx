@@ -12,20 +12,50 @@ import {
   Collapse,
   Popconfirm,
 } from 'antd';
-import Icon, { PlusOutlined, MinusCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, MinusCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useMessage } from 'entities/locale/lib/hooks';
-import React, { FC, useEffect, useState, useRef } from 'react';
+import { FC, useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
-import { TTrackerConfig, TYandexTrackerConfig, isYandexTrackerCfg } from 'entities/tracker/model/types';
-import { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
+import { TTrackerConfig } from 'entities/tracker/model/types';
+import { AIIcon } from 'components/Icons/AI';
 import { TYandexUser } from 'entities/user/yandex/model/types';
-import { validateHumanReadableDuration } from '../../lib/validate-human-readable-duration';
-import { ITimesheeterRuleCondition, TRule } from './types';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
+import { YandexIssuesSearchConnected } from 'entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected';
+import { validateHumanReadableDuration } from 'entities/track/common/lib/validate-human-readable-duration';
+import { TTimesheeterRuleCondition, TRule } from './types';
 
-export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> = ({ tracker, isDarkMode }) => {
+// Move ShareTeamSelect and ShareButton above RulesManage
+interface IShareTeamSelectProps {
+  userTeams: { id: string; name: string }[];
+  selectedShareTeam: string | undefined;
+  onChange: (value: string) => void;
+  message: (id: string) => string;
+}
+const ShareTeamSelect: React.FC<IShareTeamSelectProps> = ({ userTeams, selectedShareTeam, onChange, message }) => (
+  <Select
+    style={{ minWidth: 250, maxWidth: 250, marginRight: 8 }}
+    placeholder={message('rules.select.team')}
+    options={userTeams.map((team) => ({ value: team.id, label: team.name }))}
+    value={selectedShareTeam}
+    onChange={onChange}
+    size="small"
+  />
+);
+
+interface IShareButtonProps {
+  loading: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  message: (id: string) => string;
+}
+const ShareButton: React.FC<IShareButtonProps> = ({ loading, onClick, disabled, message }) => (
+  <Button size="small" loading={loading} onClick={onClick} disabled={disabled}>
+    {message('rules.share.with.team')}
+  </Button>
+);
+
+export const RulesManage: FC<{ tracker: TTrackerConfig; isDarkMode: boolean }> = ({ tracker, isDarkMode }) => {
   const message = useMessage();
   const [form] = Form.useForm<TRule>();
   const [rules, setRules] = useState<TRule[]>([]);
@@ -47,10 +77,11 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
       if (!self) return;
       try {
         const res = await fetch('/api/team', {
-          headers: { 
-            'x-user-id': self?.uid?.toString() || ''
-            , 'x-user-email': self?.email || ''
-            , 'x-user-display': self?.display ? encodeURIComponent(self.display) : '', },
+          headers: {
+            'x-user-id': self?.uid?.toString() || '',
+            'x-user-email': self?.email || '',
+            'x-user-display': self?.display ? encodeURIComponent(self.display) : '',
+          },
         });
         if (res.ok) {
           const data = await res.json();
@@ -66,7 +97,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
       }
     };
     fetchTeams();
-  }, []);
+  }, [self]);
 
   // Fetch all shared rules for all teams
   useEffect(() => {
@@ -85,7 +116,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
       }
     };
     fetchRules();
-  }, []);
+  }, [self]);
 
   // Localized constants must be inside the component
   const CONDITION_FIELDS = [
@@ -222,7 +253,10 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
             id: uuidv4(),
             name: 'Округление',
             description: 'Правило по-умолчанию для округления длительности встречи до 1 часа',
-            conditions: [{ field: 'duration', operator: '<', value: '1ч', logic: 'AND' as const }, { field: 'duration', operator: '>', value: '30м', logic: 'AND' as const }],
+            conditions: [
+              { field: 'duration', operator: '<', value: '1ч', logic: 'AND' as const },
+              { field: 'duration', operator: '>', value: '30м', logic: 'AND' as const },
+            ],
             actions: [{ type: 'set_duration', value: '1ч' }],
           },
           {
@@ -381,7 +415,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
   const [operatorRerenderKey, setOperatorRerenderKey] = useState(0);
 
   // Track previous conditions to detect field changes
-  const prevConditionsRef = useRef<ITimesheeterRuleCondition[]>([]);
+  const prevConditionsRef = useRef<TTimesheeterRuleCondition[]>([]);
 
   const handleValuesChange = (changed: Partial<TRule>, all: TRule) => {
     const prevConditions = prevConditionsRef.current;
@@ -406,7 +440,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
     }
     // Update ref for next change
     prevConditionsRef.current = Array.isArray(currentConditions)
-      ? currentConditions.map((c) => ({ ...(c as ITimesheeterRuleCondition) }))
+      ? currentConditions.map((c) => ({ ...(c as TTimesheeterRuleCondition) }))
       : [];
   };
 
@@ -429,8 +463,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
         body: JSON.stringify({
           query,
           user: displayName,
-          orgId: tracker.type === 'yandex' ? (tracker as TYandexTrackerConfig).orgId : undefined,
-          isCloud: tracker.type === 'yandex' ? (tracker as TYandexTrackerConfig).isCloud : undefined,
+          orgId: tracker.type === 'yandex' ? tracker.orgId : undefined,
+          isCloud: tracker.type === 'yandex' ? tracker.isCloud : undefined,
         }),
       });
       const { rule, error, raw, cost } = await res.json();
@@ -445,7 +479,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
               const parsed = JSON.parse(match[1]);
               if (parsed.message) errorMsg = parsed.message;
             }
-          } catch {}
+          } catch (e) {
+            console.error('Error parsing AI response:', e);
+          }
         } else if (raw?.error) {
           errorMsg = raw.error;
         }
@@ -478,23 +514,6 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
       setAiLoading(false);
     }
   };
-  const AISvg = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" viewBox="0 0 100 100">
-      <path
-        fill="#262626"
-        d="m85.188 44.582c-16.801-4.6406-20.297-8.1367-24.934-24.938-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-4.6406 16.801-8.1367 20.297-24.938 24.938-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 16.801 4.6406 20.297 8.1328 24.938 24.934 0.19531 0.70312 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 4.6406-16.801 8.1328-20.297 24.934-24.934 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"
-      />
-      <path
-        fill="#262626"
-        d="m20.023 23.164c7.5938 2.0977 8.9375 3.4375 11.031 11.031 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.0977-7.5938 3.4375-8.9375 11.031-11.031 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625-7.5938-2.0977-8.9336-3.4375-11.031-11.031-0.19531-0.70312-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.0977 7.5938-3.4375 8.9375-11.031 11.031-0.70313 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625z"
-      />
-      <path
-        fill="#262626"
-        d="m46.957 73.906c-9.8828-2.7266-11.781-4.6289-14.508-14.508-0.19531-0.70313-0.83594-1.1914-1.5625-1.1914-0.73047 0-1.3672 0.48828-1.5625 1.1914-2.7266 9.8828-4.625 11.781-14.508 14.508-0.70312 0.19531-1.1914 0.83594-1.1914 1.5625 0 0.73047 0.48828 1.3672 1.1914 1.5625 9.8828 2.7266 11.781 4.6289 14.508 14.508 0.19531 0.70313 0.83594 1.1914 1.5625 1.1914 0.73047 0 1.3672-0.48828 1.5625-1.1914 2.7266-9.8828 4.6289-11.781 14.508-14.508 0.70312-0.19531 1.1914-0.83594 1.1914-1.5625 0-0.73047-0.48828-1.3672-1.1914-1.5625z"
-      />
-    </svg>
-  );
-  const AIIcon = (props: Partial<CustomIconComponentProps>) => <Icon component={AISvg} {...props} />;
 
   // Add share handler
   const handleShareWithTeam = async (rule: TRule, teamName: string) => {
@@ -530,7 +549,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
       const results = await Promise.all(
         teams.map(async (team) => {
           // Remove id if present to avoid unique constraint error
-          const { id, ...ruleWithoutId } = rule;
+          const { id: _id, ...ruleWithoutId } = rule;
           const res = await fetch('/api/team-rules', {
             method: 'POST',
             headers: {
@@ -697,7 +716,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
                   {message('rules.add.action')}
                 </Button>
               )}
-              {fields.map((field, idx) => {
+              {fields.map((field) => {
                 const { key, ...fieldProps } = field;
                 return (
                   <Space key={key} align="baseline" style={{ display: 'flex', marginBottom: 8 }}>
@@ -745,22 +764,27 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
                                     unCheckedChildren={<CloseOutlined />}
                                     onChange={(checked) =>
                                       form.setFieldsValue({
-                                        actions: form.getFieldValue('actions').map((a: { [key: string]: unknown }, i: number) =>
-                                          i === field.name ? { ...a, value: checked ? 'true' : 'false' } : a,
-                                        ),
+                                        actions: form
+                                          .getFieldValue('actions')
+                                          .map((a: { [key: string]: unknown }, i: number) =>
+                                            i === field.name ? { ...a, value: checked ? 'true' : 'false' } : a,
+                                          ),
                                       })
                                     }
                                   />
                                 );
-                              } else if (typeVal === 'set_task' && isYandexTrackerCfg(tracker)) {
+                              }
+                              if (typeVal === 'set_task' && tracker.type === 'yandex') {
                                 return (
                                   <YandexIssuesSearchConnected
                                     value={form.getFieldValue(['actions', field.name, 'value'])}
                                     onChange={(val) =>
                                       form.setFieldsValue({
-                                        actions: form.getFieldValue('actions').map((a: { [key: string]: unknown }, i: number) =>
-                                          i === field.name ? { ...a, value: val } : a,
-                                        ),
+                                        actions: form
+                                          .getFieldValue('actions')
+                                          .map((a: { [key: string]: unknown }, i: number) =>
+                                            i === field.name ? { ...a, value: val } : a,
+                                          ),
                                       })
                                     }
                                     name={`issueKey-rule-${key}`}
@@ -771,9 +795,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
                                     tracker={tracker}
                                   />
                                 );
-                              } else {
-                                return <Input placeholder={message('rules.value')} />;
                               }
+                              return <Input placeholder={message('rules.value')} />;
                             })()}
                           </Form.Item>
                         );
@@ -826,7 +849,12 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
               <div
                 style={{
                   border: sharedRules.some((r) => r.id === rule.id) ? '2px solid #1890ff' : undefined,
-                  background: sharedRules.some((r) => r.id === rule.id) ? isDarkMode ? '#2e2e2e' : '#e6f7ff' : undefined,
+                  background: (() => {
+                    if (sharedRules.some((r) => r.id === rule.id)) {
+                      return isDarkMode ? '#2e2e2e' : '#e6f7ff';
+                    }
+                    return undefined;
+                  })(),
                   borderRadius: 6,
                   padding: 8,
                 }}
@@ -834,10 +862,10 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
                 <div style={{ margin: '8px 0' }}>
                   <b>{message('rules.divider.when')}:</b>{' '}
                   {(Array.isArray(rule.conditions) ? rule.conditions : [])
-                    .map((c, i) => {
+                    .map((c, i, arr) => {
                       const condStr = `${c.field} ${c.operator} "${c.value}"`;
                       if (i === 0) return condStr;
-                      const prevLogic = rule.conditions[i].logic || 'AND';
+                      const prevLogic = arr[i].logic || 'AND';
                       return ` ${prevLogic} ${condStr}`;
                     })
                     .join('')}
@@ -848,36 +876,39 @@ export const RulesManage: FC<{ tracker: TTrackerConfig, isDarkMode: boolean }> =
                 </div>
                 <Space>
                   {/* Only show share button for personal rules (not already shared) */}
-                  {!sharedRules.some((r) => r.id === rule.id) && (
-                    userTeams.length > 1 ? (
-                      <>
-                        <Select
-                          style={{ minWidth: 250, maxWidth: 250, marginRight: 8 }}
-                          placeholder={message('rules.select.team')}
-                          options={userTeams.map(team => ({ value: team.id, label: team.name }))}
-                          value={selectedShareTeam}
-                          onChange={setSelectedShareTeam}
-                          size="small"
-                        />
-                        <Button
-                          size="small"
-                          loading={shareLoading === rule.id}
-                          onClick={() => selectedShareTeam && handleShareWithTeam(rule, teamNameMap[selectedShareTeam])}
-                          disabled={!selectedShareTeam}
-                        >
-                          {message('rules.share.with.team')}
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="small"
-                        loading={shareLoading === rule.id}
-                        onClick={() => handleShareWithTeam(rule, teamNameMap[(rule as TRule).teamId])}
-                      >
-                        {message('rules.share.with.team')}
-                      </Button>
-                    )
-                  )}
+                  {(() => {
+                    if (sharedRules.some((r) => r.id === rule.id)) {
+                      return null;
+                    }
+                    let shareControls;
+                    if (userTeams.length > 1) {
+                      const handleShare = () => {
+                        if (selectedShareTeam) handleShareWithTeam(rule, teamNameMap[selectedShareTeam]);
+                      };
+                      shareControls = (
+                        <>
+                          <ShareTeamSelect
+                            userTeams={userTeams}
+                            selectedShareTeam={selectedShareTeam}
+                            onChange={setSelectedShareTeam}
+                            message={message}
+                          />
+                          <ShareButton
+                            loading={shareLoading === rule.id}
+                            onClick={handleShare}
+                            disabled={!selectedShareTeam}
+                            message={message}
+                          />
+                        </>
+                      );
+                    } else {
+                      const handleShare = () => handleShareWithTeam(rule, teamNameMap[(rule as TRule).teamId]);
+                      shareControls = (
+                        <ShareButton loading={shareLoading === rule.id} onClick={handleShare} message={message} />
+                      );
+                    }
+                    return shareControls;
+                  })()}
                   <Button size="small" onClick={() => handleEdit(rule)}>
                     {message('rules.rule.edit')}
                   </Button>

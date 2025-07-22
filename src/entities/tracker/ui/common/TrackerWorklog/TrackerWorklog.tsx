@@ -8,8 +8,7 @@ import { YandexAuthorizedTimesheet } from 'entities/track/yandex/ui/YandexAuthor
 import { AuthRoute } from 'entities/auth/ui/AuthRoute';
 import { JiraAuthorizedTimesheet } from 'entities/track/jira/ui/JiraAuthorizedTimesheet/JiraAuthorizedTimesheet';
 import { ConfigProvider, theme } from 'antd';
-import { useEffect, useState } from 'react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 type TProps = {
   tracker: TTrackerConfig | undefined;

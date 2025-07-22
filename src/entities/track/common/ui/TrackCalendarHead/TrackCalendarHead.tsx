@@ -7,8 +7,8 @@ import { Button } from 'antd';
 import { SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import { useFilters } from 'features/filters/lib/useFilters';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
-import styles from './TrackCalendarHead.module.scss';
 import clsx from 'clsx';
+import styles from './TrackCalendarHead.module.scss';
 
 interface ITrackCalendarHeadProps {
   range: string[];

@@ -99,7 +99,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
 
   const { isTrackCreateLoading, createTrack } = useCreateJiraTrack(tracker);
   const { updateTrack, isTrackUpdateLoading } = useUpdateJiraTrack(tracker);
-  const { isTrackDeleteLoading, deleteTrack } = useDeleteJiraTrack(tracker);
+  const { deleteTrack } = useDeleteJiraTrack(tracker);
 
   const onCreateTrack = useCallback(
     async (fields: TTrackFormCreateFields) => {
@@ -174,7 +174,9 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
             isDarkMode={isDarkMode}
           />
         )}
-        renderTrackCalendarFootConnected={(props) => <JiraTrackCalendarFootConnected {...props} tracks={tracks} isDarkMode={isDarkMode} />}
+        renderTrackCalendarFootConnected={(props) => (
+          <JiraTrackCalendarFootConnected {...props} tracks={tracks} isDarkMode={isDarkMode} />
+        )}
         renderIssueTracksConnected={(props) => (
           <JiraIssueTracksConnected
             {...props}
@@ -183,7 +185,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
             updateTrack={updateTrack}
             isTrackUpdateLoading={isTrackUpdateLoading}
             uId={uId}
-            deleteTrack={deleteTrack} 
+            deleteTrack={deleteTrack}
             isDarkMode={isDarkMode}
           />
         )}

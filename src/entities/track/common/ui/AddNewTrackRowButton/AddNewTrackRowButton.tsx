@@ -23,8 +23,13 @@ export const AddNewTrackRowButton = memo(({ issueKey, isDarkMode }: IAddNewTrack
   };
 
   return (
-    <Button type="link" onClick={handleClick} style={{ color: isDarkMode ? '#ebedf4' : '#2e2e2e', padding: '0' }} aria-label={message('track.create.add')}>
-      <PlusOutlined style={{ fontSize: '16px' }}/>
+    <Button
+      type="link"
+      onClick={handleClick}
+      style={{ color: isDarkMode ? '#ebedf4' : '#2e2e2e', padding: '0' }}
+      aria-label={message('track.create.add')}
+    >
+      <PlusOutlined style={{ fontSize: '16px' }} />
       <span>
         <Message id="track.create.add" />
       </span>

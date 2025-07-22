@@ -1,16 +1,15 @@
-import { Popconfirm, Spin } from 'antd';
+import { Popconfirm, Spin, Button } from 'antd';
 import React from 'react';
 import { Form } from 'react-final-form';
 import { FormApi } from 'final-form';
 import { TTrack, TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/model/types';
-import { DeleteRowOutlined } from '@ant-design/icons';
+import { DeleteRowOutlined, DeleteOutlined } from '@ant-design/icons';
 import { InputField } from 'features/form/ui/InputField';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { useISOToHumanReadableDuration } from 'entities/track/common/lib/hooks/use-iso-to-human-readable-duration';
 import { DateInputField } from 'features/form/ui/DateInputField';
 import { validateHumanReadableDuration } from 'entities/track/common/lib/validate-human-readable-duration';
 import { humanReadableDurationToISO } from 'entities/track/common/lib/human-readable-duration-to-iso';
-import { TrackDeleteButton } from 'entities/track/common/ui/TrackInnerRows/TrackDeleteButton';
 
 export interface ITrackEditProps {
   track: TTrack;
@@ -21,7 +20,6 @@ export interface ITrackEditProps {
   updateTrack(input: Partial<TTrackInputEditForm>, issueIdOrKey?: string, trackId?: number | string): void;
   spinnerClassName?(isLoading: boolean): string;
   deleteTrack(form: TTrackInputDelete): void;
-  isDarkMode: boolean;
 }
 
 export const TrackEdit = ({
@@ -33,7 +31,6 @@ export const TrackEdit = ({
   deleteTrack,
   isTrackUpdateLoading,
   isEditTrackComment,
-  isDarkMode,
 }: ITrackEditProps) => {
   const { duration, comment, start, id: trackId } = track;
   const message = useMessage();
@@ -99,7 +96,7 @@ export const TrackEdit = ({
             title={`${message('track.delete.title')}?`}
             onConfirm={() => deleteTrack({ issueIdOrKey: issueKey, trackId })}
           >
-            <TrackDeleteButton isDarkMode={isDarkMode} />
+            <Button shape="circle" type="text" icon={<DeleteOutlined />} />
           </Popconfirm>
           <Spin size="small" spinning className={spinnerClassName?.(isTrackUpdateLoading)} />
         </form>

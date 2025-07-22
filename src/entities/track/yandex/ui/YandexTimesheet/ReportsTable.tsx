@@ -30,15 +30,9 @@ const UserDisplayWithPhoto: React.FC<{ uid: number; display: string }> = ({ uid,
   return (
     <Flex align="center" gap={8}>
       {userExtras?.photo ? (
-        <Avatar 
-          src={`data:image/jpeg;base64,${userExtras.photo}`} 
-          size={24}
-        />
+        <Avatar src={`data:image/jpeg;base64,${userExtras.photo}`} size={24} />
       ) : (
-        <Avatar 
-          icon={<UserOutlined />} 
-          size={24}
-        />
+        <Avatar icon={<UserOutlined />} size={24} />
       )}
       <Text style={{ minWidth: 200, display: 'inline-block' }}>{display}</Text>
     </Flex>
@@ -75,7 +69,15 @@ function sumDurations(tracks: TTransformedTracksByUser[]): TBusinessDurationData
   return msToBusinessDurationData(ms);
 }
 
-export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showWeekends, isDarkMode }: TReportsTableProps) {
+export function ReportsTable({
+  team,
+  tracks,
+  from,
+  to,
+  utcOffsetInMinutes,
+  showWeekends,
+  isDarkMode,
+}: TReportsTableProps) {
   //   const days = useRange({ from, to, showWeekends, utcOffsetInMinutes });
   //   console.log('days:', days);
   const message = useMessage();
@@ -148,9 +150,8 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       sorter: (a: Record<string, unknown>, b: Record<string, unknown>) =>
         String(a.display).localeCompare(String(b.display)),
       render: (display: string, record: Record<string, unknown>) => {
-        const user = team.find((u) => u.uid === (record as any).key);
+        const user = team.find((u) => u.uid === record.key);
         if (!user) return <Text style={{ minWidth: 200, display: 'inline-block' }}>{display}</Text>;
-        
         return <UserDisplayWithPhoto uid={user.uid} display={display} />;
       },
     },
@@ -158,7 +159,11 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
       title,
       dataIndex, // use dataIndex here
       key,
-      className: clsx(styles.col, { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode }, { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode  }),
+      className: clsx(
+        styles.col,
+        { [styles.col_weekend_light]: (isWeekend || isHoliday) && !isDarkMode },
+        { [styles.col_weekend_dark]: (isWeekend || isHoliday) && isDarkMode },
+      ),
       render: (iso: TBusinessDurationData) => {
         const ms = isoDurationToBusinessMs(businessDurationDataToIso(iso));
         const loggedHours = ms ? Math.floor(ms / (1000 * 60 * 60)) : 0;
@@ -282,7 +287,13 @@ export function ReportsTable({ team, tracks, from, to, utcOffsetInMinutes, showW
         pagination={false}
         scroll={{ x: true, y: `calc(100vh - 302px)` }}
         summary={() => (
-          <Table.Summary.Row className={clsx(styles.sticky, { [styles.sticky_dark]: isDarkMode }, { [styles.sticky_light]: !isDarkMode })}>
+          <Table.Summary.Row
+            className={clsx(
+              styles.sticky,
+              { [styles.sticky_dark]: isDarkMode },
+              { [styles.sticky_light]: !isDarkMode },
+            )}
+          >
             <Table.Summary.Cell index={0}>
               <b>{message('track.total.daily')}</b>
             </Table.Summary.Cell>

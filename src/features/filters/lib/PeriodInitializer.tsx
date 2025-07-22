@@ -24,4 +24,4 @@ export const PeriodInitializer: React.FC<{ defaultPeriod?: 'week' | 'month' }> =
   }, []);
 
   return null;
-}; 
+};

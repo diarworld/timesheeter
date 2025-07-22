@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { TTrack } from 'entities/track/common/model/types';
 import { getExpectedHoursForDay } from 'entities/track/common/lib/hooks/use-expected-hours-for-day';
 import { msToBusinessDurationData } from 'entities/track/common/lib/ms-to-business-duration-data';
+import { isoDurationToBusinessMs } from 'entities/track/common/lib/iso-duration-to-business-ms';
 import { DurationFormat } from 'features/date/ui/DurationFormat';
 import { Progress } from 'antd';
 import { Text } from 'components';
@@ -20,8 +21,7 @@ export const TrackCalendarFootColSum = memo(({ tracks = [], range, isDarkMode }:
   const trackedMs = tracks.reduce((sum, t) => {
     if (t.duration) {
       try {
-        const { isoDurationToBusinessMs } = require('entities/track/common/lib/iso-duration-to-business-ms');
-        return sum + isoDurationToBusinessMs(t.duration);
+        return sum + (isoDurationToBusinessMs(t.duration) ?? 0);
       } catch {
         return sum;
       }

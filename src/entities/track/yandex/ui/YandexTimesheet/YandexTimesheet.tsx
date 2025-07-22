@@ -20,25 +20,22 @@ import { YandexUserSelectConnected } from 'entities/track/yandex/ui/YandexUserSe
 import { YandexIssueStatusSelectConnected } from 'entities/issue/yandex/ui/YandexIssueStatusSelectConnected/YandexIssueStatusSelectConnected';
 import { QueueSelect } from 'entities/queue/common/ui/QueueSelect/QueueSelect';
 import { IssueSummarySearch } from 'entities/issue/common/ui/IssueSummarySearch/IssueSummarySearch';
-import { Message } from 'entities/locale/ui/Message';
-import { Button, Spin } from 'antd';
+import { Spin } from 'antd';
 import { YANDEX_ISSUE_SORTING_KEY } from 'entities/issue/yandex/model/constants';
-import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
 import { useDispatch } from 'react-redux';
-import { TTransformedTracksByUser, TTrack, TISODuration } from 'entities/track/common/model/types';
+import { TTransformedTracksByUser, TTrack } from 'entities/track/common/model/types';
 import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
 import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
 
 import { useAppSelector } from 'shared/lib/hooks';
 import { selectTeam } from 'entities/track/common/model/selectors';
 import { track } from 'entities/track/common/model/reducers';
-import { ReportsTable } from './ReportsTable';
-import dayjs, { Dayjs } from 'dayjs';
-import { useISOToHumanReadableDuration } from 'entities/track/common/lib/hooks/use-iso-to-human-readable-duration';
+import dayjs from 'dayjs';
 
 import { MonthCalendar } from 'entities/track/common/ui/MonthCalendar/MonthCalendar';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate/TrackModalCreate';
 import { PeriodInitializer } from 'features/filters/lib/PeriodInitializer';
+import { ReportsTable } from './ReportsTable';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -50,11 +47,7 @@ type TProps = {
 
 export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode, setIsDarkMode }) => {
   const [currentMenuKey, setCurrentMenuKey] = useState('tracks');
-  const logout = useLogoutTracker(tracker);
   const teamInitializedRef = useRef(false);
-
-  // Add calendarModal state
-  const [calendarModal, setCalendarModal] = useState<{visible: boolean, date: Dayjs | null}>({visible: false, date: null});
 
   const {
     from,
@@ -74,7 +67,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
 
   const { pinnedIssues, pinIssue, unpinIssue } = usePinnedIssues(tracker.orgId);
 
-  const { isLoading: isLoadingTracks, currentData: tracksData } = yandexTrackApi.useGetYandexTracksQuery(
+  const { currentData: tracksData } = yandexTrackApi.useGetYandexTracksQuery(
     { from, to, createdBy: uId, utcOffsetInMinutes, tracker },
     { skip: !uId },
   );
@@ -95,7 +88,9 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
     }
   }, [currentMenuKey, updateRangeFilter]);
 
-  const team = useAppSelector(selectTeam) || [];
+  // Wrap team in useMemo to stabilize reference for useEffect deps
+  const teamRaw = useAppSelector(selectTeam);
+  const team = useMemo(() => teamRaw || [], [teamRaw]);
 
   const dispatch = useDispatch();
 
@@ -112,7 +107,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
       }
       teamInitializedRef.current = true;
     }
-  }, []); // Remove dispatch dependency as it's stable from useDispatch
+  }, [dispatch]);
 
   const [userTracks, setUserTracks] = useState<TTransformedTracksByUser[]>([]);
   const [loadingUserTracks, setLoadingUserTracks] = useState(false);
@@ -150,7 +145,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
     }
   }, [currentMenuKey, team, from, to, utcOffsetInMinutes, tracker, triggerGetYandexTracks]);
 
-  const { isLoadingIssues, issues } = useIssuesList({
+  const { issues } = useIssuesList({
     from,
     to,
     user: uId,
@@ -169,22 +164,20 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
   // Build issueMap for MonthCalendar
   const issueMap = useMemo(() => {
     if (!issues) return {};
-    return Object.fromEntries(
-      issues.map(issue => [issue.key, issue.summary])
-    );
+    return Object.fromEntries(issues.map((issue) => [issue.key, issue.summary]));
   }, [issues]);
 
   const { currentData: queueList, isFetching: isFetchingQueueList } = yandexQueueApi.useGetQueuesQuery({ tracker });
 
   const { isTrackCreateLoading, createTrack } = useCreateYandexTrack(tracker);
-  const { updateTrack, isTrackUpdateLoading } = useUpdateYandexTrack(tracker);
-  const { isTrackDeleteLoading, deleteTrack } = useDeleteYandexTrack(tracker);
+  const { updateTrack } = useUpdateYandexTrack(tracker);
+  const { deleteTrack } = useDeleteYandexTrack(tracker);
 
   const getIssueUrl = useCallback((issueKey: string) => new URL(issueKey, tracker.url).href, [tracker]);
 
   const viewingAnotherUser = !!userIdFromFilter;
   const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined; // TODO Offset critically affect us, need to refactor and check
-  const isLoading = isLoadingIssues || isLoadingTracks;
+  // Removed: const isLoading = isLoadingIssues || isLoadingTracks;
 
   // Set period to current month when switching to calendar
   useEffect(() => {
@@ -197,7 +190,69 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
         // updatePeriod(startOfMonth, endOfMonth);
       }
     }
-  }, [currentMenuKey]);
+  }, [currentMenuKey, from, to]);
+
+  // Refactor nested ternary for main content rendering
+  let content;
+  if (currentMenuKey === 'tracks') {
+    content = (
+      <TrackCalendar
+        isEdit={isEdit}
+        from={from}
+        to={to}
+        showWeekends={showWeekends}
+        utcOffsetInMinutes={utcOffsetInMinutes}
+        issueSortingKey={YANDEX_ISSUE_SORTING_KEY}
+        issues={issues}
+        pinnedIssues={pinnedIssues}
+        pinIssue={pinIssue}
+        unpinIssue={unpinIssue}
+        deleteTrack={deleteTrack}
+        isDarkMode={isDarkMode}
+        renderTrackCalendarRowConnected={(props) => (
+          <YandexTrackCalendarRowConnected
+            {...props}
+            tracker={tracker}
+            updateTrack={updateTrack}
+            getIssueUrl={getIssueUrl}
+            deleteTrack={deleteTrack}
+          />
+        )}
+        renderTrackCalendarFootConnected={(props) => <YandexTrackCalendarFootConnected {...props} tracker={tracker} />}
+      />
+    );
+  } else if (currentMenuKey === 'calendar') {
+    content = (
+      <div style={{ padding: 24, background: isDarkMode ? '#111' : '#fff' }}>
+        <MonthCalendar
+          tracksData={tracksData ?? { date2Tracks: {} }}
+          isDarkMode={isDarkMode}
+          from={from}
+          to={to}
+          getIssueUrl={getIssueUrl}
+          issueMap={issueMap}
+          isEdit={isEdit}
+          onPeriodChange={(newFrom, newTo) => updateRangeFilter({ from: newFrom, to: newTo })}
+        />
+      </div>
+    );
+  } else {
+    content = (
+      <div style={{ padding: '0 32px', textAlign: 'center' }}>
+        <Spin spinning={loadingUserTracks}>
+          <ReportsTable
+            team={team}
+            tracks={userTracks}
+            from={from}
+            to={to}
+            utcOffsetInMinutes={utcOffsetInMinutes}
+            showWeekends={showWeekends}
+            isDarkMode={isDarkMode}
+          />
+        </Spin>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -205,110 +260,39 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
       <TrackCalendarHeader
         isEdit={isEdit}
         tracker={tracker}
-        _upperRowControls={
-          <Button onClick={logout} type="link">
-            <Message id="home.logout" />
-          </Button>
-        }
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
-        filters={
-          currentMenuKey === 'tracks' ? (
-            <>
-              <YandexUserSelectConnected tracker={tracker} userId={userIdFromFilter} login={loginFromFilter} />
-              <YandexIssueStatusSelectConnected
-                tracker={tracker}
-                value={issueStatus}
-                language={language}
-                onChange={updateIssueStatus}
-              />
-              <QueueSelect
-                value={queue}
-                onChange={updateQueue}
-                queueList={queueList}
-                isFetchingQueueList={isFetchingQueueList}
-              />
-              <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
-            </>
-          ) : currentMenuKey === 'calendar' ? (
-            <><YandexUserSelectConnected tracker={tracker} userId={userIdFromFilter} login={loginFromFilter} /></>
-          ) : null
-        }
+        filters={(() => {
+          switch (currentMenuKey) {
+            case 'tracks':
+              return (
+                <>
+                  <YandexUserSelectConnected tracker={tracker} userId={userIdFromFilter} login={loginFromFilter} />
+                  <YandexIssueStatusSelectConnected
+                    tracker={tracker}
+                    value={issueStatus}
+                    language={language}
+                    onChange={updateIssueStatus}
+                  />
+                  <QueueSelect
+                    value={queue}
+                    onChange={updateQueue}
+                    queueList={queueList}
+                    isFetchingQueueList={isFetchingQueueList}
+                  />
+                  <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
+                </>
+              );
+            case 'calendar':
+              return <YandexUserSelectConnected tracker={tracker} userId={userIdFromFilter} login={loginFromFilter} />;
+            default:
+              return null;
+          }
+        })()}
         currentMenuKey={currentMenuKey}
         onMenuChange={setCurrentMenuKey}
       />
-      {currentMenuKey === 'tracks' ? (
-        <TrackCalendar
-          tracker={tracker}
-          isEdit={isEdit}
-          from={from}
-          to={to}
-          showWeekends={showWeekends}
-          utcOffsetInMinutes={utcOffsetInMinutes}
-          issueSortingKey={YANDEX_ISSUE_SORTING_KEY}
-          _isLoading={isLoading}
-          issues={issues}
-          pinnedIssues={pinnedIssues}
-          pinIssue={pinIssue}
-          unpinIssue={unpinIssue}
-          isTrackCreateLoading={isTrackCreateLoading}
-          createTrack={createTrack}
-          deleteTrack={deleteTrack}
-          isDarkMode={isDarkMode}
-          renderTrackCalendarRowConnected={(props) => (
-            <YandexTrackCalendarRowConnected
-              {...props}
-              tracker={tracker}
-              updateTrack={updateTrack}
-              getIssueUrl={getIssueUrl}
-              deleteTrack={deleteTrack}
-            />
-          )}
-          renderTrackCalendarFootConnected={(props) => (
-            <YandexTrackCalendarFootConnected {...props} tracker={tracker} />
-          )}
-          renderIssueTracksConnected={(props) => (
-            <YandexIssueTracksConnected
-              {...props}
-              isEditTrackComment
-              tracker={tracker}
-              updateTrack={updateTrack}
-              isTrackUpdateLoading={isTrackUpdateLoading}
-              uId={uId}
-              deleteTrack={deleteTrack}
-              isDarkMode={isDarkMode}
-            />
-          )}
-          renderIssuesSearchConnected={(props) => <YandexIssuesSearchConnected {...props} tracker={tracker} />}
-        />
-      ) : currentMenuKey === 'calendar' ? (
-        <div style={{ padding: 24, background: isDarkMode ? '#111' : '#fff' }}>
-          <MonthCalendar
-            tracksData={tracksData}
-            isDarkMode={isDarkMode}
-            from={from}
-            to={to}
-            getIssueUrl={getIssueUrl}
-            issueMap={issueMap}
-            isEdit={isEdit}
-            onPeriodChange={(from, to) => updateRangeFilter({ from, to })}
-          />
-        </div>
-      ) : (
-        <div style={{ padding: '0 32px', textAlign: 'center' }}>
-          <Spin spinning={loadingUserTracks}>
-            <ReportsTable
-              team={team}
-              tracks={userTracks}
-              from={from}
-              to={to}
-              utcOffsetInMinutes={utcOffsetInMinutes}
-              showWeekends={showWeekends}
-              isDarkMode={isDarkMode}
-            />
-          </Spin>
-        </div>
-      )}
+      {content}
       {/* Always render modals here, outside the tab conditional */}
       <TeamModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
       <LdapLoginModalCreate tracker={tracker} isTrackCreateLoading={isTrackCreateLoading} />
@@ -319,12 +303,6 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
         renderIssueTracksConnected={YandexIssueTracksConnected}
         renderIssuesSearchConnected={YandexIssuesSearchConnected}
       />
-
     </div>
   );
-};
-
-const ISODurationText: React.FC<{ duration: TISODuration }> = ({ duration }) => {
-  const human = useISOToHumanReadableDuration(duration);
-  return <>{human}</>;
 };

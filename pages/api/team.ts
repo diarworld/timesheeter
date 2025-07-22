@@ -147,23 +147,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Необходимо сначала настроить свою команду' });
     }
 
-    // Use email as unique identifier for users
-    const emails = members.map((m: any) => m.email).sort();
-
-    // Try to find a team with exactly these members (by email)
-    const allTeams = await prisma.team.findMany({ include: { members: true } });
-    // console.log('allTeams', allTeams);
-    let foundTeam = allTeams.find((team: any) => {
-      const teamEmails = team.members.map((m: any) => m.email).sort();
-      return teamEmails.length === emails.length && teamEmails.every((e: any, i: number) => e === emails[i]);
-    });
-
-    if (foundTeam) {
-      // console.log('foundTeam', foundTeam);
-      return res.json({ teamId: foundTeam.id });
-    }
-    
-    
     // Ensure all users exist in DB
     const userRecords = await Promise.all(members.map(async (m: any) => {
       let user = await prisma.user.findUnique({ where: { uid: BigInt(m.uid) } });
@@ -188,6 +171,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (teamCreator) {
       return res.json({ teamId: teamCreator.id });
+    }
+    // Use email as unique identifier for users
+    const emails = members.map((m: any) => m.email).sort();
+
+    // Try to find a team with exactly these members (by email)
+    const allTeams = await prisma.team.findMany({ include: { members: true } });
+    let foundTeam = allTeams.find((team: any) => {
+      const teamEmails = team.members.map((m: any) => m.email).sort();
+      return teamEmails.length === emails.length && teamEmails.every((e: any, i: number) => e === emails[i]);
+    });
+
+    if (foundTeam) {
+      // console.log('foundTeam', foundTeam);
+      return res.json({ "error": "Team with these members already exists" });
     }
     // Create new team if not found existing team
     const newTeam = await prisma.team.create({
