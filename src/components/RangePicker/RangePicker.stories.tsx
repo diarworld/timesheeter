@@ -1,5 +1,6 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/nextjs';
+import { fn } from 'storybook/test';
 
 import { RangePicker } from './index';
 
@@ -14,14 +15,15 @@ export default {
   // Argtypes are badly inferred sometimes, some need manual configuration
   argTypes: {
     // do range dae & regular date
+    onClick: { action: 'clicked', actionHandler: fn() },
   },
   args: {
     children: 'RangePicker label',
   },
-} as ComponentMeta<typeof RangePicker>;
+} as Meta<typeof RangePicker>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof RangePicker> = (args) => <RangePicker {...args} />;
+const Template: StoryFn<typeof RangePicker> = (args) => <RangePicker {...args} />;
 
 export const Primary = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args

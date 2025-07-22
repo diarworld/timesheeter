@@ -1,44 +1,28 @@
-const path = require('path');
-module.exports = {
-  "stories": [
-    "../src/**/*.stories.mdx",
-    "../src/**/*.stories.@(js|jsx|ts|tsx)"
-  ],
-
-  "addons": [
-    "@storybook/addon-links",
-    "@storybook/addon-essentials",
-    "@storybook/addon-interactions",
-    "@storybook/addon-docs",
-    "@storybook/addon-mdx-gfm"
-  ],
-
-  "framework": {
-    name: "@storybook/nextjs",
-    options: {}
-  },
-
-  staticDirs: ['../public'],
-
-  docs: {
-    autodocs: true
-  },
-
-  async webpackFinal(config, { configType }) {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      app: path.resolve(__dirname, './src/app'),
-      components: path.resolve(__dirname, './src/components'),
-      entities: path.resolve(__dirname, './src/entities'),
-      features: path.resolve(__dirname, './src/features'),
-      pages: path.resolve(__dirname, './src/pages'),
-      shared: path.resolve(__dirname, './src/shared'),
-      config: path.resolve(__dirname, './src/config'),
-      lib: path.resolve(__dirname, './src/lib'),
-      styles: path.resolve(__dirname, './src/styles'),
-      ui: path.resolve(__dirname, './src/ui'),
-    };
-
-    return config;
-  },
+import { resolve } from 'path';
+export const stories = ['../src/**/*.stories.@(js|jsx|ts|tsx|mdx)'];
+export const addons = [
+  '@storybook/addon-links',
+  '@storybook/addon-docs',
+];
+export const framework = {
+  name: '@storybook/nextjs',
+  options: {}
+};
+export const staticDirs = ['../public'];
+export const docs = { autodocs: true };
+export async function webpackFinal(config) {
+  config.resolve.alias = {
+    ...config.resolve.alias,
+    app: resolve(__dirname, '../src/app'),
+    components: resolve(__dirname, '../src/components'),
+    entities: resolve(__dirname, '../src/entities'),
+    features: resolve(__dirname, '../src/features'),
+    pages: resolve(__dirname, '../src/pages'),
+    shared: resolve(__dirname, '../src/shared'),
+    config: resolve(__dirname, '../src/config'),
+    lib: resolve(__dirname, '../src/lib'),
+    styles: resolve(__dirname, '../src/styles'),
+    ui: resolve(__dirname, '../src/ui'),
+  };
+  return config;
 }

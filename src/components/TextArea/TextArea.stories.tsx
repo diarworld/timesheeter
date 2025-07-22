@@ -1,5 +1,6 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/nextjs';
+import { fn } from 'storybook/test';
 
 import { TextArea } from './index';
 
@@ -7,12 +8,15 @@ import { TextArea } from './index';
 export default {
   title: 'Example/TextArea',
   component: TextArea,
+  argTypes: {
+    onClick: { action: 'clicked', actionHandler: fn() },
+  },
   args: {
     placeholder: 'TextArea placeholder',
   },
-} as ComponentMeta<typeof TextArea>;
+} as Meta<typeof TextArea>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof TextArea> = (args) => <TextArea {...args} />;
+const Template: StoryFn<typeof TextArea> = (args) => <TextArea {...args} />;
 
 export const Primary = Template.bind({});
