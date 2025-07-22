@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
+    "@openreplay/tracker": "^16.4.2",
+    "@openreplay/tracker-assist": "^11.0.8",
     "@prisma/client": "^6.12.0",
     "@reduxjs/toolkit": "^2.0.1",
     "@types/cookie": "^0.6.0",
@@ -30,7 +32,7 @@
     "js-cookie": "^2.2.1",
     "lodash": "^4.17.21",
     "next": "^14.0.4",
-    "parse-duration": "^1.0.2",
+    "parse-duration": "^2.1.4",
     "query-string": "^8.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -57,6 +59,7 @@
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@types/jest": "^29.5.11",
+    "@types/lodash": "^4.17.20",
     "@types/node": "^16.11.38",
     "@types/react": "^18.2.45",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
@@ -71,7 +74,7 @@
     "prettier": "^3.1.1",
     "prisma": "^6.12.0",
     "sass": "^1.52.2",
-    "storybook": "^7.6.6",
+    "storybook": "^8.6.14",
     "typescript": "^5.3.3",
     "webpack": "^5.74.0"
   }

@@ -18,16 +18,18 @@ import { track } from 'entities/track/common/model/reducers';
 
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 import styles from './TeamFormManage.module.scss';
 
+interface IUserDisplayWithPhotoProps {
+  uid: number;
+  login: string;
+  display: string;
+  position?: string;
+}
+
 // Component for displaying user with photo
-const UserDisplayWithPhoto: React.FC<{ uid: number; login: string; display: string; position?: string }> = ({
-  uid,
-  login,
-  display,
-  position,
-}) => {
+const UserDisplayWithPhoto: React.FC<IUserDisplayWithPhotoProps> = ({ uid, login, display, position }) => {
   const { data: userExtras } = useGetUserExtrasQuery(uid, {
     skip: !uid,
   });
