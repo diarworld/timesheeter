@@ -159,7 +159,7 @@ export const TrackCalendarRow = memo(
             aria-label="issue status badge"
           >
             <div>
-              <IssueStatusBadge status={issue.status} isDarkMode={isDarkMode} />
+              <IssueStatusBadge status={issue.status} />
             </div>
           </th>
 

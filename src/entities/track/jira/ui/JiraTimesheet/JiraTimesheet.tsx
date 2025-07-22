@@ -7,11 +7,8 @@ import { JiraTrackCalendarRowConnected } from 'entities/track/jira/ui/JiraTrackC
 import { jiraTrackApi } from 'entities/track/jira/model/jira-api';
 import { JiraTrackCalendarFootConnected } from 'entities/track/jira/ui/JiraTrackCalendarFootConnected/JiraTrackCalendarFootConnected';
 import { TrackCalendarHeader } from 'entities/track/common/ui/TrackCalendarHeader/TrackCalendarHeader';
-import { useCreateJiraTrack } from 'entities/track/jira/lib/hooks/use-create-jira-track';
 import { useDeleteJiraTrack } from 'entities/track/jira/lib/hooks/use-delete-jira-track';
 import { useUpdateJiraTrack } from 'entities/track/jira/lib/hooks/use-update-jira-track';
-import { JiraIssueTracksConnected } from 'entities/track/jira/ui/JiraIssueTracksConnected/JiraIssueTracksConnected';
-import { JiraIssuesSearchConnected } from 'entities/track/jira/ui/JiraIssuesSearchConnected/JiraIssuesSearchConnected';
 import { jiraProjectApi } from 'entities/queue/jira/jira-api';
 import { TCurrentLocale } from 'entities/locale/model/types';
 import { useFilters } from 'features/filters/lib/useFilters';
@@ -21,7 +18,6 @@ import { QueueSelect } from 'entities/queue/common/ui/QueueSelect/QueueSelect';
 import { IssueSummarySearch } from 'entities/issue/common/ui/IssueSummarySearch/IssueSummarySearch';
 import { JIRA_ISSUE_SORTING_KEY } from 'entities/issue/jira/model/constants';
 import { sortWithPinedIssues } from 'entities/issue/common/lib/sortWithPinedIssues';
-import { TTrackFormCreateFields } from 'entities/track/common/ui/TrackFormCreate/types';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -34,7 +30,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
   // due to how issues and worklogs are loaded from jira, we have to include issue keys for all created tracks here in order
   // to always load issue for the track.
   // otherwise in case user creates track for an issue that hasn't been loaded yet, it wouldn't be loaded
-  const [createdTrackIssueKeys, setCreatedTrackIssueKeys] = useState<string[]>([]);
+  const [createdTrackIssueKeys] = useState<string[]>([]);
 
   const {
     from,
@@ -60,7 +56,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
     [pinnedIssues, createdTrackIssueKeys],
   );
 
-  const { currentData: issues, isLoading: isLoadingIssues } = jiraIssueApi.useGetJiraIssuesQuery(
+  const { currentData: issues } = jiraIssueApi.useGetJiraIssuesQuery(
     {
       from,
       to,
@@ -81,7 +77,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
 
   const issueKeyList = useMemo(() => sortedIssues?.map((i) => i.key) ?? [], [sortedIssues]);
 
-  const { currentData: tracks, isLoading: isLoadingTracks } = jiraTrackApi.useGetJiraTracksQuery(
+  const { currentData: tracks } = jiraTrackApi.useGetJiraTracksQuery(
     {
       from,
       to,
@@ -97,17 +93,8 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
 
   const { currentData: queueList, isFetching: isFetchingQueueList } = jiraProjectApi.useGetProjectsQuery({ tracker });
 
-  const { isTrackCreateLoading, createTrack } = useCreateJiraTrack(tracker);
-  const { updateTrack, isTrackUpdateLoading } = useUpdateJiraTrack(tracker);
+  const { updateTrack } = useUpdateJiraTrack(tracker);
   const { deleteTrack } = useDeleteJiraTrack(tracker);
-
-  const onCreateTrack = useCallback(
-    async (fields: TTrackFormCreateFields) => {
-      await createTrack(fields);
-      setCreatedTrackIssueKeys((keys) => [...keys, fields.issueKey]);
-    },
-    [createTrack],
-  );
 
   const getIssueUrl = useCallback((issueKey: string) => new URL(`/browse/${issueKey}`, tracker.url).href, [tracker]);
 
@@ -117,7 +104,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
 
   const viewingAnotherUser = !!userIdFromFilter;
   const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined;
-  const isLoading = isLoadingIssues || isLoadingTracks;
 
   return (
     <div>
@@ -148,7 +134,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
         setIsDarkMode={setIsDarkMode}
       />
       <TrackCalendar
-        tracker={tracker}
         isDarkMode={isDarkMode}
         isEdit={isEdit}
         from={from}
@@ -156,13 +141,10 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
         showWeekends={showWeekends}
         utcOffsetInMinutes={utcOffsetInMinutes}
         issueSortingKey={JIRA_ISSUE_SORTING_KEY}
-        _isLoading={isLoading}
         issues={sortedIssues}
         pinnedIssues={pinnedIssues}
         pinIssue={pinIssue}
         unpinIssue={unpinIssue}
-        isTrackCreateLoading={isTrackCreateLoading}
-        createTrack={onCreateTrack}
         deleteTrack={deleteTrack}
         renderTrackCalendarRowConnected={(props) => (
           <JiraTrackCalendarRowConnected
@@ -177,19 +159,6 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
         renderTrackCalendarFootConnected={(props) => (
           <JiraTrackCalendarFootConnected {...props} tracks={tracks} isDarkMode={isDarkMode} />
         )}
-        renderIssueTracksConnected={(props) => (
-          <JiraIssueTracksConnected
-            {...props}
-            isEditTrackComment={false}
-            tracker={tracker}
-            updateTrack={updateTrack}
-            isTrackUpdateLoading={isTrackUpdateLoading}
-            uId={uId}
-            deleteTrack={deleteTrack}
-            isDarkMode={isDarkMode}
-          />
-        )}
-        renderIssuesSearchConnected={(props) => <JiraIssuesSearchConnected {...props} tracker={tracker} />}
       />
     </div>
   );
