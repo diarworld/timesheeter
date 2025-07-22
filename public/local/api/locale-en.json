@@ -96,7 +96,7 @@
   "ldap.auth": "Authorization",
   "ldap.auth.title": "Calendar authorization",
   "ldap.auth.login": "Email",
-  "ldap.auth.login.placeholder": "ivan.ivanov@lemanapro.ru",
+  "ldap.auth.login.placeholder": "ivan.ivanov@example.com",
   "ldap.auth.login.hint": "Auth is allowed only for Ya.Tracker user email",
   "ldap.auth.password": "Password",
   "ldap.auth.password.hint": "Password saved only in local browser cache",

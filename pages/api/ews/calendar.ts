@@ -30,8 +30,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     const service = new ExchangeService(ExchangeVersion.Exchange2016);
     const usernameOnly = username.split('@')[0];
-    service.Credentials = new WebCredentials(`RU1000\\${usernameOnly}`, token);
-    service.Url = new Uri("https://owa.lemanapro.ru/EWS/Exchange.asmx");
+    const ewsDomain = process.env.EWS_DOMAIN;
+    if (!ewsDomain) {
+      throw new Error('EWS_DOMAIN is not defined in environment variables');
+    }
+    service.Credentials = new WebCredentials(`${ewsDomain}\\${usernameOnly}`, token);
+    const ewsServiceUrl = process.env.EWS_SERVICE_URL;
+    if (!ewsServiceUrl) {
+      throw new Error('EWS_SERVICE_URL is not defined in environment variables');
+    }
+    service.Url = new Uri(ewsServiceUrl);
     
     // Access calendar
     const calendar = await CalendarFolder.Bind(service, WellKnownFolderName.Calendar);

@@ -95,7 +95,7 @@
   "ldap.auth": "Авторизация",
   "ldap.auth.title": "Авторизация в календаре",
   "ldap.auth.login": "Email",
-  "ldap.auth.login.placeholder": "ivan.ivanov@lemanapro.ru",
+  "ldap.auth.login.placeholder": "ivan.ivanov@example.com",
   "ldap.auth.login.hint": "Авторизация разрешена только пользователем из Я.трекера",
   "ldap.auth.password": "Пароль",
   "ldap.auth.password.hint": "Пароль сохраняется в локальном кеше брузера",

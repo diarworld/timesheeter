@@ -89,7 +89,7 @@ export const LdapLoginFormManage: FC = () => {
           <>
             {/* <p>{message('ldap.auth.password.hint')}</p> */}
             <a
-              href="https://intraru.lemanapro.ru/restore"
+              href={process.env.RESTORE_PASSWORD_URL}
               target="_blank"
               rel="noopener noreferrer"
               style={{ fontSize: '12px', display: 'inline-block', marginTop: 4 }}

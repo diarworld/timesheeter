@@ -46,7 +46,7 @@ export const Layout: FC<TProps> = ({ children, head, isDarkMode }) => (
           type="link"
           icon={<WechatWorkOutlined />}
           target="_blank"
-          href="https://lemanapro.loop.ru/lemanapro/channels/lmru-timesheet-support"
+          href={process.env.SUPPORT_URL}
           style={{ padding: 0 }}
         >
           Support
