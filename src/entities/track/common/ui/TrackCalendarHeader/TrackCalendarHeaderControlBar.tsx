@@ -50,7 +50,7 @@ export const TrackCalendarHeaderControlBar = memo(
         </div>
         <Text fs={13} style={{ padding: '0 10px' }}>
           <Checkbox
-            checked={disableShowWeekends ? true : showWeekends}
+            checked={Boolean(showWeekends)}
             onChange={handleWeekendsVisibilityChange}
             disabled={disableShowWeekends}
           >

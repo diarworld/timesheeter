@@ -17,6 +17,7 @@ import { TrackCalendarColIssueSumDay } from 'entities/track/common/ui/TrackCalen
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import { msToBusinessDurationData } from 'entities/track/common/lib/ms-to-business-duration-data';
 import styles from './MonthCalendar.module.scss';
+import { useFilters } from 'features/filters/lib/useFilters';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -34,7 +35,6 @@ interface IMonthCalendarProps {
   /**
    * Called when the user changes the month in the calendar. Receives new from and to (YYYY-MM-DD).
    */
-  onPeriodChange?: (from: string, to: string) => void;
 }
 
 const ISODurationText: React.FC<{ duration: TISODuration }> = ({ duration }) => {
@@ -65,12 +65,12 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
   getIssueUrl,
   issueMap,
   isEdit,
-  onPeriodChange,
 }) => {
   const [calendarModal, setCalendarModal] = useState<{ visible: boolean; date: Dayjs | null }>({
     visible: false,
     date: null,
   });
+  const { updateRangeFilter } = useFilters();
   const message = useMessage();
   const tracksByDate = useMemo(() => {
     const map: Record<string, TTrack[]> = {};
@@ -369,9 +369,7 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
         headerRender={() => headerRender(fromProp, toProp, totalExpectedHours, totalLoggedMs)}
         // headerRender={() => null}
         onPanelChange={(date, mode) => {
-          if (mode === 'month' && onPeriodChange) {
-            onPeriodChange(date.startOf('month').format('YYYY-MM-DD'), date.endOf('month').format('YYYY-MM-DD'));
-          }
+          updateRangeFilter({ from: date.startOf(mode).format('YYYY-MM-DD'), to: date.endOf(mode).format('YYYY-MM-DD') });
         }}
       />
       {renderCalendarModal()}

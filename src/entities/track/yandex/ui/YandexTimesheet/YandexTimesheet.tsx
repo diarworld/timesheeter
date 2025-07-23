@@ -34,8 +34,8 @@ import dayjs from 'dayjs';
 
 import { MonthCalendar } from 'entities/track/common/ui/MonthCalendar/MonthCalendar';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate/TrackModalCreate';
-import { PeriodInitializer } from 'features/filters/lib/PeriodInitializer';
 import { ReportsTable } from './ReportsTable';
+import { TYandexUser } from 'entities/user/yandex/model/types';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -43,9 +43,10 @@ type TProps = {
   tracker: TYandexTrackerConfig;
   isDarkMode: boolean;
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
+  self: TYandexUser;
 };
 
-export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode, setIsDarkMode }) => {
+export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode, setIsDarkMode, self }) => {
   const [currentMenuKey, setCurrentMenuKey] = useState('tracks');
   const teamInitializedRef = useRef(false);
 
@@ -63,6 +64,8 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
     updateIssueStatus,
     updateSummary,
     updateQueue,
+    updateRangeFilter,
+    updateWeekendVisibility,
   } = useFilters();
 
   const { pinnedIssues, pinIssue, unpinIssue } = usePinnedIssues(tracker.orgId);
@@ -72,25 +75,10 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
     { skip: !uId },
   );
 
-  // For calendar period sync
-  const { updateRangeFilter } = useFilters();
-  const calendarInitializedRef = useRef(false);
-
-  useEffect(() => {
-    if (currentMenuKey === 'calendar' && !calendarInitializedRef.current) {
-      const startOfMonth = dayjs().startOf('month').format('YYYY-MM-DD');
-      const endOfMonth = dayjs().endOf('month').format('YYYY-MM-DD');
-      updateRangeFilter({ from: startOfMonth, to: endOfMonth });
-      calendarInitializedRef.current = true;
-    }
-    if (currentMenuKey !== 'calendar') {
-      calendarInitializedRef.current = false;
-    }
-  }, [currentMenuKey, updateRangeFilter]);
-
   // Wrap team in useMemo to stabilize reference for useEffect deps
   const teamRaw = useAppSelector(selectTeam);
   const team = useMemo(() => teamRaw || [], [teamRaw]);
+  const currentUser = team.find((user) => user.uid === uId);
 
   const dispatch = useDispatch();
 
@@ -142,8 +130,20 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
         .finally(() => setLoadingUserTracks(false));
     } else if (currentMenuKey === 'reports') {
       setUserTracks([]);
+    } else if (currentMenuKey === 'calendar') {
+      const startOfMonth = dayjs(from).startOf('month').format('YYYY-MM-DD');
+      const endOfMonth = dayjs(to).endOf('month').format('YYYY-MM-DD');
+      // Only update if not already set
+      const needsPeriodUpdate = from !== startOfMonth || to !== endOfMonth;
+      const needsWeekendUpdate = showWeekends !== true; // or !== '1' depending on your logic
+      if (needsPeriodUpdate) {
+        updateRangeFilter({ from: startOfMonth, to: endOfMonth });
+      }
+      if (needsWeekendUpdate) {
+        updateWeekendVisibility('1');
+      }
     }
-  }, [currentMenuKey, team, from, to, utcOffsetInMinutes, tracker, triggerGetYandexTracks]);
+  }, [currentMenuKey, from, to, showWeekends, updateRangeFilter, updateWeekendVisibility]);
 
   const { issues } = useIssuesList({
     from,
@@ -174,24 +174,11 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
   const { deleteTrack } = useDeleteYandexTrack(tracker);
 
   const getIssueUrl = useCallback((issueKey: string) => new URL(issueKey, tracker.url).href, [tracker]);
-
-  const viewingAnotherUser = !!userIdFromFilter;
+  const viewingAnotherUser = userIdFromFilter !== undefined && self.uid !== undefined && Number(userIdFromFilter) !== Number(self.uid);
   const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined; // TODO Offset critically affect us, need to refactor and check
   // Removed: const isLoading = isLoadingIssues || isLoadingTracks;
 
-  // Set period to current month when switching to calendar
-  useEffect(() => {
-    if (currentMenuKey === 'calendar') {
-      const startOfMonth = dayjs().startOf('month').format('YYYY-MM-DD');
-      const endOfMonth = dayjs().endOf('month').format('YYYY-MM-DD');
-      if (from !== startOfMonth || to !== endOfMonth) {
-        // update filters to current month
-        // If you have a filter update function, call it here
-        // updatePeriod(startOfMonth, endOfMonth);
-      }
-    }
-  }, [currentMenuKey, from, to]);
-
+ 
   // Refactor nested ternary for main content rendering
   let content;
   if (currentMenuKey === 'tracks') {
@@ -232,7 +219,6 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
           getIssueUrl={getIssueUrl}
           issueMap={issueMap}
           isEdit={isEdit}
-          onPeriodChange={(newFrom, newTo) => updateRangeFilter({ from: newFrom, to: newTo })}
         />
       </div>
     );
@@ -256,7 +242,6 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
 
   return (
     <div>
-      <PeriodInitializer defaultPeriod="week" />
       <TrackCalendarHeader
         isEdit={isEdit}
         tracker={tracker}

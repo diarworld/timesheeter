@@ -183,6 +183,7 @@ export const YandexAuthorizedTimesheet = ({
         uId={uId}
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
+        self={self as TYandexUser}
       />
     </Loading>
   );

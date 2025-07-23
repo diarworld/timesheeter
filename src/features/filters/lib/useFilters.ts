@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useCallback } from 'react';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import { TSortOrder } from 'shared/lib/types';
+import dayjs from 'dayjs';
 
 export const useFilters = () => {
   const router = useRouter();
@@ -29,8 +30,8 @@ export const useFilters = () => {
       router.replace({
         query: {
           ...router.query,
-          from: nextFrom,
-          to: nextTo,
+          from: dayjs(nextFrom).format('YYYY-MM-DD'),
+          to: dayjs(nextTo).format('YYYY-MM-DD'),
         },
       });
     },

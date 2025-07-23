@@ -381,9 +381,6 @@ export function TrackCalendarHeader({
   const onClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'tracks' || e.key === 'reports' || e.key === 'calendar') {
       onMenuChange(e.key);
-      if (e.key === 'calendar') {
-        updateWeekendVisibility('true');
-      }
     }
   };
   const { userId, login } = useFilterValues();
