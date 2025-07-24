@@ -16,8 +16,8 @@ import { isoDurationToBusinessMs } from 'entities/track/common/lib/iso-duration-
 import { TrackCalendarColIssueSumDay } from 'entities/track/common/ui/TrackCalendarColIssueSumDay/TrackCalendarColIssueSumDay';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import { msToBusinessDurationData } from 'entities/track/common/lib/ms-to-business-duration-data';
-import styles from './MonthCalendar.module.scss';
 import { useFilters } from 'features/filters/lib/useFilters';
+import styles from './MonthCalendar.module.scss';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -369,7 +369,10 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
         headerRender={() => headerRender(fromProp, toProp, totalExpectedHours, totalLoggedMs)}
         // headerRender={() => null}
         onPanelChange={(date, mode) => {
-          updateRangeFilter({ from: date.startOf(mode).format('YYYY-MM-DD'), to: date.endOf(mode).format('YYYY-MM-DD') });
+          updateRangeFilter({
+            from: date.startOf(mode).format('YYYY-MM-DD'),
+            to: date.endOf(mode).format('YYYY-MM-DD'),
+          });
         }}
       />
       {renderCalendarModal()}

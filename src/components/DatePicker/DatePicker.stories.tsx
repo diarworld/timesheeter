@@ -2,6 +2,13 @@ import React from 'react';
 import { Meta, StoryFn } from '@storybook/nextjs';
 import { fn } from 'storybook/test';
 
+// More on args: https://storybook.js.org/docs/react/writing-stories/args
+// Primary.args = {
+//   type: 'primary',
+// };
+
+import { Provider } from 'react-redux';
+import { store } from 'app/store';
 import { DatePicker } from './index';
 
 // Range here etc
@@ -26,14 +33,11 @@ export default {
 const Template: StoryFn<typeof DatePicker> = (args) => <DatePicker {...args} />;
 
 export const Primary = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-// Primary.args = {
-//   type: 'primary',
-// };
 
-import { Provider } from 'react-redux';
-import { store } from 'app/store';
-
-export const decorators = [
-  (Story: React.FC) => <Provider store={store}><Story /></Provider>,
+export const Decorators = [
+  (Story: React.FC) => (
+    <Provider store={store}>
+      <Story />
+    </Provider>
+  ),
 ];

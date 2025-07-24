@@ -39,6 +39,25 @@ export const YandexAuthorizedTimesheet = ({
   const dispatch = useAppDispatch();
 
   const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
+
+  // Move hooks to top level
+  const router = useRouter();
+  const menuFromQuery = typeof router.query.menu === 'string' ? router.query.menu : 'tracks';
+  const [currentMenuKey, setCurrentMenuKey] = useState(menuFromQuery);
+
+  useEffect(() => {
+    if (menuFromQuery !== currentMenuKey) {
+      setCurrentMenuKey(menuFromQuery);
+    }
+  }, [menuFromQuery, currentMenuKey]);
+
+  // When user switches tab
+  const handleMenuChange = (key: string) => {
+    if (key !== currentMenuKey) {
+      router.push({ pathname: router.pathname, query: { ...router.query, menu: key } }, undefined, { shallow: true });
+    }
+  };
+
   useEffect(() => {
     if (self) {
       // Call your backend API to upsert the user
@@ -142,7 +161,7 @@ export const YandexAuthorizedTimesheet = ({
       trackerRef.current.setUserID(self?.display || self?.login || '');
     }
   }, [self]);
-  const ldapCredentials = localStorage.getItem('ldapCredentials');
+  const ldapCredentials = typeof window !== 'undefined' ? localStorage.getItem('ldapCredentials') : null;
   if (self && !ldapCredentials) {
     const credentials = {
       username: self.email,
@@ -175,28 +194,6 @@ export const YandexAuthorizedTimesheet = ({
   if (!tracker) {
     return null;
   }
-
-  const router = useRouter();
-  const menuFromQuery = typeof router.query.menu === 'string' ? router.query.menu : 'tracks';
-  const [currentMenuKey, setCurrentMenuKey] = useState(menuFromQuery);
-
-  // Keep state in sync with query param
-  useEffect(() => {
-    if (menuFromQuery !== currentMenuKey) {
-      setCurrentMenuKey(menuFromQuery);
-    }
-  }, [menuFromQuery, currentMenuKey]);
-
-  // When user switches tab
-  const handleMenuChange = (key: string) => {
-    if (key !== currentMenuKey) {
-      router.push(
-        { pathname: router.pathname, query: { ...router.query, menu: key } },
-        undefined,
-        { shallow: true }
-      );
-    }
-  };
 
   return (
     <Loading isLoading={isLoadingSelf}>

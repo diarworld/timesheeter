@@ -34,9 +34,9 @@ import dayjs from 'dayjs';
 
 import { MonthCalendar } from 'entities/track/common/ui/MonthCalendar/MonthCalendar';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate/TrackModalCreate';
-import { ReportsTable } from './ReportsTable';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useRouter } from 'next/router';
+import { ReportsTable } from './ReportsTable';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -64,11 +64,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
   // When user switches tab
   const handleMenuChange = (key: string) => {
     if (key !== currentMenuKey) {
-      router.push(
-        { pathname: router.pathname, query: { ...router.query, menu: key } },
-        undefined,
-        { shallow: true }
-      );
+      router.push({ pathname: router.pathname, query: { ...router.query, menu: key } }, undefined, { shallow: true });
     }
   };
 
@@ -216,10 +212,10 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
   const { deleteTrack } = useDeleteYandexTrack(tracker);
 
   const getIssueUrl = useCallback((issueKey: string) => new URL(issueKey, tracker.url).href, [tracker]);
-  const viewingAnotherUser = userIdFromFilter !== undefined && self.uid !== undefined && Number(userIdFromFilter) !== Number(self.uid);
+  const viewingAnotherUser =
+    userIdFromFilter !== undefined && self.uid !== undefined && Number(userIdFromFilter) !== Number(self.uid);
   const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined; // TODO Offset critically affect us, need to refactor and check
   // Removed: const isLoading = isLoadingIssues || isLoadingTracks;
-
 
   // Refactor nested ternary for main content rendering
   let content;

@@ -180,7 +180,7 @@ export function TrackCalendarHeader({
 }: ITrackCalendarHeaderProps) {
   const message = useMessage();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
-  const { from, to, updateWeekendVisibility } = useFilters();
+  const { from, to } = useFilters();
 
   const [loadings, setLoadings] = useState<boolean[]>([]);
   const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
@@ -386,24 +386,35 @@ export function TrackCalendarHeader({
     },
     {
       key: 'user-info',
-      label: <Card size="small" style={{ marginTop: '-5px', borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
-              <Card.Meta
-                style={{ margin: 0, padding: 0 }}
-                avatar={
-                  <UserAvatar
-                    userExtras={userExtras as IUserExtras}
-                    isDarkMode={isDarkMode}
-                    setPhotoUploadModalVisible={setPhotoUploadModalVisible}
-                  />
-                }
-                title={
-                  <Typography.Text style={{ fontSize: '12px', fontWeight: 800, margin: 0, padding: 0, cursor: 'default', marginTop: '5px' }}>
-                    {displayName}
-                  </Typography.Text>
-                }
-                description={<UserInfo userExtras={userExtras as IUserExtras} isDarkMode={isDarkMode} />}
+      label: (
+        <Card size="small" style={{ marginTop: '-5px', borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
+          <Card.Meta
+            style={{ margin: 0, padding: 0 }}
+            avatar={
+              <UserAvatar
+                userExtras={userExtras as IUserExtras}
+                isDarkMode={isDarkMode}
+                setPhotoUploadModalVisible={setPhotoUploadModalVisible}
               />
-            </Card>,
+            }
+            title={
+              <Typography.Text
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  margin: 0,
+                  padding: 0,
+                  cursor: 'default',
+                  marginTop: '5px',
+                }}
+              >
+                {displayName}
+              </Typography.Text>
+            }
+            description={<UserInfo userExtras={userExtras as IUserExtras} isDarkMode={isDarkMode} />}
+          />
+        </Card>
+      ),
       className: clsx(styles.menu),
       disabled: true,
       style: { cursor: 'default' },
@@ -415,16 +426,15 @@ export function TrackCalendarHeader({
       onClick: tracker ? logoutTracker : undefined,
       disabled: !tracker,
     },
-
   ];
   const menuItems = [
     ...leftMenuItems,
     {
-      type: "divider" as const,
+      type: 'divider' as const,
       style: { flexGrow: 1, order: leftMenuItems.length, borderTopWidth: 0, marginBlock: 0 },
     },
     ...rightMenuItems,
-  ]
+  ];
 
   const onClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'tracks' || e.key === 'reports' || e.key === 'calendar') {
@@ -432,48 +442,10 @@ export function TrackCalendarHeader({
     }
   };
 
-
   return (
     <>
-      {/* <Row className={styles.menu} justify="space-between" align="middle">
-        <Col flex="auto"> */}
-          <Menu
-            onClick={onClick}
-            selectedKeys={[currentMenuKey]}
-            mode="horizontal"
-            items={menuItems}
-          />
-        {/* </Col>
+      <Menu onClick={onClick} selectedKeys={[currentMenuKey]} mode="horizontal" items={menuItems} />
 
-        <Col style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-          <DarkModeSwitch style={{ marginRight: '15px' }} checked={isDarkMode} onChange={handleClickTheme} size={32} />
-          <Card size="small">
-            <Card.Meta
-              style={{ margin: 0, padding: 0 }}
-              avatar={
-                <UserAvatar
-                  userExtras={userExtras as IUserExtras}
-                  isDarkMode={isDarkMode}
-                  setPhotoUploadModalVisible={setPhotoUploadModalVisible}
-                />
-              }
-              title={
-                <Typography.Text style={{ fontSize: '12px', fontWeight: 800, margin: 0, padding: 0 }}>
-                  {displayName}
-                </Typography.Text>
-              }
-              description={<UserInfo userExtras={userExtras as IUserExtras} isDarkMode={isDarkMode} />}
-            />
-          </Card>
-          <Menu
-            onClick={onClick}
-            mode="horizontal"
-            items={items.filter((item) => item?.key === 'logout')}
-            theme="light"
-            style={{ minWidth: 'fit-content' }}
-          />
-        </Col>
-      </Row> */}
       <div
         className={clsx(styles.header, { [styles.header_dark]: isDarkMode }, { [styles.header_light]: !isDarkMode })}
       >
