@@ -145,6 +145,7 @@ const UserInfo: React.FC<IUserInfoProps> = ({ userExtras, isDarkMode }) => {
                 fontSize: '11px',
                 color: isDarkMode ? '#8c8c8c' : '#666',
                 lineHeight: '1',
+                cursor: 'default',
               }}
             >
               {userExtras.department}
@@ -156,6 +157,7 @@ const UserInfo: React.FC<IUserInfoProps> = ({ userExtras, isDarkMode }) => {
                 fontSize: '11px',
                 color: isDarkMode ? '#8c8c8c' : '#666',
                 lineHeight: '1',
+                cursor: 'default',
               }}
             >
               {userExtras.division}
@@ -305,8 +307,13 @@ export function TrackCalendarHeader({
   // ];
 
   const logoutTracker = useLogoutTracker(tracker);
-
-  const items: TMenuItem[] = [
+  const { userId, login } = useFilterValues();
+  const { self } = useYandexUser(tracker, userId, login);
+  const { data: userExtras, refetch: refetchUserExtras } = useGetUserExtrasQuery(self?.uid || 0, {
+    skip: !self?.uid,
+  });
+  const displayName = self ? self.display : tracker.username || '';
+  const leftMenuItems: TMenuItem[] = [
     {
       label: message('menu.settings'),
       key: 'SubMenu',
@@ -369,6 +376,38 @@ export function TrackCalendarHeader({
       icon: <DashboardOutlined />,
       // disabled: true,
     },
+  ];
+  const rightMenuItems: TMenuItem[] = [
+    {
+      key: 'theme',
+      label: <DarkModeSwitch checked={isDarkMode} size={36} onChange={handleClickTheme} />,
+      disabled: true,
+      style: { cursor: 'default', padding: '0px' },
+    },
+    {
+      key: 'user-info',
+      label: <Card size="small" style={{ marginTop: '-5px', borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
+              <Card.Meta
+                style={{ margin: 0, padding: 0 }}
+                avatar={
+                  <UserAvatar
+                    userExtras={userExtras as IUserExtras}
+                    isDarkMode={isDarkMode}
+                    setPhotoUploadModalVisible={setPhotoUploadModalVisible}
+                  />
+                }
+                title={
+                  <Typography.Text style={{ fontSize: '12px', fontWeight: 800, margin: 0, padding: 0, cursor: 'default', marginTop: '5px' }}>
+                    {displayName}
+                  </Typography.Text>
+                }
+                description={<UserInfo userExtras={userExtras as IUserExtras} isDarkMode={isDarkMode} />}
+              />
+            </Card>,
+      className: clsx(styles.menu),
+      disabled: true,
+      style: { cursor: 'default' },
+    },
     {
       key: 'logout',
       label: message('home.logout'),
@@ -376,34 +415,35 @@ export function TrackCalendarHeader({
       onClick: tracker ? logoutTracker : undefined,
       disabled: !tracker,
     },
+
   ];
+  const menuItems = [
+    ...leftMenuItems,
+    {
+      type: "divider" as const,
+      style: { flexGrow: 1, order: leftMenuItems.length, borderTopWidth: 0, marginBlock: 0 },
+    },
+    ...rightMenuItems,
+  ]
 
   const onClick: MenuProps['onClick'] = (e) => {
     if (e.key === 'tracks' || e.key === 'reports' || e.key === 'calendar') {
       onMenuChange(e.key);
     }
   };
-  const { userId, login } = useFilterValues();
-  const { self } = useYandexUser(tracker, userId, login);
-  const displayName = self ? self.display : tracker.username || '';
 
-  // Fetch user extras data for avatar
-  const { data: userExtras, refetch: refetchUserExtras } = useGetUserExtrasQuery(self?.uid || 0, {
-    skip: !self?.uid,
-  });
 
   return (
     <>
-      <Row className={styles.menu} justify="space-between" align="middle">
-        <Col flex="auto">
+      {/* <Row className={styles.menu} justify="space-between" align="middle">
+        <Col flex="auto"> */}
           <Menu
             onClick={onClick}
             selectedKeys={[currentMenuKey]}
             mode="horizontal"
-            items={items.filter((item) => item?.key !== 'logout')}
-            theme="light"
+            items={menuItems}
           />
-        </Col>
+        {/* </Col>
 
         <Col style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           <DarkModeSwitch style={{ marginRight: '15px' }} checked={isDarkMode} onChange={handleClickTheme} size={32} />
@@ -433,7 +473,7 @@ export function TrackCalendarHeader({
             style={{ minWidth: 'fit-content' }}
           />
         </Col>
-      </Row>
+      </Row> */}
       <div
         className={clsx(styles.header, { [styles.header_dark]: isDarkMode }, { [styles.header_light]: !isDarkMode })}
       >

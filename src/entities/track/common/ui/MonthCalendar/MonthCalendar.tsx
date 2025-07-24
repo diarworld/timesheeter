@@ -128,7 +128,7 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
 
   const headerRender = useCallback(
     (headerFrom: string, headerTo: string, headerTotalExpectedHours: number, headerTotalLoggedMs: number) => (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', padding: '0 16px', alignItems: 'center', justifyContent: 'space-between' }}>
         <Typography.Text style={{ fontSize: 14, color: '#888', fontWeight: 800 }}>
           {`${dayjs(headerFrom).format('DD MMMM YYYY')} - ${dayjs(headerTo).format('DD MMMM YYYY')}`}
         </Typography.Text>

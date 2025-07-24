@@ -13,10 +13,11 @@ import { syncTeamToDb } from 'entities/track/common/lib/sync-team';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Tracker from '@openreplay/tracker';
 import trackerAssist from '@openreplay/tracker-assist';
 import { TTeam } from 'entities/track/common/ui/TeamFormManage/types';
+import { useRouter } from 'next/router';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -175,6 +176,28 @@ export const YandexAuthorizedTimesheet = ({
     return null;
   }
 
+  const router = useRouter();
+  const menuFromQuery = typeof router.query.menu === 'string' ? router.query.menu : 'tracks';
+  const [currentMenuKey, setCurrentMenuKey] = useState(menuFromQuery);
+
+  // Keep state in sync with query param
+  useEffect(() => {
+    if (menuFromQuery !== currentMenuKey) {
+      setCurrentMenuKey(menuFromQuery);
+    }
+  }, [menuFromQuery, currentMenuKey]);
+
+  // When user switches tab
+  const handleMenuChange = (key: string) => {
+    if (key !== currentMenuKey) {
+      router.push(
+        { pathname: router.pathname, query: { ...router.query, menu: key } },
+        undefined,
+        { shallow: true }
+      );
+    }
+  };
+
   return (
     <Loading isLoading={isLoadingSelf}>
       <YandexTimesheet
@@ -184,6 +207,8 @@ export const YandexAuthorizedTimesheet = ({
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
         self={self as TYandexUser}
+        currentMenuKey={currentMenuKey}
+        onMenuChange={handleMenuChange}
       />
     </Loading>
   );

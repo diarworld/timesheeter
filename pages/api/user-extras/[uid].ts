@@ -31,6 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       photo: userExtras.photo,
     };
 
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
     res.status(200).json(serializedUserExtras);
   } catch (error) {
     console.error('Error fetching user extras:', error);

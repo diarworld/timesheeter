@@ -36,6 +36,7 @@ import { MonthCalendar } from 'entities/track/common/ui/MonthCalendar/MonthCalen
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate/TrackModalCreate';
 import { ReportsTable } from './ReportsTable';
 import { TYandexUser } from 'entities/user/yandex/model/types';
+import { useRouter } from 'next/router';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -44,10 +45,33 @@ type TProps = {
   isDarkMode: boolean;
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
   self: TYandexUser;
+  currentMenuKey: string;
+  onMenuChange: (key: string) => void;
 };
 
 export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode, setIsDarkMode, self }) => {
-  const [currentMenuKey, setCurrentMenuKey] = useState('tracks');
+  const router = useRouter();
+  const menuFromQuery = typeof router.query.menu === 'string' ? router.query.menu : 'tracks';
+  const [currentMenuKey, setCurrentMenuKey] = useState(menuFromQuery);
+
+  // Keep state in sync with query param
+  useEffect(() => {
+    if (menuFromQuery !== currentMenuKey) {
+      setCurrentMenuKey(menuFromQuery);
+    }
+  }, [menuFromQuery, currentMenuKey]);
+
+  // When user switches tab
+  const handleMenuChange = (key: string) => {
+    if (key !== currentMenuKey) {
+      router.push(
+        { pathname: router.pathname, query: { ...router.query, menu: key } },
+        undefined,
+        { shallow: true }
+      );
+    }
+  };
+
   const teamInitializedRef = useRef(false);
 
   const {
@@ -78,7 +102,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
   // Wrap team in useMemo to stabilize reference for useEffect deps
   const teamRaw = useAppSelector(selectTeam);
   const team = useMemo(() => teamRaw || [], [teamRaw]);
-  const currentUser = team.find((user) => user.uid === uId);
+  // const currentUser = team.find((user) => user.uid === uId);
 
   const dispatch = useDispatch();
 
@@ -102,7 +126,10 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
 
   const [triggerGetYandexTracks] = yandexTrackApi.useLazyGetYandexTracksQuery();
 
+  // Effect for reports tab only
   useEffect(() => {
+    let cancelled = false;
+
     if (currentMenuKey === 'reports' && team.length > 0) {
       setLoadingUserTracks(true);
       Promise.all(
@@ -117,20 +144,34 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
         ),
       )
         .then((results) => {
-          setUserTracks(
-            results.flatMap((r, i) =>
-              (r?.list ?? []).map((trackItem: TTrack) => ({
-                ...trackItem,
-                display: team[i].display,
-                uid: team[i].uid,
-              })),
-            ),
-          );
+          if (!cancelled) {
+            setUserTracks(
+              results.flatMap((r, i) =>
+                (r?.list ?? []).map((trackItem: TTrack) => ({
+                  ...trackItem,
+                  display: team[i].display,
+                  uid: team[i].uid,
+                })),
+              ),
+            );
+          }
         })
-        .finally(() => setLoadingUserTracks(false));
-    } else if (currentMenuKey === 'reports') {
+        .finally(() => {
+          if (!cancelled) setLoadingUserTracks(false);
+        });
+    } else if (currentMenuKey !== 'reports') {
       setUserTracks([]);
-    } else if (currentMenuKey === 'calendar') {
+    }
+
+    return () => {
+      cancelled = true;
+    };
+    // Only depend on these:
+  }, [currentMenuKey, team, from, to, utcOffsetInMinutes, tracker, triggerGetYandexTracks]);
+
+  // Effect for calendar tab only
+  useEffect(() => {
+    if (currentMenuKey === 'calendar') {
       const startOfMonth = dayjs(from).startOf('month').format('YYYY-MM-DD');
       const endOfMonth = dayjs(to).endOf('month').format('YYYY-MM-DD');
       // Only update if not already set
@@ -143,6 +184,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
         updateWeekendVisibility('1');
       }
     }
+    // Only depend on these:
   }, [currentMenuKey, from, to, showWeekends, updateRangeFilter, updateWeekendVisibility]);
 
   const { issues } = useIssuesList({
@@ -178,7 +220,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
   const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined; // TODO Offset critically affect us, need to refactor and check
   // Removed: const isLoading = isLoadingIssues || isLoadingTracks;
 
- 
+
   // Refactor nested ternary for main content rendering
   let content;
   if (currentMenuKey === 'tracks') {
@@ -275,7 +317,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
           }
         })()}
         currentMenuKey={currentMenuKey}
-        onMenuChange={setCurrentMenuKey}
+        onMenuChange={handleMenuChange}
       />
       {content}
       {/* Always render modals here, outside the tab conditional */}
