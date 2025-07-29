@@ -6,7 +6,7 @@ This document outlines the optimizations made to the Docker build process to imp
 
 ### 1. **Multi-Stage Build Optimization**
 - **Separate dependency stages**: `deps` and `deps-dev` stages for better layer caching
-- **Alpine Linux base**: Using `node:18-alpine` for smaller image size
+- **Alpine Linux base**: Using `node:22-alpine` for smaller image size and latest LTS features
 - **Standalone output**: Next.js configured for standalone output to reduce production image size
 
 ### 2. **Layer Caching Improvements**
