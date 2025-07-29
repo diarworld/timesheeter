@@ -1,14 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
-message=$(cat << EOF
-Error starting container. Missing one environment variables.
+message="Error starting container. Missing one environment variables.
 
 You must specify CLIENT_ID to a non-empty value.
-For example, "-e CLIENT_ID=clientid" on "docker run".
-EOF
-)
+For example, \"-e CLIENT_ID=clientid\" on \"docker run\"."
 
 auto_config() {
   local config_file="${CONFIG_FILE:-./public/local/api/config.json}"
