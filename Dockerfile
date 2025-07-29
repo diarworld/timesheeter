@@ -73,7 +73,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
+
+# Copy entrypoint script directly
+COPY entrypoint.sh ./entrypoint.sh
 
 # Set proper permissions
 RUN chmod +x ./entrypoint.sh
@@ -139,7 +141,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
+
+# Copy entrypoint script directly
+COPY entrypoint.sh ./entrypoint.sh
 
 # Set proper permissions
 RUN chmod +x ./entrypoint.sh
