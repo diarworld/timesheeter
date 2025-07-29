@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { TBusinessDurationData } from 'entities/track/common/model/types';
 import { useFormatDuration } from 'entities/track/common/lib/hooks/use-format-duration';
 
@@ -9,5 +9,5 @@ type TProps = {
 export const DurationFormat: FC<TProps> = ({ duration }: TProps) => {
   // console.log(duration)
   const durationFormat = useFormatDuration(duration);
-  return <>{durationFormat}</>;
+  return durationFormat;
 };

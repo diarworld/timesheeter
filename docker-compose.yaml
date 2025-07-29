@@ -8,8 +8,6 @@ services:
       dockerfile: Dockerfile
       cache_from:
         - timesheet:dev-cache
-      args:
-        - GA_NPM_TOKEN=${GA_NPM_TOKEN}
     image: timesheet:dev
     container_name: timesheet-dev
     env_file:
@@ -34,8 +32,6 @@ services:
       dockerfile: Dockerfile
       cache_from:
         - timesheet:prod-cache
-      args:
-        - GA_NPM_TOKEN=${GA_NPM_TOKEN}
     image: timesheet:prod
     container_name: timesheet-prod
     env_file:

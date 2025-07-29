@@ -1,16 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Check if GA_NPM_TOKEN is set
-if "%GA_NPM_TOKEN%"=="" (
-    echo [WARNING] GA_NPM_TOKEN environment variable is not set. Build may fail if private packages are required.
-)
-
 REM Build arguments
 set BUILD_ARGS=
-if not "%GA_NPM_TOKEN%"=="" (
-    set BUILD_ARGS=--build-arg GA_NPM_TOKEN=%GA_NPM_TOKEN%
-)
 
 REM Function to build with cache
 :build_with_cache

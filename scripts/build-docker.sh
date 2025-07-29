@@ -21,16 +21,8 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if GA_NPM_TOKEN is set
-if [ -z "$GA_NPM_TOKEN" ]; then
-    print_warning "GA_NPM_TOKEN environment variable is not set. Build may fail if private packages are required."
-fi
-
 # Build arguments
 BUILD_ARGS=""
-if [ ! -z "$GA_NPM_TOKEN" ]; then
-    BUILD_ARGS="--build-arg GA_NPM_TOKEN=$GA_NPM_TOKEN"
-fi
 
 # Function to build with cache
 build_with_cache() {

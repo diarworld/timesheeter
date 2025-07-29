@@ -11,7 +11,7 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 
 # Copy package files first for better caching
-COPY package.json package-lock.json* .npmrc ./
+COPY package.json package-lock.json* ./
 
 # Install dependencies with cache mount for better performance
 RUN --mount=type=cache,target=/root/.npm \
@@ -24,7 +24,7 @@ FROM base AS deps-dev
 RUN apk add --no-cache libc6-compat
 
 # Copy package files
-COPY package.json package-lock.json* .npmrc ./
+COPY package.json package-lock.json* ./
 
 # Install all dependencies (including dev dependencies)
 RUN --mount=type=cache,target=/root/.npm \

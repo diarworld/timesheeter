@@ -109,9 +109,8 @@ export const TrackCalendarRow = memo(
                   >
                     {issue.key}
                   </a>
-                  {issueIsPinned ? (
-                    <>
-                      {unpinIssue && (
+                  {issueIsPinned
+                    ? unpinIssue && (
                         <PushpinFilled
                           className={clsx(
                             styles.pinIcon,
@@ -120,11 +119,8 @@ export const TrackCalendarRow = memo(
                           )}
                           onClick={handleUnpinIssue}
                         />
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {pinIssue && (
+                      )
+                    : pinIssue && (
                         <PushpinOutlined
                           className={clsx(
                             styles.pinIcon,
@@ -134,8 +130,6 @@ export const TrackCalendarRow = memo(
                           onClick={handlePinIssue}
                         />
                       )}
-                    </>
-                  )}
                 </div>
                 <div
                   className={clsx(

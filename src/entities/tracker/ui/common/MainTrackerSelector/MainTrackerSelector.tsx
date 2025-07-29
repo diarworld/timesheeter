@@ -19,10 +19,17 @@ export const MainTrackerSelector = () => {
   const options = useMemo(() => {
     const res: TOption[] = [];
     for (const tracker of Object.values(trackersState)) {
+      const getIcon = () => {
+        if (!isYandexTrackerCfg(tracker)) {
+          return <Jira />;
+        }
+        return tracker.isCloud ? <YandexCloud /> : <Yandex360 />;
+      };
+
       res.push({
         label: (
           <div className={styles.label}>
-            {isYandexTrackerCfg(tracker) ? <>{tracker.isCloud ? <YandexCloud /> : <Yandex360 />}</> : <Jira />}
+            {getIcon()}
             <span>{tracker.name}</span>
           </div>
         ),

@@ -67,10 +67,7 @@ scripts\build-docker.bat prod
 
 ### Environment Variables
 
-Set the required environment variable:
-```bash
-export GA_NPM_TOKEN=your_token_here
-```
+No special environment variables are required for the build process.
 
 ### Docker Compose
 
@@ -156,9 +153,9 @@ docker history timesheet:prod
 ## Troubleshooting
 
 ### Build Failures
-1. Ensure `GA_NPM_TOKEN` is set for private packages
-2. Check Docker has sufficient disk space
-3. Verify `.npmrc` configuration
+1. Check Docker has sufficient disk space
+2. Verify network connectivity for package downloads
+3. Ensure all dependencies are publicly available
 
 ### Cache Issues
 1. Run `./scripts/build-docker.sh clean` to reset cache
@@ -174,12 +171,10 @@ docker history timesheet:prod
 
 ### From Old Dockerfile
 - Update build commands to use new targets
-- Set `GA_NPM_TOKEN` environment variable
 - Use new docker-compose configuration
 - Update CI/CD pipelines to use optimized build process
 
 ### Environment Variables
-- `GA_NPM_TOKEN`: Required for private package access
 - `NODE_ENV`: Automatically set by build stages
 - `NEXT_TELEMETRY_DISABLED`: Disabled for privacy
 
