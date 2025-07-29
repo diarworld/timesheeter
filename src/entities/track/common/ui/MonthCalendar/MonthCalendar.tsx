@@ -370,8 +370,8 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
         // headerRender={() => null}
         onPanelChange={(date, mode) => {
           updateRangeFilter({
-            from: date.startOf(mode).format('YYYY-MM-DD'),
-            to: date.endOf(mode).format('YYYY-MM-DD'),
+            from: DateWrapper.getDateFormat(date.startOf(mode)),
+            to: DateWrapper.getDateFormat(date.endOf(mode)),
           });
         }}
       />

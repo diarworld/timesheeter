@@ -26,6 +26,8 @@ import { useDispatch } from 'react-redux';
 import { TTransformedTracksByUser, TTrack } from 'entities/track/common/model/types';
 import { TeamModalCreate } from 'entities/track/common/ui/TeamModalCreate';
 import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCreate';
+import { DateWrapper } from 'features/date/lib/DateWrapper';
+
 
 import { useAppSelector } from 'shared/lib/hooks';
 import { selectTeam } from 'entities/track/common/model/selectors';
@@ -168,8 +170,8 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
   // Effect for calendar tab only
   useEffect(() => {
     if (currentMenuKey === 'calendar') {
-      const startOfMonth = dayjs(from).startOf('month').format('YYYY-MM-DD');
-      const endOfMonth = dayjs(to).endOf('month').format('YYYY-MM-DD');
+      const startOfMonth = DateWrapper.getDateFormat(dayjs(from).startOf('month'))
+      const endOfMonth = DateWrapper.getDateFormat(dayjs(from).endOf('month'))
       // Only update if not already set
       const needsPeriodUpdate = from !== startOfMonth || to !== endOfMonth;
       const needsWeekendUpdate = showWeekends !== true; // or !== '1' depending on your logic

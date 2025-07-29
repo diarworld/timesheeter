@@ -30,8 +30,8 @@ export const useFilters = () => {
       router.replace({
         query: {
           ...router.query,
-          from: dayjs(nextFrom).format('YYYY-MM-DD'),
-          to: dayjs(nextTo).format('YYYY-MM-DD'),
+          from: nextFrom,
+          to: nextTo,
         },
       });
     },
