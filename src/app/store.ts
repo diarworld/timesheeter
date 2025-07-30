@@ -28,15 +28,13 @@ const getInitialState = () => {
   });
 };
 
-export const store = isClient
-  ? configureStore({
-      reducer: {
-        [locale.name]: locale.reducer,
-        [track.name]: track.reducer,
-        [trackers.name]: trackers.reducer,
-        [api.reducerPath]: api.reducer,
-      },
-      middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware).concat(trackersMiddleware),
-      preloadedState: getInitialState(),
-    })
-  : configureStore({ reducer: {} });
+export const store = configureStore({
+  reducer: {
+    [locale.name]: locale.reducer,
+    [track.name]: track.reducer,
+    [trackers.name]: trackers.reducer,
+    [api.reducerPath]: api.reducer,
+  },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware).concat(trackersMiddleware),
+  preloadedState: isClient ? getInitialState() : undefined,
+});
