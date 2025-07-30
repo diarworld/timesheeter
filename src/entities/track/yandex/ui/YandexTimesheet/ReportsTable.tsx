@@ -271,12 +271,7 @@ export function ReportsTable({
           <Text style={{ alignItems: 'center', display: 'flex' }}>
             <Message id="track.powerbi.message" />
           </Text>
-          <Button
-            type="link"
-            icon={<ExportOutlined />}
-            target="_blank"
-            href={process.env.COMPANY_POWERBI_URL}
-          >
+          <Button type="link" icon={<ExportOutlined />} target="_blank" href={process.env.COMPANY_POWERBI_URL}>
             {message('track.powerbi.link')}
           </Button>
         </Row>
