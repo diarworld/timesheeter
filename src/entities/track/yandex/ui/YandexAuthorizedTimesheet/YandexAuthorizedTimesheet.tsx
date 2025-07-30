@@ -146,8 +146,8 @@ export const YandexAuthorizedTimesheet = ({
   useEffect(() => {
     if (!trackerRef.current) {
       const trackerOpenReplay = new Tracker({
-        projectKey: 'k5BEz4HNHVUqjAXHNC2t',
-        ingestPoint: 'https://openreplay.apps.data.lmru.tech/ingest',
+        projectKey: process.env.COMPANY_OPENREPLAY_KEY,
+        ingestPoint: process.env.COMPANY_OPENREPLAY_URL,
       });
       trackerOpenReplay.use(trackerAssist());
       trackerOpenReplay.start();

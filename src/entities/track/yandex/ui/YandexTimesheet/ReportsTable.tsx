@@ -275,7 +275,7 @@ export function ReportsTable({
             type="link"
             icon={<ExportOutlined />}
             target="_blank"
-            href="https://powerbi.data.lmru.tech/reports/powerbi/Отчеты Power BI/HR Analytics/Учет трудозатрат ЛМЦТ"
+            href={process.env.COMPANY_POWERBI_URL}
           >
             {message('track.powerbi.link')}
           </Button>

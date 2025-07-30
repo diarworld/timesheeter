@@ -36,7 +36,6 @@ import dayjs from 'dayjs';
 import { MonthCalendar } from 'entities/track/common/ui/MonthCalendar/MonthCalendar';
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate/TrackModalCreate';
 import { TYandexUser } from 'entities/user/yandex/model/types';
-import { useRouter } from 'next/router';
 import { ReportsTable } from './ReportsTable';
 
 type TProps = {
@@ -50,25 +49,16 @@ type TProps = {
   onMenuChange: (key: string) => void;
 };
 
-export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode, setIsDarkMode, self }) => {
-  const router = useRouter();
-  const menuFromQuery = typeof router.query.menu === 'string' ? router.query.menu : 'tracks';
-  const [currentMenuKey, setCurrentMenuKey] = useState(menuFromQuery);
-
-  // Keep state in sync with query param
-  useEffect(() => {
-    if (menuFromQuery !== currentMenuKey) {
-      setCurrentMenuKey(menuFromQuery);
-    }
-  }, [menuFromQuery, currentMenuKey]);
-
-  // When user switches tab
-  const handleMenuChange = (key: string) => {
-    if (key !== currentMenuKey) {
-      router.push({ pathname: router.pathname, query: { ...router.query, menu: key } }, undefined, { shallow: true });
-    }
-  };
-
+export const YandexTimesheet: FC<TProps> = ({
+  language,
+  tracker,
+  uId,
+  isDarkMode,
+  setIsDarkMode,
+  self,
+  currentMenuKey,
+  onMenuChange,
+}) => {
   const teamInitializedRef = useRef(false);
 
   const {
@@ -314,7 +304,7 @@ export const YandexTimesheet: FC<TProps> = ({ language, tracker, uId, isDarkMode
           }
         })()}
         currentMenuKey={currentMenuKey}
-        onMenuChange={handleMenuChange}
+        onMenuChange={onMenuChange}
       />
       {content}
       {/* Always render modals here, outside the tab conditional */}
