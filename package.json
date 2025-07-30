@@ -86,7 +86,7 @@
     "sass": "^1.52.2",
     "storybook": "^9.0.18",
     "typescript": "^5.3.3",
-    "webpack": "^5.74.0",
+    "webpack": "^5.101.0",
     "eslint-plugin-storybook": "9.0.18"
   }
 }
