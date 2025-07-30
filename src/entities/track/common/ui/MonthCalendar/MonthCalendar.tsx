@@ -39,7 +39,7 @@ interface IMonthCalendarProps {
 
 const ISODurationText: React.FC<{ duration: TISODuration }> = ({ duration }) => {
   const human = useISOToHumanReadableDuration(duration);
-  return <>{human}</>;
+  return human;
 };
 
 function expectedPercent(tracks: TTrack[], expected: number): number {

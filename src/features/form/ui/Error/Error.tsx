@@ -5,6 +5,4 @@ type TProps = {
   error?: string;
 };
 
-export const Error: FC<TProps> = ({ error }) => (
-  <>{error && <Typography.Text type="danger">{error}</Typography.Text>}</>
-);
+export const Error: FC<TProps> = ({ error }) => error && <Typography.Text type="danger">{error}</Typography.Text>;

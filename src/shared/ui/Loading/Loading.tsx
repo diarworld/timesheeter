@@ -20,5 +20,5 @@ export const Loading: FC<TProps> = ({ children, isLoading }) => {
     );
   }
 
-  return <>{children}</>;
+  return children;
 };

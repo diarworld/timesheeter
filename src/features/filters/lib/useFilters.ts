@@ -2,7 +2,6 @@ import { useRouter } from 'next/router';
 import { useCallback } from 'react';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import { TSortOrder } from 'shared/lib/types';
-import dayjs from 'dayjs';
 
 export const useFilters = () => {
   const router = useRouter();

@@ -46,5 +46,5 @@ export const OrganizationRoute = ({ children }: PropsWithChildren) => {
     return <EmptyYandexOrganization />;
   }
 
-  return <>{children}</>;
+  return children;
 };

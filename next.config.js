@@ -7,6 +7,7 @@ module.exports = {
     NEXT_TELEMETRY_DISABLED: '1',
   },
   reactStrictMode: true,
+  output: 'standalone',
   rewrites() {
     return [
       {

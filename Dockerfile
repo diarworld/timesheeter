@@ -1,53 +1,160 @@
-FROM node:18 AS base
+# Use a specific Node.js version for better reproducibility
+FROM node:22-alpine AS base
 
-FROM base AS deps
-
-ARG GA_NPM_TOKEN
-WORKDIR /deps
-
-COPY .npmrc package*.json ./
-RUN npm ci
-
-FROM base AS build
-
-ENV NEXT_TELEMETRY_DISABLED 1
-
-WORKDIR /build
-
-COPY --from=deps /deps/node_modules ./node_modules
-COPY . .
-
-RUN npx prisma generate --schema=./prisma/schema.prisma
-RUN npm run build
-
-FROM base AS application
-
+# Set working directory
 WORKDIR /app
 
-RUN apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y \
-	jq \
-	&& apt-get remove --purge --auto-remove -y && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/*
+# Install dependencies only when needed
+FROM base AS deps
 
-COPY --from=build /build/next.config.js ./
-COPY --from=build /build/.next ./.next
-COPY --from=build /build/public ./public
-COPY --from=build /build/node_modules ./node_modules
-COPY --from=build /build/package.json ./package.json
-COPY --from=build /build/entrypoint.sh ./entrypoint.sh
-COPY --from=build /build/prisma ./prisma
+# Install system dependencies needed for npm
+RUN apk add --no-cache libc6-compat
+
+# Copy package files first for better caching
+COPY package.json package-lock.json* ./
+
+# Install dependencies with cache mount for better performance
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production && npm cache clean --force
+
+# Development dependencies stage
+FROM base AS deps-dev
+
+# Install system dependencies needed for npm
+RUN apk add --no-cache libc6-compat
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install all dependencies (including dev dependencies)
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci && npm cache clean --force
+
+# Builder stage
+FROM base AS builder
+
+# Install system dependencies needed for build
+RUN apk add --no-cache libc6-compat
+
+# Set environment variables
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Copy dependencies from deps-dev stage
+COPY --from=deps-dev /app/node_modules ./node_modules
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM base AS runner
+
+# Install system dependencies needed for runtime
+RUN apk add --no-cache \
+    jq \
+    && rm -rf /var/cache/apk/*
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy built application
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/prisma ./prisma
+
+# Copy entrypoint script directly
+COPY entrypoint.sh ./entrypoint.sh
+
+# Set proper permissions
 RUN chmod +x ./entrypoint.sh
+RUN chown -R nextjs:nodejs /app
 
-FROM application AS development
+# Switch to non-root user
+USER nextjs
 
+# Expose port
 EXPOSE 3000
 
+# Set the entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
+
+# Development stage
+FROM base AS development
+
+# Install system dependencies
+RUN apk add --no-cache libc6-compat jq
+
+# Copy dependencies from deps-dev stage
+COPY --from=deps-dev /app/node_modules ./node_modules
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy entrypoint
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+# Expose port
+EXPOSE 3000
+
+# Set the entrypoint
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
-FROM application AS production
+# Production stage with standalone output
+FROM base AS production
 
+# Install system dependencies needed for runtime
+RUN apk add --no-cache \
+    jq \
+    && rm -rf /var/cache/apk/*
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy built application
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/prisma ./prisma
+
+# Copy entrypoint script directly
+COPY entrypoint.sh ./entrypoint.sh
+
+# Set proper permissions
+RUN chmod +x ./entrypoint.sh
+RUN chown -R nextjs:nodejs /app
+
+# Switch to non-root user
+USER nextjs
+
+# Expose port
 EXPOSE 3000
 
+# Set the entrypoint
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]

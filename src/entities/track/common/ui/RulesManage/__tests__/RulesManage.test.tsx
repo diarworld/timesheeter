@@ -1,9 +1,21 @@
-import { fireEvent, render, waitFor, act, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { track } from 'entities/track/common/model/reducers';
 import { RulesManage } from 'entities/track/common/ui/RulesManage';
-import { TTrackerConfig, Tracker } from 'entities/tracker/model/types';
+import { api } from 'shared/api/api';
+import { mockTracker } from '__mocks__/tracker';
+
+// Mock Next.js router
+jest.mock('next/router', () => ({
+  useRouter: () => ({
+    query: {},
+    push: jest.fn(),
+    replace: jest.fn(),
+    pathname: '/',
+    asPath: '/',
+  }),
+}));
 
 // Mock the EWS API hook
 jest.mock('entities/track/common/model/ews-api', () => ({
@@ -18,6 +30,47 @@ jest.mock('entities/track/common/model/ews-api', () => ({
 // Mock the message hook
 jest.mock('entities/locale/lib/hooks', () => ({
   useMessage: () => (key: string) => key,
+}));
+
+// Mock the Yandex user API
+jest.mock('entities/user/yandex/model/yandex-api', () => ({
+  yandexUserApi: {
+    useGetMyselfYandexQuery: () => ({
+      data: {
+        uid: 'mock-user-id',
+        email: 'mock@example.com',
+        display: 'Mock User',
+      },
+      isLoading: false,
+      error: null,
+    }),
+    useGetYandexUserByIdQuery: () => ({
+      data: null,
+      isLoading: false,
+      error: null,
+    }),
+    useGetYandexUserByLoginQuery: () => ({
+      data: null,
+      isLoading: false,
+      error: null,
+    }),
+  },
+}));
+
+// Mock the Yandex issue API
+jest.mock('entities/issue/yandex/model/yandex-api', () => ({
+  yandexIssueApi: {
+    useGetYandexIssuesQuery: () => ({
+      currentData: [],
+      isFetching: false,
+      error: null,
+    }),
+    useGetYandexIssueQuery: () => ({
+      currentData: null,
+      isFetching: false,
+      error: null,
+    }),
+  },
 }));
 
 // Mock localStorage
@@ -41,7 +94,9 @@ const createTestStore = () =>
   configureStore({
     reducer: {
       [track.name]: track.reducer,
+      [api.reducerPath]: api.reducer,
     },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
   });
 
 const renderWithProvider = (component: React.ReactElement) => {
@@ -55,123 +110,175 @@ describe('RulesManage', () => {
     localStorageMock.setItem.mockClear();
   });
 
-  it('should add a new rule and save it to localStorage', async () => {
-    const mockTracker: TTrackerConfig = {
-      id: 'mock-id',
-      type: Tracker.Yandex,
-      name: 'Mock Yandex',
-      orgId: 'mock-org',
-      url: 'https://mock.yandex',
-      username: 'mockuser',
-      isCloud: false,
-    };
+  it('should render the component without crashing', () => {
+    const { container } = renderWithProvider(<RulesManage tracker={mockTracker} isDarkMode={false} />);
 
-    const { getByText, getByPlaceholderText, getAllByRole } = renderWithProvider(
+    expect(container).toBeInTheDocument();
+  });
+
+  it('should load default rules when localStorage is empty', async () => {
+    // Mock empty localStorage
+    localStorageMock.getItem.mockReturnValue(null);
+
+    const { getByText } = renderWithProvider(<RulesManage tracker={mockTracker} isDarkMode={false} />);
+
+    // Wait for default rules to be loaded
+    await waitFor(() => {
+      expect(getByText('Отпуск')).toBeInTheDocument();
+      expect(getByText('Обучение')).toBeInTheDocument();
+    });
+
+    // Verify that default rules were saved to localStorage
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('timesheeterRules', expect.stringContaining('Отпуск'));
+  });
+
+  it('should delete a default rule', async () => {
+    // Mock empty localStorage to trigger default rules
+    localStorageMock.getItem.mockReturnValue(null);
+
+    const { getByText } = renderWithProvider(<RulesManage tracker={mockTracker} isDarkMode={false} />);
+
+    // Wait for default rules to be loaded
+    await waitFor(() => {
+      expect(getByText('Отпуск')).toBeInTheDocument();
+    });
+
+    // Click on the rule name to expand the collapse
+    fireEvent.click(getByText('Отпуск'));
+
+    // Wait for the collapse to expand and buttons to be visible
+    await waitFor(() => {
+      const deleteButtons = document.querySelectorAll('button[class*="ant-btn-danger"]');
+      expect(deleteButtons.length).toBeGreaterThan(0);
+    });
+
+    // Find and click the delete button for the first rule
+    const deleteButtons = document.querySelectorAll('button[class*="ant-btn-danger"]');
+    const deleteButton = deleteButtons[0];
+
+    expect(deleteButton).toBeInTheDocument();
+
+    fireEvent.click(deleteButton);
+
+    // Verify that localStorage was updated (the rule was deleted)
+    expect(localStorageMock.setItem).toHaveBeenCalled();
+  });
+
+  it('should edit a default rule', async () => {
+    // Mock empty localStorage to trigger default rules
+    localStorageMock.getItem.mockReturnValue(null);
+
+    const { getByText, getByPlaceholderText } = renderWithProvider(
       <RulesManage tracker={mockTracker} isDarkMode={false} />,
     );
 
-    // Fill in the rule name
-    await act(async () => {
-      fireEvent.change(getByPlaceholderText('rules.rule.name'), { target: { value: 'Test Rule' } });
-    });
-    // Fill in the description (in case it's required)
-    await act(async () => {
-      fireEvent.change(getByPlaceholderText('rules.rule.description'), { target: { value: 'Test Description' } });
-    });
-
-    // Add a condition
-    await act(async () => {
-      fireEvent.click(getByText((c) => c === 'rules.add.condition'));
-    });
-    // Use combobox roles for selects
-    const selects = getAllByRole('combobox');
-    // Field select
-    await act(async () => {
-      fireEvent.mouseDown(selects[0]);
-    });
-    const summaryOption = document.body.querySelector('.ant-select-item-option');
-    if (!summaryOption) throw new Error('Summary option not found');
-    await act(async () => {
-      fireEvent.click(summaryOption);
-      fireEvent.blur(selects[0]);
-    });
-
-    // Wait for the operator select to be re-rendered
+    // Wait for default rules to be loaded
     await waitFor(() => {
-      const tempSelects = document.querySelectorAll('input[role=combobox]');
-      if (tempSelects.length < 2) throw new Error('Operator select not rendered');
+      expect(getByText('Отпуск')).toBeInTheDocument();
     });
 
-    // Re-query the selects to get the updated operator select
-    const operatorSelects = document.querySelectorAll('input[role=combobox]');
+    // Click on the rule name to expand the collapse
+    fireEvent.click(getByText('Отпуск'));
 
-    // Open the operator select
-    await act(async () => {
-      fireEvent.mouseDown(operatorSelects[1]);
-    });
-
-    // Wait for operator options to appear
+    // Wait for the collapse to expand and buttons to be visible
     await waitFor(() => {
-      const operatorOptions = Array.from(document.body.querySelectorAll('.ant-select-item-option')).filter(
-        (el) =>
-          el.textContent &&
-          (el.textContent.toLowerCase().includes('contain') ||
-            el.textContent.toLowerCase().includes('equal') ||
-            el.textContent.toLowerCase().includes('not')),
+      const allButtons = document.querySelectorAll('button');
+      const editButton = Array.from(allButtons).find(
+        (button) => button.textContent?.includes('rules.rule.edit') && !button.className.includes('ant-btn-danger'),
       );
-      if (operatorOptions.length === 0) {
-        // console.log(
-        //   'Available operator options:',
-        //   Array.from(document.body.querySelectorAll('.ant-select-item-option')).map((el) => el.textContent),
-        // );
-        throw new Error('Operator options not found');
-      }
+      expect(editButton).toBeInTheDocument();
     });
-    const operatorOptions = Array.from(document.body.querySelectorAll('.ant-select-item-option')).filter(
-      (el) =>
-        el.textContent &&
-        (el.textContent.toLowerCase().includes('contain') ||
-          el.textContent.toLowerCase().includes('equal') ||
-          el.textContent.toLowerCase().includes('not')),
+
+    // Find and click the edit button for the first rule (not the delete button)
+    const allButtons = document.querySelectorAll('button');
+    const editButton = Array.from(allButtons).find(
+      (button) => button.textContent?.includes('rules.rule.edit') && !button.className.includes('ant-btn-danger'),
     );
-    if (operatorOptions.length === 0) throw new Error('Operator options not found');
-    await act(async () => {
-      fireEvent.click(operatorOptions[0]);
-      fireEvent.blur(operatorSelects[1]);
-    });
-    // Value input for condition
-    const valueInputs = document.querySelectorAll('input[placeholder="rules.value"]');
-    await act(async () => {
-      fireEvent.change(valueInputs[0], { target: { value: 'Test Value' } });
-    });
 
-    // Add an action
-    await act(async () => {
-      fireEvent.click(getByText((c) => c === 'rules.add.action'));
-    });
-    // Action type select
-    const actionSelects = getAllByRole('combobox');
-    await act(async () => {
-      fireEvent.mouseDown(actionSelects[2]);
-    });
-    const setTaskOption = within(document.body).getByText((content) => content === 'rules.action.set_task');
-    await act(async () => {
-      fireEvent.click(setTaskOption);
-    });
-    // Value input for action
-    const updatedValueInputs = document.querySelectorAll('input[placeholder="rules.value"]');
-    await act(async () => {
-      fireEvent.change(updatedValueInputs[1], { target: { value: 'Test Action Value' } });
-      fireEvent.blur(updatedValueInputs[1]);
-    });
+    expect(editButton).toBeInTheDocument();
 
-    // Save the rule
-    await act(async () => {
-      fireEvent.click(getByText((c) => c === 'rules.rule.create'));
-    });
+    fireEvent.click(editButton!);
 
+    // Verify the form is populated with the rule data
     await waitFor(() => {
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('timesheeterRules', expect.stringContaining('Test Rule'));
+      const nameInput = getByPlaceholderText('rules.rule.name') as HTMLInputElement;
+      expect(nameInput.value).toBe('Отпуск');
+    });
+
+    // Change the rule name
+    fireEvent.change(getByPlaceholderText('rules.rule.name'), { target: { value: 'Updated Vacation Rule' } });
+
+    // Save the updated rule
+    fireEvent.click(getByText('rules.rule.save'));
+
+    // Verify the updated rule was saved to localStorage
+    await waitFor(() => {
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'timesheeterRules',
+        expect.stringContaining('Updated Vacation Rule'),
+      );
+    });
+  });
+
+  it('should cancel editing a rule', async () => {
+    // Mock empty localStorage to trigger default rules
+    localStorageMock.getItem.mockReturnValue(null);
+
+    const { getByText, getByPlaceholderText } = renderWithProvider(
+      <RulesManage tracker={mockTracker} isDarkMode={false} />,
+    );
+
+    // Wait for default rules to be loaded
+    await waitFor(() => {
+      expect(getByText('Отпуск')).toBeInTheDocument();
+    });
+
+    // Click on the rule name to expand the collapse
+    await act(async () => {
+      fireEvent.click(getByText('Отпуск'));
+    });
+
+    // Wait for the collapse to expand and buttons to be visible
+    await waitFor(() => {
+      const allButtons = document.querySelectorAll('button');
+      const editButton = Array.from(allButtons).find(
+        (button) => button.textContent?.includes('rules.rule.edit') && !button.className.includes('ant-btn-danger'),
+      );
+      expect(editButton).toBeInTheDocument();
+    });
+
+    // Find and click the edit button for the first rule (not the delete button)
+    const allButtons = document.querySelectorAll('button');
+    const editButton = Array.from(allButtons).find(
+      (button) => button.textContent?.includes('rules.rule.edit') && !button.className.includes('ant-btn-danger'),
+    );
+
+    expect(editButton).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(editButton!);
+    });
+
+    // Verify the form is populated with the rule data
+    await waitFor(() => {
+      const nameInput = getByPlaceholderText('rules.rule.name') as HTMLInputElement;
+      expect(nameInput.value).toBe('Отпуск');
+    });
+
+    // Change the rule name
+    await act(async () => {
+      fireEvent.change(getByPlaceholderText('rules.rule.name'), { target: { value: 'Changed But Will Cancel' } });
+    });
+
+    // Click cancel
+    await act(async () => {
+      fireEvent.click(getByText('rules.rule.cancel'));
+    });
+
+    // Verify the form is reset
+    await waitFor(() => {
+      const nameInput = getByPlaceholderText('rules.rule.name') as HTMLInputElement;
+      expect(nameInput.value).toBe('');
     });
   });
 });

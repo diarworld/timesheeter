@@ -15,7 +15,7 @@ export const AuthRoute = ({ children, tracker }: PropsWithChildren<TProps>) => {
   const { authToken } = tracker;
 
   if (authToken) {
-    return <>{children}</>;
+    return children;
   }
 
   if (configAuth) {
