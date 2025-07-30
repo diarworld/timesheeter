@@ -9,6 +9,8 @@ export type TIssuesSearchProps = AutoCompleteProps<string> &
     options: TOption[];
     isFetchingIssues: boolean;
     onSearch(value: string): void;
+    perPage?: number;
+    maxItems?: number;
   };
 
 export const IssuesSearch = ({

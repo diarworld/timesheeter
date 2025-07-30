@@ -1,7 +1,6 @@
 import { Popconfirm, Spin, Button } from 'antd';
 import React from 'react';
 import { Form } from 'react-final-form';
-import { FormApi } from 'final-form';
 import { TTrack, TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/model/types';
 import { DeleteRowOutlined, DeleteOutlined } from '@ant-design/icons';
 import { InputField } from 'features/form/ui/InputField';
@@ -43,11 +42,12 @@ export const TrackEdit = ({
     start,
   };
 
-  const validate = (fields: TTrackInputEditForm) => ({
+  const validate = (fields: { duration: string; comment: string; start: string }) => ({
     duration: validateHumanReadableDuration(fields.duration) ? undefined : message('form.invalid.format'),
   });
 
-  const submit = (fields: TTrackInputEditForm, formApi: FormApi<TTrackInputEditForm, typeof initialValues>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const submit = (fields: { duration: string; comment: string; start: string }, formApi: any) => {
     const durationISO = humanReadableDurationToISO(fields.duration);
 
     const formHadChanges = formApi.getState().dirty;

@@ -30,7 +30,7 @@ import { selectHasLdapCredentials } from 'entities/track/common/model/selectors'
 import { track } from 'entities/track/common/model/reducers';
 import { RulesManage } from 'entities/track/common/ui/RulesManage';
 
-import { DarkModeSwitch } from 'react-toggle-dark-mode';
+import { DarkModeToggle } from 'shared/ui/DarkModeToggle';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import clsx from 'clsx';
@@ -380,7 +380,7 @@ export function TrackCalendarHeader({
   const rightMenuItems: TMenuItem[] = [
     {
       key: 'theme',
-      label: <DarkModeSwitch checked={isDarkMode} size={36} onChange={handleClickTheme} />,
+      label: <DarkModeToggle checked={isDarkMode} size={36} onChange={handleClickTheme} />,
       disabled: true,
       style: { cursor: 'default', padding: '0px' },
     },

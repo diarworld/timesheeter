@@ -21,7 +21,14 @@ type TProps = {
   isTrackCreateLoading: boolean;
   createTrack(form: TTrackFormCreateFields): void;
   renderIssueTracksConnected(props: Pick<IIssueTracksProps, 'issueKey' | 'date' | 'className'>): ReactNode;
-  renderIssuesSearchConnected(props: AutoCompleteProps<string> & FieldInputProps<string>): ReactNode;
+  renderIssuesSearchConnected(
+    props: AutoCompleteProps<string> &
+      FieldInputProps<string> & {
+        tracker: TTrackerConfig;
+        maxItems?: number;
+        perPage?: number;
+      },
+  ): ReactNode;
 };
 
 export const TrackFormCreate: FC<TProps> = ({
