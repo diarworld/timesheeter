@@ -127,7 +127,7 @@ export const jiraTrackApi = api.injectEndpoints({
         }
       },
     }),
-    deleteJiraTrack: build.mutation<{}, TDeleteTrackParams>({
+    deleteJiraTrack: build.mutation<Record<string, never>, TDeleteTrackParams>({
       query: ({ issueIdOrKey, trackId, tracker }) => ({
         url: jiraTrackEndpoints.track(issueIdOrKey, trackId),
         method: 'DELETE',
@@ -167,7 +167,7 @@ export const jiraTrackApi = api.injectEndpoints({
         }
       },
     }),
-    updateJiraTrack: build.mutation<{}, TJiraEditTrackParams>({
+    updateJiraTrack: build.mutation<Record<string, never>, TJiraEditTrackParams>({
       query: ({ param: { issueIdOrKey, trackId }, form: { start, timeSpentSeconds, comment }, tracker }) => ({
         url: jiraTrackEndpoints.track(issueIdOrKey, trackId),
         method: 'PUT',

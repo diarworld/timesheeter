@@ -20,7 +20,7 @@ export function getExpectedHoursForDay(day: string): number {
         const date = String(d.getDate()).padStart(2, '0');
         dayStr = `${year}-${month}-${date}`;
       }
-    } catch (e) {
+    } catch {
       // Ignore parse error
     }
   }

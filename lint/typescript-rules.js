@@ -1,12 +1,8 @@
 module.exports = {
-    '@typescript-eslint/comma-dangle': ['error', 'always-multiline'],
-    '@typescript-eslint/ban-types': [
-      'error',
-      {
-        types: { '{}': false },
-        extendDefaults: true,
-      },
-    ],
+    // @typescript-eslint/comma-dangle was removed in v8.x, use base eslint rule
+    'comma-dangle': ['error', 'always-multiline'],
+    // @typescript-eslint/ban-types was replaced with more specific rules in v8.x
+    '@typescript-eslint/no-empty-object-type': 'error',
     '@typescript-eslint/no-explicit-any': ['error'],
     '@typescript-eslint/no-unused-vars': [
       'error',

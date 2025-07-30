@@ -196,7 +196,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
     if (!rule.conditions || rule.conditions.length === 0) return false;
     let result = null;
     for (let i = 0; i < rule.conditions.length; i += 1) {
-      const cond = rule.conditions[i] as TCondition;
+      const cond = rule.conditions[i];
       let condResult = false;
       const op = cond.operator;
       const val = cond.value?.toString() || '';

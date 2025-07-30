@@ -25,7 +25,7 @@ export class DateWrapper {
     return dayjs(date).utcOffset(utcOffsetInMinutes);
   }
 
-  static getDateFormat(dateObject: TDate, format?: string, utcOffsetInMinutes?: number | undefined): string {
+  static getDateFormat(dateObject: TDate, format?: string, utcOffsetInMinutes?: number): string {
     if (utcOffsetInMinutes === undefined) {
       return dateObject.format(format);
     }

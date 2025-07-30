@@ -388,8 +388,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig; isDarkMode: boolean }> =
       setEditingRule(null);
       form.resetFields();
       messageApi.success(message('rules.rule.saved', { name: rule.name }));
-    } catch (err) {
-      // console.log('Validation error', JSON.stringify(err, null, 2));
+    } catch {
+      console.error('Validation error');
     }
   };
 
@@ -429,7 +429,8 @@ export const RulesManage: FC<{ tracker: TTrackerConfig; isDarkMode: boolean }> =
             const err = await res.json();
             messageApi.error(err.error || 'Delete failed');
           }
-        } catch (e) {
+        } catch {
+          console.error('Delete failed');
           messageApi.error('Delete failed');
         }
       }
@@ -556,7 +557,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig; isDarkMode: boolean }> =
       messageApi.error(message('rules.current.user.error'));
       return;
     }
-    setShareLoading((rule.id as string) || '');
+    setShareLoading(rule.id || '');
     try {
       let teams = userTeams;
       // If userTeams is empty, create a new team
@@ -868,9 +869,9 @@ export const RulesManage: FC<{ tracker: TTrackerConfig; isDarkMode: boolean }> =
             label: (
               <span>
                 <Typography.Text strong>{rule.name}</Typography.Text>
-                {(rule as TRule).teamId && teamNameMap[(rule as TRule).teamId] && (
+                {rule.teamId && teamNameMap[rule.teamId] && (
                   <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
-                    [{teamNameMap[(rule as TRule).teamId]}]
+                    [{teamNameMap[rule.teamId]}]
                   </Typography.Text>
                 )}
                 {rule.description && (
@@ -937,7 +938,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig; isDarkMode: boolean }> =
                         </>
                       );
                     } else {
-                      const handleShare = () => handleShareWithTeam(rule, teamNameMap[(rule as TRule).teamId]);
+                      const handleShare = () => handleShareWithTeam(rule, teamNameMap[rule.teamId]);
                       shareControls = (
                         <ShareButton loading={shareLoading === rule.id} onClick={handleShare} message={message} />
                       );
@@ -951,7 +952,7 @@ export const RulesManage: FC<{ tracker: TTrackerConfig; isDarkMode: boolean }> =
                     <Popconfirm
                       title={message('rules.rule.delete.confirm.shared')}
                       description={message('rules.rule.delete.confirm.shared.description')}
-                      onConfirm={() => handleDelete(rule.id, (rule as TRule).teamId)}
+                      onConfirm={() => handleDelete(rule.id, rule.teamId)}
                       okText={message('share.yes.action')}
                       cancelText={message('share.cancel.action')}
                     >

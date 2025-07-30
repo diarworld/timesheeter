@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 export const useIssueStatusFilter = () => {
   const router = useRouter();
 
-  const statusQuery = router.query.status as string | string[] | undefined;
+  const statusQuery = router.query.status;
 
   const status = useMemo(
     () => (Array.isArray(statusQuery) ? statusQuery : [statusQuery].filter(Boolean)),

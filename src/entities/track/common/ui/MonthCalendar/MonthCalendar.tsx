@@ -44,9 +44,9 @@ const ISODurationText: React.FC<{ duration: TISODuration }> = ({ duration }) => 
 
 function expectedPercent(tracks: TTrack[], expected: number): number {
   const trackedMs = tracks.reduce((sum, t) => {
-    if ((t as TTrack).duration) {
+    if (t.duration) {
       try {
-        return sum + (isoDurationToBusinessMs((t as TTrack).duration) ?? 0);
+        return sum + (isoDurationToBusinessMs(t.duration) ?? 0);
       } catch {
         return sum;
       }
@@ -77,7 +77,7 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
     if (tracksData?.date2Tracks) {
       Object.entries(tracksData.date2Tracks).forEach(([isoDate, tracks]) => {
         const date = dayjs(isoDate).format('YYYY-MM-DD');
-        map[date] = tracks as TTrack[];
+        map[date] = tracks;
       });
     }
     return map;
@@ -107,9 +107,9 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
         return (
           sum +
           tracks.reduce((trackSum, t) => {
-            if ((t as TTrack).duration) {
+            if (t.duration) {
               try {
-                return trackSum + (isoDurationToBusinessMs((t as TTrack).duration) ?? 0);
+                return trackSum + (isoDurationToBusinessMs(t.duration) ?? 0);
               } catch {
                 return trackSum;
               }
@@ -169,7 +169,7 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, fontSize: 11 }}>
               {tracks.slice(0, 2).map((track, idx) => (
                 <li
-                  key={(track as TTrack).id || idx}
+                  key={track.id || idx}
                   style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                 >
                   <YandexTracker
@@ -179,15 +179,15 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
                     }}
                   />{' '}
                   &nbsp;
-                  <span style={{ fontWeight: 700 }}>{(track as TTrack).issueKey}</span>
-                  {issueMap[(track as TTrack).issueKey] ? `: ${issueMap[(track as TTrack).issueKey]}` : ''}
+                  <span style={{ fontWeight: 700 }}>{track.issueKey}</span>
+                  {issueMap[track.issueKey] ? `: ${issueMap[track.issueKey]}` : ''}
                 </li>
               ))}
               {tracks.length > 2 && <li>+{tracks.length - 2} more</li>}
             </ul>
             <Flex justify="space-between" align="center">
               <div style={{ fontSize: 10, color: isDarkMode ? '#aaa' : '#888', marginTop: 2 }}>
-                <DurationFormat duration={sumIsoDurations(tracks.map((t) => (t as TTrack).duration))} />
+                <DurationFormat duration={sumIsoDurations(tracks.map((t) => t.duration))} />
               </div>
               {getExpectedHoursForDay(dateStr) > 0 && (
                 <Progress
@@ -288,9 +288,9 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
     const tracks = tracksByDate[dateStr] || [];
 
     const totalLoggedMsModal = tracks.reduce((sum, t) => {
-      if ((t as TTrack).duration) {
+      if (t.duration) {
         try {
-          return sum + (isoDurationToBusinessMs((t as TTrack).duration) ?? 0);
+          return sum + (isoDurationToBusinessMs(t.duration) ?? 0);
         } catch {
           return sum;
         }
@@ -310,8 +310,8 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
       >
         <ul style={{ padding: 0, listStyle: 'none' }}>
           {tracks.map((track, idx) => (
-            <li key={(track as TTrack).id || idx} style={{ marginBottom: 8 }}>
-              {(track as TTrack).issueKey ? (
+            <li key={track.id || idx} style={{ marginBottom: 8 }}>
+              {track.issueKey ? (
                 <Button
                   type="link"
                   icon={
@@ -323,17 +323,17 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
                     />
                   }
                   target="_blank"
-                  href={getIssueUrl((track as TTrack).issueKey)}
+                  href={getIssueUrl(track.issueKey)}
                   style={{ padding: 0 }}
                 >
-                  {(track as TTrack).issueKey}
+                  {track.issueKey}
                 </Button>
               ) : null}
-              {issueMap[(track as TTrack).issueKey] ? `: ${issueMap[(track as TTrack).issueKey]}` : ''}
-              <span style={{ color: '#888', marginLeft: 4, fontSize: 12 }}>&nbsp;{(track as TTrack).comment}</span>
+              {issueMap[track.issueKey] ? `: ${issueMap[track.issueKey]}` : ''}
+              <span style={{ color: '#888', marginLeft: 4, fontSize: 12 }}>&nbsp;{track.comment}</span>
               <span style={{ color: '#888', marginLeft: 4, fontSize: 12 }}>
                 &nbsp;(
-                <ISODurationText duration={(track as TTrack).duration} />)
+                <ISODurationText duration={track.duration} />)
               </span>
             </li>
           ))}
@@ -342,9 +342,8 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
           <TrackTimeButton isEdit={isEdit} />
         </div>
         <Typography.Text strong>
-          {message('track.total.logged')}:{' '}
-          <DurationFormat duration={sumIsoDurations(tracks.map((t) => (t as TTrack).duration))} /> /{' '}
-          {message('date.hours.short', { value: getExpectedHoursForDay(dateStr) })}
+          {message('track.total.logged')}: <DurationFormat duration={sumIsoDurations(tracks.map((t) => t.duration))} />{' '}
+          / {message('date.hours.short', { value: getExpectedHoursForDay(dateStr) })}
         </Typography.Text>
 
         <div style={{ marginTop: 8 }}>

@@ -112,7 +112,7 @@ export const yandexTrackApi = api.injectEndpoints({
         }
       },
     }),
-    deleteYandexTrack: build.mutation<{}, TDeleteTrackParams>({
+    deleteYandexTrack: build.mutation<Record<string, never>, TDeleteTrackParams>({
       query: ({ issueIdOrKey, trackId, tracker }) => ({
         url: yandexTrackEndpoints.track(issueIdOrKey, trackId),
         method: 'DELETE',
@@ -152,7 +152,7 @@ export const yandexTrackApi = api.injectEndpoints({
         }
       },
     }),
-    updateYandexTrack: build.mutation<{}, TYandexEditTrackParams>({
+    updateYandexTrack: build.mutation<Record<string, never>, TYandexEditTrackParams>({
       query: ({ param: { issueIdOrKey, trackId }, form, tracker }) => ({
         url: yandexTrackEndpoints.track(issueIdOrKey, trackId),
         method: 'PATCH',
