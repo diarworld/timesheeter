@@ -35,7 +35,7 @@
     "iso8601-duration": "^2.1.2",
     "js-cookie": "^2.2.1",
     "lodash": "^4.17.21",
-    "next": "^14.0.4",
+    "next": "^15.4.5",
     "parse-duration": "^2.1.4",
     "query-string": "^8.1.0",
     "react": "^18.2.0",
