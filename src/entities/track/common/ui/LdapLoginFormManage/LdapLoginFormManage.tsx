@@ -5,6 +5,7 @@ import React, { FC, useCallback, useEffect } from 'react';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
 import { useAuthenticateEwsMutation } from 'entities/track/common/model/ews-api';
+import { useRuntimeConfig } from 'shared/lib/useRuntimeConfig';
 
 export const LdapLoginFormManage: FC = () => {
   const message = useMessage();
@@ -12,6 +13,7 @@ export const LdapLoginFormManage: FC = () => {
   const dispatch = useAppDispatch();
   const [form] = Form.useForm();
   const [authenticateEws, { isLoading: isAuthenticating }] = useAuthenticateEwsMutation();
+  const { restorePasswordUrl } = useRuntimeConfig();
 
   // Load saved credentials from localStorage
   const savedCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
@@ -90,7 +92,7 @@ export const LdapLoginFormManage: FC = () => {
           <>
             {/* <p>{message('ldap.auth.password.hint')}</p> */}
             <a
-              href={process.env.RESTORE_PASSWORD_URL}
+              href={restorePasswordUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{ fontSize: '12px', display: 'inline-block', marginTop: 4 }}

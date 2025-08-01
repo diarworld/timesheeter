@@ -1,4 +1,6 @@
 // OpenReplay tracker utility with React 19 compatibility
+import getConfig from 'next/config';
+
 interface ITracker {
   setUserID: (userId: string) => void;
   use: (plugin: unknown) => void;
@@ -12,6 +14,7 @@ let hasInitializationFailed = false;
 export const initializeTracker = async () => {
   // Only initialize in production or if explicitly enabled
   const shouldInitialize = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_TRACKER === 'true';
+  // TODO: remove this after testing
   console.log('shouldInitialize', shouldInitialize);
   console.log('process.env.NODE_ENV', process.env.NODE_ENV);
 
@@ -44,8 +47,10 @@ export const initializeTracker = async () => {
       const { default: TrackerModule } = await import('@openreplay/tracker');
       const { default: trackerAssistModule } = await import('@openreplay/tracker-assist');
 
-      const projectKey = process.env.COMPANY_OPENREPLAY_KEY;
-      const ingestPoint = process.env.COMPANY_OPENREPLAY_URL;
+      // Get runtime configuration
+      const { publicRuntimeConfig } = getConfig() || {};
+      const projectKey = publicRuntimeConfig?.COMPANY_OPENREPLAY_KEY;
+      const ingestPoint = publicRuntimeConfig?.COMPANY_OPENREPLAY_URL;
 
       if (!projectKey || !ingestPoint) {
         console.warn('OpenReplay configuration missing');

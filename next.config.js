@@ -8,13 +8,20 @@ module.exports = {
     NEXT_TELEMETRY_DISABLED: '1',
     // Disable tracker in development by default to prevent HMR issues
     NEXT_PUBLIC_ENABLE_TRACKER: process.env.NODE_ENV === 'production' ? 'true' : 'false',
+  },
+  // Use serverRuntimeConfig and publicRuntimeConfig for runtime environment variables
+  serverRuntimeConfig: {
+    // Will only be available on the server side
+  },
+  publicRuntimeConfig: {
+    // Will be available on both server and client
     // OpenReplay session recording service configuration
-    COMPANY_OPENREPLAY_KEY: process.env.COMPANY_OPENREPLAY_KEY, // API key for OpenReplay service
-    COMPANY_OPENREPLAY_URL: process.env.COMPANY_OPENREPLAY_URL, // OpenReplay service endpoint
+    COMPANY_OPENREPLAY_KEY: process.env.COMPANY_OPENREPLAY_KEY,
+    COMPANY_OPENREPLAY_URL: process.env.COMPANY_OPENREPLAY_URL,
     // External service URLs for client-side access
-    COMPANY_POWERBI_URL: process.env.COMPANY_POWERBI_URL, // PowerBI dashboard URL for reports
-    SUPPORT_URL: process.env.SUPPORT_URL, // Support channel/contact URL
-    RESTORE_PASSWORD_URL: process.env.RESTORE_PASSWORD_URL, // Password recovery page URL
+    COMPANY_POWERBI_URL: process.env.COMPANY_POWERBI_URL,
+    SUPPORT_URL: process.env.SUPPORT_URL,
+    RESTORE_PASSWORD_URL: process.env.RESTORE_PASSWORD_URL,
   },
   reactStrictMode: true,
   output: 'standalone',

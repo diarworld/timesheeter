@@ -18,6 +18,7 @@ import { Message } from 'entities/locale/ui/Message';
 import { ExportOutlined, UserOutlined } from '@ant-design/icons';
 import { getExpectedHoursForDay } from 'entities/track/common/lib/hooks/use-expected-hours-for-day';
 import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
+import { useRuntimeConfig } from 'shared/lib/useRuntimeConfig';
 
 import styles from './ReportsTable.module.scss';
 
@@ -81,6 +82,7 @@ export function ReportsTable({
   //   const days = useRange({ from, to, showWeekends, utcOffsetInMinutes });
   //   console.log('days:', days);
   const message = useMessage();
+  const { powerBiUrl } = useRuntimeConfig();
   const days = getDaysArray(from, to, utcOffsetInMinutes, showWeekends);
   const today = DateWrapper.getDate({ utcOffsetInMinutes }).format('YYYY-MM-DD');
   const currentLocale = useCurrentLocale();
@@ -271,7 +273,7 @@ export function ReportsTable({
           <Text style={{ alignItems: 'center', display: 'flex' }}>
             <Message id="track.powerbi.message" />
           </Text>
-          <Button type="link" icon={<ExportOutlined />} target="_blank" href={process.env.COMPANY_POWERBI_URL}>
+          <Button type="link" icon={<ExportOutlined />} target="_blank" href={powerBiUrl}>
             {message('track.powerbi.link')}
           </Button>
         </Row>
