@@ -24,7 +24,7 @@
     "@openreplay/tracker-assist": "^11.0.8",
     "@prisma/client": "^6.13.0",
     "@reduxjs/toolkit": "^2.0.1",
-    "@types/cookie": "^0.6.0",
+    "@types/cookie": "^1.0.0",
     "@vvo/tzdb": "^6.124.0",
     "antd": "^5.12.5",
     "clsx": "^2.0.0",
