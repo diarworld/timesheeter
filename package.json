@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.19.6",
+    "@babel/eslint-parser": "^7.24.1",
     "@chromatic-com/storybook": "^4.0.1",
     "@next/eslint-plugin-next": "^15.4.5",
     "@storybook/addon-docs": "^9.0.18",
@@ -66,7 +67,6 @@
     "@types/react": "^18.2.45",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
-    "babel-eslint": "^10.1.0",
     "eslint": "^9.32.0",
     "eslint-config-next": "^15.4.5",
     "eslint-config-prettier": "^9.1.0",
@@ -89,5 +89,10 @@
     "storybook": "^9.0.18",
     "typescript": "^5.3.3",
     "webpack": "^5.101.0"
+  },
+  "overrides": {
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.5",
+    "test-exclude": "^7.0.0"
   }
 }
