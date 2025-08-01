@@ -30,7 +30,6 @@ export function useIssuesList(params: TIssuesParams) {
     [issuesFromTracks, pinnedIssues],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const selectSortedIssues = useMemo(() => createSortedIssuesSelector(pinnedIssues), []);
 
   return yandexIssueApi.useGetYandexIssuesQuery(

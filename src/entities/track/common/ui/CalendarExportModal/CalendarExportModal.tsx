@@ -489,7 +489,6 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
     if (visible) {
       applyRulesToAll();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const columns = [

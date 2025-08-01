@@ -3,6 +3,16 @@ const baseRules = require('./lint/base-rules');
 const typescriptRules = require('./lint/typescript-rules');
 
 module.exports = [
+  // Ignore patterns (replaces .eslintignore)
+  {
+    ignores: [
+      'build/**',
+      'node_modules/**',
+      '**/*.min.js',
+      'jest.config.js',
+    ],
+  },
+
   // Base configuration for all files
   {
     files: ['**/*.{js,jsx,ts,tsx}'],

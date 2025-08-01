@@ -7,6 +7,8 @@ import { FieldInputProps } from 'react-final-form';
 type TProps = AutoCompleteProps<string> &
   FieldInputProps<string> & {
     tracker: TYandexTrackerConfig;
+    maxItems?: number;
+    perPage?: number;
   };
 
 export const YandexIssuesSearchConnected = (props: TProps) => {

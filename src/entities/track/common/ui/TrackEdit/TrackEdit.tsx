@@ -3,6 +3,12 @@ import React from 'react';
 import { Form } from 'react-final-form';
 import { FormApi } from 'final-form';
 import { TTrack, TTrackInputDelete, TTrackInputEditForm } from 'entities/track/common/model/types';
+
+type TTrackEditFormValues = {
+  comment: string;
+  duration: string;
+  start: string;
+};
 import { DeleteRowOutlined, DeleteOutlined } from '@ant-design/icons';
 import { InputField } from 'features/form/ui/InputField';
 import { useMessage } from 'entities/locale/lib/hooks';
@@ -43,11 +49,14 @@ export const TrackEdit = ({
     start,
   };
 
-  const validate = (fields: TTrackInputEditForm) => ({
+  const validate = (fields: TTrackEditFormValues) => ({
     duration: validateHumanReadableDuration(fields.duration) ? undefined : message('form.invalid.format'),
   });
 
-  const submit = (fields: TTrackInputEditForm, formApi: FormApi<TTrackInputEditForm, typeof initialValues>) => {
+  const submit = (
+    fields: TTrackEditFormValues,
+    formApi: FormApi<TTrackEditFormValues, Partial<TTrackEditFormValues>>,
+  ) => {
     const durationISO = humanReadableDurationToISO(fields.duration);
 
     const formHadChanges = formApi.getState().dirty;

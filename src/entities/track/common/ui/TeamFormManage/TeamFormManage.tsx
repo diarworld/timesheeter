@@ -228,7 +228,6 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       lastSyncedTeam.current = teamString;
       syncTeamToDb(team, self);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [team, self]);
 
   const [teamSearchOptions, setTeamSearchOptions] = useState<
