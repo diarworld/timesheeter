@@ -5,7 +5,7 @@ import { LocaleProvider } from 'entities/locale/ui/LocaleProvider';
 import { useCurrentLocale } from 'entities/locale/lib/hooks';
 import { isRuLocale } from 'entities/locale/lib/helpers';
 import ruLocale from 'antd/lib/locale/ru_RU';
-import { ConfigProvider as AntdConfigProvider } from 'antd';
+import { ConfigProvider as AntdConfigProvider, App as AntdApp } from 'antd';
 
 const AntdProvider = ({ children }: PropsWithChildren) => {
   const currentLocale = useCurrentLocale();
@@ -21,7 +21,7 @@ const AntdProvider = ({ children }: PropsWithChildren) => {
         },
       }}
     >
-      {children}
+      <AntdApp>{children}</AntdApp>
     </AntdConfigProvider>
   );
 };

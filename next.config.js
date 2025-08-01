@@ -5,6 +5,8 @@ const path = require('path');
 module.exports = {
   env: {
     NEXT_TELEMETRY_DISABLED: '1',
+    // Disable tracker in development by default to prevent HMR issues
+    NEXT_PUBLIC_ENABLE_TRACKER: process.env.NODE_ENV === 'production' ? 'true' : 'false',
   },
   reactStrictMode: true,
   output: 'standalone',
@@ -51,10 +53,13 @@ module.exports = {
     'rc-transfer',
     'rc-tree-select',
     'rc-virtual-list',
+    // Only include OpenReplay in production
+    ...(process.env.NODE_ENV === 'production' ? ['@openreplay'] : []),
   ],
   webpack: (config, options) => {
     patchWebpackConfig(config, options);
 
+    // Handle OpenReplay compatibility with React 19
     config.resolve.alias = {
       ...config.resolve.alias,
       app: path.resolve(__dirname, './src/app'),
@@ -67,6 +72,37 @@ module.exports = {
       lib: path.resolve(__dirname, './src/lib'),
       styles: path.resolve(__dirname, './src/styles'),
       ui: path.resolve(__dirname, './src/ui'),
+    };
+
+    // In development, completely ignore OpenReplay packages
+    if (process.env.NODE_ENV === 'development') {
+      config.resolve.alias['@openreplay/tracker'] = false;
+      config.resolve.alias['@openreplay/tracker-assist'] = false;
+      config.resolve.alias['@openreplay/network-proxy'] = false;
+      
+      // Add a fallback that returns an empty module
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        '@openreplay/tracker': false,
+        '@openreplay/tracker-assist': false,
+        '@openreplay/network-proxy': false,
+      };
+    }
+
+    // Ignore source map warnings for OpenReplay
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      /Failed to parse source map/,
+      /installHook\.js\.map/,
+      /@openreplay/,
+    ];
+
+    // Configure fallbacks for OpenReplay compatibility
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
     };
 
     return config;

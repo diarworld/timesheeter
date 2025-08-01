@@ -7,6 +7,60 @@ import { DeleteRowOutlined, DeleteOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import styles from './TrackNameColumn.module.scss';
 
+interface ITrackNameFormProps {
+  initialValues: { comment: string };
+  onFocus: FocusEventHandler<HTMLTextAreaElement>;
+  onSubmit: (values: { comment: string }) => void;
+  isEdit: boolean;
+  isDarkMode: boolean;
+  message: (key: string) => string;
+}
+
+const TrackNameForm: React.FC<ITrackNameFormProps> = ({
+  initialValues,
+  onFocus,
+  onSubmit,
+  isEdit,
+  isDarkMode,
+  message,
+}) => {
+  const [form] = Form.useForm<typeof initialValues>();
+
+  useEffect(() => {
+    form.setFieldValue('comment', initialValues.comment);
+  }, [initialValues.comment, form]);
+
+  const handleBlur: FocusEventHandler<HTMLTextAreaElement> = (e) => {
+    e.target.spellcheck = false;
+    form.validateFields().then(onSubmit).catch(console.error);
+  };
+
+  return (
+    <Form
+      noValidate
+      className={styles.form}
+      form={form}
+      initialValues={initialValues}
+      aria-label={message('track.comment.title')}
+    >
+      <Form.Item name="comment" noStyle>
+        <TextArea
+          onFocus={onFocus}
+          onBlur={handleBlur}
+          className={clsx(
+            styles.textarea,
+            { [styles.textarea_dark]: isDarkMode },
+            { [styles.textarea_light]: !isDarkMode },
+          )}
+          spellCheck={false}
+          autoSize
+          readOnly={!isEdit}
+        />
+      </Form.Item>
+    </Form>
+  );
+};
+
 interface ITrackNameColumnProps {
   trackId: number | string;
   trackComment: string | undefined;
@@ -36,12 +90,6 @@ export const TrackNameColumn = memo(
       comment: trackComment ?? '',
     } as const;
 
-    const [form] = Form.useForm<typeof initialValues>();
-
-    useEffect(() => {
-      form.setFieldValue('comment', trackComment);
-    }, [trackComment, form]);
-
     const handleFocus: FocusEventHandler<HTMLTextAreaElement> = (e) => {
       e.target.select();
       e.target.spellcheck = true;
@@ -50,11 +98,6 @@ export const TrackNameColumn = memo(
     const handleSubmit = (values: typeof initialValues) => {
       if (!isEdit) return;
       updateTrack(values, issueId, trackId);
-    };
-
-    const handleBlur: FocusEventHandler<HTMLTextAreaElement> = (e) => {
-      e.target.spellcheck = false;
-      form.validateFields().then(handleSubmit).catch(console.error);
     };
 
     return (
@@ -75,28 +118,14 @@ export const TrackNameColumn = memo(
                   <Button shape="circle" type="text" icon={<DeleteOutlined />} />
                 </Popconfirm>
                 {isEditTrackComment ? (
-                  <Form
-                    noValidate
-                    className={styles.form}
-                    form={form}
+                  <TrackNameForm
                     initialValues={initialValues}
-                    aria-label={message('track.comment.title')}
-                  >
-                    <Form.Item name="comment" noStyle>
-                      <TextArea
-                        onFocus={handleFocus}
-                        onBlur={handleBlur}
-                        className={clsx(
-                          styles.textarea,
-                          { [styles.textarea_dark]: isDarkMode },
-                          { [styles.textarea_light]: !isDarkMode },
-                        )}
-                        spellCheck={false}
-                        autoSize
-                        readOnly={!isEdit}
-                      />
-                    </Form.Item>
-                  </Form>
+                    onFocus={handleFocus}
+                    onSubmit={handleSubmit}
+                    isEdit={isEdit}
+                    isDarkMode={isDarkMode}
+                    message={message}
+                  />
                 ) : (
                   <Typography.Text
                     disabled

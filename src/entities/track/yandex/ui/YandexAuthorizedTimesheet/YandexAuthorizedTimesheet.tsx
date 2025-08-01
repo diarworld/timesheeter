@@ -13,11 +13,10 @@ import { syncTeamToDb } from 'entities/track/common/lib/sync-team';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useAppDispatch } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
-import { useEffect, useState, useRef } from 'react';
-import Tracker from '@openreplay/tracker';
-import trackerAssist from '@openreplay/tracker-assist';
+import { useEffect, useState } from 'react';
 import { TTeam } from 'entities/track/common/ui/TeamFormManage/types';
 import { useRouter } from 'next/router';
+import { initializeTracker, setUserID } from 'shared/lib/tracker';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -142,23 +141,15 @@ export const YandexAuthorizedTimesheet = ({
   }, [self, dispatch]);
 
   // OpenReplay Tracker initialization (only once)
-  const trackerRef = useRef<Tracker | null>(null);
   useEffect(() => {
-    if (!trackerRef.current) {
-      const trackerOpenReplay = new Tracker({
-        projectKey: process.env.COMPANY_OPENREPLAY_KEY,
-        ingestPoint: process.env.COMPANY_OPENREPLAY_URL,
-      });
-      trackerOpenReplay.use(trackerAssist());
-      trackerOpenReplay.start();
-      trackerRef.current = trackerOpenReplay;
-    }
+    // Initialize tracker using the utility function
+    initializeTracker();
   }, []);
 
   // Set user ID for OpenReplay when self is available
   useEffect(() => {
-    if (self && trackerRef.current) {
-      trackerRef.current.setUserID(self?.display || self?.login || '');
+    if (self) {
+      setUserID(self?.display || self?.login || '');
     }
   }, [self]);
   const ldapCredentials = typeof window !== 'undefined' ? localStorage.getItem('ldapCredentials') : null;

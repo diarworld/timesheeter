@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import { DatePicker } from 'components';
 import dayjs, { Dayjs } from 'dayjs';
 import { FieldItem } from 'features/form/ui/FieldItem';
-import React, { ComponentProps, useCallback } from 'react';
+import React, { ComponentProps, useCallback, useMemo } from 'react';
 import { useField } from 'react-final-form';
 
 type TProps = Omit<ComponentProps<typeof DatePicker>, 'status' | 'onChange'> & {
@@ -28,6 +28,14 @@ export const DateInputField = ({
   } = useField<string>(name);
 
   const error = meta.error || meta.submitError;
+
+  // Safely parse the date value, returning null if invalid
+  const dateValue = useMemo(() => {
+    if (!value) return null;
+    const parsed = dayjs(value);
+    return parsed.isValid() ? parsed : null;
+  }, [value]);
+
   const handleChange = useCallback(
     (date: Dayjs | null) => {
       onChange(date?.format());
@@ -43,7 +51,7 @@ export const DateInputField = ({
         {...input}
         changeOnBlur
         showTime={showTime}
-        defaultValue={dayjs(value)}
+        value={dateValue}
         onChange={handleChange}
         allowClear={allowClear}
         status={clsx({ warning: error }) as 'warning' | undefined}

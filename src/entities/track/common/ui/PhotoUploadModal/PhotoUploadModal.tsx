@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Modal, Button, message, Avatar } from 'antd';
+import { Modal, Button, Avatar, App } from 'antd';
 import { UploadOutlined, UserOutlined } from '@ant-design/icons';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { useUploadPhotoMutation } from 'entities/user/common/model/api';
@@ -23,6 +23,7 @@ export const PhotoUploadModal: React.FC<IPhotoUploadModalProps> = ({
   const [previewImage, setPreviewImage] = useState<string | null>(currentPhoto || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageApi = useMessage();
+  const { message } = App.useApp();
   const [uploadPhoto] = useUploadPhotoMutation();
 
   // Update preview when currentPhoto changes

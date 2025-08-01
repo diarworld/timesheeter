@@ -62,7 +62,7 @@
   "track.delete.confirm": "Are you sure you want to delete track?",
   "track.delete.title": "Delete track",
   "track.details.open": "Open",
-  "track.duration.placeholder": "Put your duration here",
+  "track.duration.placeholder": "Put your duration here (e.g. 2h 30m)",
   "track.duration.title": "Duration",
   "track.edit.title": "Edit track",
   "track.item.comment": "Comment",

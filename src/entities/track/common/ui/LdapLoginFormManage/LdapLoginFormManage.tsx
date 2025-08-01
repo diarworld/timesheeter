@@ -1,4 +1,4 @@
-import { Button, Form, Input, Flex, message as antMessage } from 'antd';
+import { Button, Form, Input, Flex, App } from 'antd';
 
 import { useMessage } from 'entities/locale/lib/hooks';
 import React, { FC, useCallback, useEffect } from 'react';
@@ -8,6 +8,7 @@ import { useAuthenticateEwsMutation } from 'entities/track/common/model/ews-api'
 
 export const LdapLoginFormManage: FC = () => {
   const message = useMessage();
+  const { message: antMessage } = App.useApp();
   const dispatch = useAppDispatch();
   const [form] = Form.useForm();
   const [authenticateEws, { isLoading: isAuthenticating }] = useAuthenticateEwsMutation();

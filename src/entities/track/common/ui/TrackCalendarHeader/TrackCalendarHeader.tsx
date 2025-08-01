@@ -1,4 +1,4 @@
-import { Button, Col, Row, Menu, MenuProps, Modal, message as antdMessage, Typography, Card, Avatar } from 'antd';
+import { Button, Col, Row, Menu, MenuProps, Modal, Typography, Card, Avatar, App } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import {
   ScheduleFilled,
@@ -30,7 +30,7 @@ import { selectHasLdapCredentials } from 'entities/track/common/model/selectors'
 import { track } from 'entities/track/common/model/reducers';
 import { RulesManage } from 'entities/track/common/ui/RulesManage';
 
-import { DarkModeSwitch } from 'react-toggle-dark-mode';
+import { DarkModeSwitch, ThemeMode } from 'entities/track/common/ui/DarkModeSwitch';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import clsx from 'clsx';
@@ -179,6 +179,7 @@ export function TrackCalendarHeader({
   setIsDarkMode,
 }: ITrackCalendarHeaderProps) {
   const message = useMessage();
+  const { message: antdMessage } = App.useApp();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
   const { from, to } = useFilters();
 
@@ -188,8 +189,13 @@ export function TrackCalendarHeader({
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
   const [photoUploadModalVisible, setPhotoUploadModalVisible] = useState(false);
-  const handleClickTheme = () => setIsDarkMode((prev) => !prev);
+  // const handleClickTheme = () => setIsDarkMode((prev) => !prev);
+  const [themeMode, setThemeMode] = useState(isDarkMode ? ThemeMode.Dark : ThemeMode.Light);
 
+  const toggleThemeMode = (themeMode: ThemeMode) => {
+    setThemeMode(themeMode);
+    setIsDarkMode(themeMode === ThemeMode.Dark);
+  };
   const dispatch = useAppDispatch();
 
   // Initialize LDAP credentials status from localStorage on mount
@@ -259,7 +265,7 @@ export function TrackCalendarHeader({
         });
       }
     },
-    [getCalendarMeetings, from, to, message],
+    [getCalendarMeetings, from, to, message, antdMessage],
   );
 
   type TMenuItem = Required<MenuProps>['items'][number];
@@ -380,7 +386,15 @@ export function TrackCalendarHeader({
   const rightMenuItems: TMenuItem[] = [
     {
       key: 'theme',
-      label: <DarkModeSwitch checked={isDarkMode} size={36} onChange={handleClickTheme} />,
+      label: (
+        <DarkModeSwitch
+          onChange={toggleThemeMode}
+          isSystemThemeModeEnabled={false}
+          themeMode={themeMode}
+          size={36}
+          style={{ marginTop: '5px' }}
+        />
+      ),
       disabled: true,
       style: { cursor: 'default', padding: '0px' },
     },

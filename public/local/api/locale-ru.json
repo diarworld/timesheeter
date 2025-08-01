@@ -62,7 +62,7 @@
   "track.delete.confirm": "Вы уверены, что хотите удалить трек?",
   "track.delete.title": "Удалить трек",
   "track.details.open": "Открыть",
-  "track.duration.placeholder": "Укажите длительность",
+  "track.duration.placeholder": "Укажите длительность (напр. 2ч 30м)",
   "track.duration.title": "Длительность",
   "track.edit.title": "Редактировать трек",
   "track.item.comment": "Комментарий",

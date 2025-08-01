@@ -1,16 +1,4 @@
-import {
-  Modal,
-  Table,
-  Space,
-  Typography,
-  TableProps,
-  Flex,
-  Button,
-  Input,
-  message as antMessage,
-  Popover,
-  Badge,
-} from 'antd';
+import { Modal, Table, Space, Typography, TableProps, Flex, Button, Input, Popover, Badge, App } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { IEwsCalendarResponse, IMeetingOrganizer } from 'entities/track/common/model/ews-api';
 import { DateWrapper } from 'features/date/lib/DateWrapper';
@@ -63,6 +51,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   tracker,
 }) => {
   const message = useMessage();
+  const { message: antMessage } = App.useApp();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [issueKeys, setIssueKeys] = useState<Record<string, string>>({});
   const [issueDurations, setIssueDurations] = useState<Record<string, number>>({});
