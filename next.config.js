@@ -1,6 +1,13 @@
 const { patchWebpackConfig } = require('next-global-css');
 const path = require('path');
 
+// Load .env file at runtime if it exists
+try {
+  require('dotenv').config();
+} catch (error) {
+  console.log('dotenv not available or .env file not found, using process.env');
+}
+
 /** @type {import('next').NextConfig} */
 module.exports = {
   env: {
