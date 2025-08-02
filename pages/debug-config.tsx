@@ -68,19 +68,19 @@ export default function DebugConfig() {
               <Text strong>NODE_ENV:</Text> {process.env.NODE_ENV}
             </div>
             <div>
-              <Text strong>COMPANY_OPENREPLAY_KEY:</Text> {process.env.COMPANY_OPENREPLAY_KEY || 'undefined'}
+              <Text strong>NEXT_PUBLIC_COMPANY_OPENREPLAY_KEY:</Text> {process.env.NEXT_PUBLIC_COMPANY_OPENREPLAY_KEY || 'undefined'}
             </div>
             <div>
-              <Text strong>COMPANY_OPENREPLAY_URL:</Text> {process.env.COMPANY_OPENREPLAY_URL || 'undefined'}
+              <Text strong>NEXT_PUBLIC_COMPANY_OPENREPLAY_URL:</Text> {process.env.NEXT_PUBLIC_COMPANY_OPENREPLAY_URL || 'undefined'}
             </div>
             <div>
-              <Text strong>COMPANY_POWERBI_URL:</Text> {process.env.COMPANY_POWERBI_URL || 'undefined'}
+              <Text strong>NEXT_PUBLIC_COMPANY_POWERBI_URL:</Text> {process.env.NEXT_PUBLIC_COMPANY_POWERBI_URL || 'undefined'}
             </div>
             <div>
-              <Text strong>SUPPORT_URL:</Text> {process.env.SUPPORT_URL || 'undefined'}
+              <Text strong>NEXT_PUBLIC_SUPPORT_URL:</Text> {process.env.NEXT_PUBLIC_SUPPORT_URL || 'undefined'}
             </div>
             <div>
-              <Text strong>RESTORE_PASSWORD_URL:</Text> {process.env.RESTORE_PASSWORD_URL || 'undefined'}
+              <Text strong>NEXT_PUBLIC_RESTORE_PASSWORD_URL:</Text> {process.env.NEXT_PUBLIC_RESTORE_PASSWORD_URL || 'undefined'}
             </div>
           </Space>
         </Card>

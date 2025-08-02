@@ -10,13 +10,13 @@ export const getRuntimeConfig = () => {
   return {
     // OpenReplay configuration
     COMPANY_OPENREPLAY_KEY:
-      publicRuntimeConfig?.NEXT_PUBLIC_COMPANY_OPENREPLAY_KEY || process.env.COMPANY_OPENREPLAY_KEY,
+      publicRuntimeConfig?.NEXT_PUBLIC_COMPANY_OPENREPLAY_KEY || process.env.NEXT_PUBLIC_COMPANY_OPENREPLAY_KEY,
     COMPANY_OPENREPLAY_URL:
-      publicRuntimeConfig?.NEXT_PUBLIC_COMPANY_OPENREPLAY_URL || process.env.COMPANY_OPENREPLAY_URL,
+      publicRuntimeConfig?.NEXT_PUBLIC_COMPANY_OPENREPLAY_URL || process.env.NEXT_PUBLIC_COMPANY_OPENREPLAY_URL,
 
     // External service URLs
-    COMPANY_POWERBI_URL: publicRuntimeConfig?.NEXT_PUBLIC_COMPANY_POWERBI_URL || process.env.COMPANY_POWERBI_URL,
-    SUPPORT_URL: publicRuntimeConfig?.NEXT_PUBLIC_SUPPORT_URL || process.env.SUPPORT_URL,
-    RESTORE_PASSWORD_URL: publicRuntimeConfig?.NEXT_PUBLIC_RESTORE_PASSWORD_URL || process.env.RESTORE_PASSWORD_URL,
+    COMPANY_POWERBI_URL: publicRuntimeConfig?.NEXT_PUBLIC_COMPANY_POWERBI_URL || process.env.NEXT_PUBLIC_COMPANY_POWERBI_URL,
+    SUPPORT_URL: publicRuntimeConfig?.NEXT_PUBLIC_SUPPORT_URL || process.env.NEXT_PUBLIC_SUPPORT_URL,
+    RESTORE_PASSWORD_URL: publicRuntimeConfig?.NEXT_PUBLIC_RESTORE_PASSWORD_URL || process.env.NEXT_PUBLIC_RESTORE_PASSWORD_URL,
   };
 };
