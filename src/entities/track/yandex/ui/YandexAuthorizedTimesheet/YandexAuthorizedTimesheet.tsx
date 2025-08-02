@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { TTeam } from 'entities/track/common/ui/TeamFormManage/types';
 import { useRouter } from 'next/router';
 import { initializeTracker, setUserID } from 'shared/lib/tracker';
+import { useRuntimeConfig } from 'shared/lib/useRuntimeConfig';
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -38,6 +39,7 @@ export const YandexAuthorizedTimesheet = ({
   const dispatch = useAppDispatch();
 
   const { uId, isLoadingSelf, errorSelf, self } = useYandexUser(tracker, userId, login);
+  const { envVariables } = useRuntimeConfig();
 
   // Move hooks to top level
   const router = useRouter();
@@ -142,9 +144,17 @@ export const YandexAuthorizedTimesheet = ({
 
   // OpenReplay Tracker initialization (only once)
   useEffect(() => {
-    // Initialize tracker using the utility function
-    initializeTracker();
-  }, []);
+    // Initialize tracker with environment variables if available
+    if (envVariables) {
+      initializeTracker({
+        COMPANY_OPENREPLAY_KEY: envVariables.COMPANY_OPENREPLAY_KEY,
+        COMPANY_OPENREPLAY_URL: envVariables.COMPANY_OPENREPLAY_URL,
+      });
+    } else {
+      // Fallback: initialize without environment variables (will fetch from API)
+      initializeTracker();
+    }
+  }, [envVariables]);
 
   // Set user ID for OpenReplay when self is available
   useEffect(() => {

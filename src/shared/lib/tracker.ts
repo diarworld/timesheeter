@@ -1,5 +1,4 @@
 // OpenReplay tracker utility with React 19 compatibility
-import { getRuntimeConfig } from './getRuntimeConfig';
 
 interface ITracker {
   setUserID: (userId: string) => void;
@@ -11,7 +10,10 @@ let trackerInstance: ITracker | null = null;
 let initializationPromise: Promise<ITracker | null> | null = null;
 let hasInitializationFailed = false;
 
-export const initializeTracker = async () => {
+export const initializeTracker = async (envVariables?: {
+  COMPANY_OPENREPLAY_KEY?: string;
+  COMPANY_OPENREPLAY_URL?: string;
+}) => {
   // Only initialize in production or if explicitly enabled
   const shouldInitialize = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_TRACKER === 'true';
 
@@ -44,10 +46,27 @@ export const initializeTracker = async () => {
       const { default: TrackerModule } = await import('@openreplay/tracker');
       const { default: trackerAssistModule } = await import('@openreplay/tracker-assist');
 
-      // Get runtime configuration with fallback
-      const config = getRuntimeConfig();
-      const projectKey = config.COMPANY_OPENREPLAY_KEY;
-      const ingestPoint = config.COMPANY_OPENREPLAY_URL;
+      // Get environment variables from parameters or fetch from API
+      let projectKey: string | undefined;
+      let ingestPoint: string | undefined;
+
+      if (envVariables) {
+        // Use provided environment variables
+        projectKey = envVariables.COMPANY_OPENREPLAY_KEY;
+        ingestPoint = envVariables.COMPANY_OPENREPLAY_URL;
+      } else {
+        // Fallback: fetch from API (for backward compatibility)
+        try {
+          const response = await fetch('/api/get-env');
+          if (response.ok) {
+            const data = await response.json();
+            projectKey = data.variables.COMPANY_OPENREPLAY_KEY;
+            ingestPoint = data.variables.COMPANY_OPENREPLAY_URL;
+          }
+        } catch (error) {
+          console.error('Failed to fetch environment variables for tracker:', error);
+        }
+      }
 
       if (!projectKey || !ingestPoint) {
         console.warn('OpenReplay configuration missing');

@@ -6,6 +6,7 @@ import { useCurrentLocale } from 'entities/locale/lib/hooks';
 import { isRuLocale } from 'entities/locale/lib/helpers';
 import ruLocale from 'antd/lib/locale/ru_RU';
 import { ConfigProvider as AntdConfigProvider, App as AntdApp } from 'antd';
+import { EnvProvider } from 'shared/lib/EnvContext';
 
 const AntdProvider = ({ children }: PropsWithChildren) => {
   const currentLocale = useCurrentLocale();
@@ -29,7 +30,9 @@ const AntdProvider = ({ children }: PropsWithChildren) => {
 export const RootProvider = ({ children }: PropsWithChildren) => (
   <ReduxProvider store={store}>
     <LocaleProvider>
-      <AntdProvider>{children}</AntdProvider>
+      <EnvProvider>
+        <AntdProvider>{children}</AntdProvider>
+      </EnvProvider>
     </LocaleProvider>
   </ReduxProvider>
 );

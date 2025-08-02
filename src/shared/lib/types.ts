@@ -39,3 +39,23 @@ export type TOption<TExtra = never> = {
   value: string;
   extra?: TExtra;
 };
+
+export interface IEnvVariables {
+  COMPANY_OPENREPLAY_KEY?: string;
+  COMPANY_OPENREPLAY_URL?: string;
+  COMPANY_POWERBI_URL?: string;
+  SUPPORT_URL?: string;
+  RESTORE_PASSWORD_URL?: string;
+}
+
+export interface IEnvContextType {
+  envVariables: IEnvVariables | null;
+  loading: boolean;
+  error: string | null;
+  // Individual properties for convenience
+  openReplayKey: string | undefined;
+  openReplayUrl: string | undefined;
+  powerBiUrl: string | undefined;
+  supportUrl: string | undefined;
+  restorePasswordUrl: string | undefined;
+}
