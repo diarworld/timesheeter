@@ -1,5 +1,5 @@
 // OpenReplay tracker utility with React 19 compatibility
-import getConfig from 'next/config';
+import { getRuntimeConfig } from './getRuntimeConfig';
 
 interface ITracker {
   setUserID: (userId: string) => void;
@@ -17,6 +17,16 @@ export const initializeTracker = async () => {
   // TODO: remove this after testing
   console.log('shouldInitialize', shouldInitialize);
   console.log('process.env.NODE_ENV', process.env.NODE_ENV);
+  console.log('process.env.NEXT_PUBLIC_ENABLE_TRACKER', process.env.NEXT_PUBLIC_ENABLE_TRACKER);
+  
+  // Get runtime configuration with fallback
+  const config = getRuntimeConfig();
+  const projectKey = config.COMPANY_OPENREPLAY_KEY;
+  const ingestPoint = config.COMPANY_OPENREPLAY_URL;
+  
+  console.log('Runtime config:', config);
+  console.log('projectKey', projectKey);
+  console.log('ingestPoint', ingestPoint);
 
   if (!shouldInitialize || typeof window === 'undefined') {
     return null;
@@ -47,10 +57,10 @@ export const initializeTracker = async () => {
       const { default: TrackerModule } = await import('@openreplay/tracker');
       const { default: trackerAssistModule } = await import('@openreplay/tracker-assist');
 
-      // Get runtime configuration
-      const { publicRuntimeConfig } = getConfig() || {};
-      const projectKey = publicRuntimeConfig?.COMPANY_OPENREPLAY_KEY;
-      const ingestPoint = publicRuntimeConfig?.COMPANY_OPENREPLAY_URL;
+      // Get runtime configuration with fallback
+      const config = getRuntimeConfig();
+      const projectKey = config.COMPANY_OPENREPLAY_KEY;
+      const ingestPoint = config.COMPANY_OPENREPLAY_URL;
 
       if (!projectKey || !ingestPoint) {
         console.warn('OpenReplay configuration missing');
