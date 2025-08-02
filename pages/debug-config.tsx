@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Space, Divider } from 'antd';
+import { Card, Typography, Space, Alert } from 'antd';
 import { useRuntimeConfig } from 'shared/lib/useRuntimeConfig';
 import { getRuntimeConfig } from 'shared/lib/getRuntimeConfig';
 
@@ -12,6 +12,14 @@ export default function DebugConfig() {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <Title level={2}>Runtime Configuration Debug</Title>
+      
+      <Alert
+        message="Environment Variables Debug"
+        description="This page shows how environment variables are loaded in your application. Check the browser console for additional logging."
+        type="info"
+        showIcon
+        style={{ marginBottom: '20px' }}
+      />
       
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Card title="Via useRuntimeConfig Hook" size="small">

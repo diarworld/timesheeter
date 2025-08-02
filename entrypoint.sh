@@ -24,6 +24,38 @@ auto_config() {
   cat "$output_file" > "$config_file" && rm "$output_file"
 }
 
+create_env_file() {
+  echo "Creating .env file with environment variables..."
+  
+  # Create .env file with all relevant environment variables
+  cat > .env << EOF
+# Environment variables for Next.js application
+# Generated at container startup
+
+# Required variables
+CLIENT_ID=${CLIENT_ID}
+
+# OpenReplay configuration
+COMPANY_OPENREPLAY_KEY=${COMPANY_OPENREPLAY_KEY}
+COMPANY_OPENREPLAY_URL=${COMPANY_OPENREPLAY_URL}
+
+# External service URLs
+COMPANY_POWERBI_URL=${COMPANY_POWERBI_URL}
+SUPPORT_URL=${SUPPORT_URL}
+RESTORE_PASSWORD_URL=${RESTORE_PASSWORD_URL}
+EOF
+
+  echo ".env file created successfully"
+  echo "Environment variables loaded:"
+  echo "  - CLIENT_ID: ${CLIENT_ID}"
+  echo "  - COMPANY_OPENREPLAY_KEY: ${COMPANY_OPENREPLAY_KEY}"
+  echo "  - COMPANY_OPENREPLAY_URL: ${COMPANY_OPENREPLAY_URL}"
+  echo "  - COMPANY_POWERBI_URL: ${COMPANY_POWERBI_URL}"
+  echo "  - SUPPORT_URL: ${SUPPORT_URL}"
+  echo "  - RESTORE_PASSWORD_URL: ${RESTORE_PASSWORD_URL}"
+}
+
 auto_config
+create_env_file
 
 exec "$@"

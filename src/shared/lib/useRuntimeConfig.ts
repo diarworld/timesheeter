@@ -6,15 +6,15 @@ import { getRuntimeConfig } from './getRuntimeConfig';
  */
 export const useRuntimeConfig = () => {
   const config = getRuntimeConfig();
-  
+
   return {
     // OpenReplay configuration
     openReplayKey: config.COMPANY_OPENREPLAY_KEY,
     openReplayUrl: config.COMPANY_OPENREPLAY_URL,
-    
+
     // External service URLs
     powerBiUrl: config.COMPANY_POWERBI_URL,
     supportUrl: config.SUPPORT_URL,
     restorePasswordUrl: config.RESTORE_PASSWORD_URL,
   };
-}; 
+};

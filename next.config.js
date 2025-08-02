@@ -9,6 +9,19 @@ module.exports = {
     // Disable tracker in development by default to prevent HMR issues
     NEXT_PUBLIC_ENABLE_TRACKER: process.env.NODE_ENV === 'production' ? 'true' : 'false',
   },
+  serverRuntimeConfig: {
+    // Will only be available on the server side
+  },
+  publicRuntimeConfig: {
+    // Will be available on both server and client
+    // OpenReplay session recording service configuration
+    NEXT_PUBLIC_COMPANY_OPENREPLAY_KEY: process.env.COMPANY_OPENREPLAY_KEY,
+    NEXT_PUBLIC_COMPANY_OPENREPLAY_URL: process.env.COMPANY_OPENREPLAY_URL,
+    // External service URLs for client-side access
+    NEXT_PUBLIC_COMPANY_POWERBI_URL: process.env.COMPANY_POWERBI_URL,
+    NEXT_PUBLIC_SUPPORT_URL: process.env.SUPPORT_URL,
+    NEXT_PUBLIC_RESTORE_PASSWORD_URL: process.env.RESTORE_PASSWORD_URL,
+  },
   reactStrictMode: true,
   output: 'standalone',
   rewrites() {

@@ -17,12 +17,7 @@ interface ITrackDurationFormProps {
   isDarkMode: boolean;
 }
 
-const TrackDurationForm: React.FC<ITrackDurationFormProps> = ({
-  initialValues,
-  onSubmit,
-  onFocus,
-  isDarkMode,
-}) => {
+const TrackDurationForm: React.FC<ITrackDurationFormProps> = ({ initialValues, onSubmit, onFocus, isDarkMode }) => {
   const [form] = Form.useForm<typeof initialValues>();
   const [durationError, setDurationError] = useState(false);
 
@@ -51,11 +46,7 @@ const TrackDurationForm: React.FC<ITrackDurationFormProps> = ({
     <Form noValidate form={form} initialValues={initialValues}>
       <Form.Item noStyle name="duration" rules={durationValidationRules}>
         <Input
-          className={clsx(
-            styles.input,
-            { [styles.input_dark]: isDarkMode },
-            { [styles.input_light]: !isDarkMode },
-          )}
+          className={clsx(styles.input, { [styles.input_dark]: isDarkMode }, { [styles.input_light]: !isDarkMode })}
           onBlur={submitForm}
           onPressEnter={submitForm}
           onFocus={handleFocus}
@@ -76,7 +67,7 @@ interface ITrackDurationEditProps {
 
 export const TrackDurationEdit = memo(
   ({ trackItem, issueId, isEdit, updateTrack, isDarkMode }: ITrackDurationEditProps) => {
-    const [durationError, setDurationError] = useState(false);
+    const [, setDurationError] = useState(false);
     const duration = trackItem?.duration || DURATION_EMPTY;
     const durationFormat = useISOToHumanReadableDuration(duration);
 

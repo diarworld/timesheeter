@@ -14,19 +14,6 @@ let hasInitializationFailed = false;
 export const initializeTracker = async () => {
   // Only initialize in production or if explicitly enabled
   const shouldInitialize = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_TRACKER === 'true';
-  // TODO: remove this after testing
-  console.log('shouldInitialize', shouldInitialize);
-  console.log('process.env.NODE_ENV', process.env.NODE_ENV);
-  console.log('process.env.NEXT_PUBLIC_ENABLE_TRACKER', process.env.NEXT_PUBLIC_ENABLE_TRACKER);
-  
-  // Get runtime configuration with fallback
-  const config = getRuntimeConfig();
-  const projectKey = config.COMPANY_OPENREPLAY_KEY;
-  const ingestPoint = config.COMPANY_OPENREPLAY_URL;
-  
-  console.log('Runtime config:', config);
-  console.log('projectKey', projectKey);
-  console.log('ingestPoint', ingestPoint);
 
   if (!shouldInitialize || typeof window === 'undefined') {
     return null;

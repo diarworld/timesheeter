@@ -15,7 +15,7 @@ type TProps = {
 
 export const Layout: FC<TProps> = ({ children, head, isDarkMode }) => {
   const { supportUrl } = useRuntimeConfig();
-  
+
   return (
     <div className="Layout">
       {head}
@@ -46,13 +46,7 @@ export const Layout: FC<TProps> = ({ children, head, isDarkMode }) => {
           >
             Docs
           </Button>
-          <Button
-            type="link"
-            icon={<WechatWorkOutlined />}
-            target="_blank"
-            href={supportUrl}
-            style={{ padding: 0 }}
-          >
+          <Button type="link" icon={<WechatWorkOutlined />} target="_blank" href={supportUrl} style={{ padding: 0 }}>
             Support
           </Button>
         </Flex>
