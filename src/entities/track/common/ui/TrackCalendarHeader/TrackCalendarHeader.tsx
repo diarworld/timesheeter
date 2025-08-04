@@ -478,7 +478,7 @@ export function TrackCalendarHeader({
           </Button>
           <Button
             type="link"
-            disabled={!isEdit || !hasLdapCredentials}
+            disabled={!isEdit}
             loading={loadings[1] || isCalendarLoading}
             icon="✈︎"
             onClick={() => setVacationModalVisible(true)}
