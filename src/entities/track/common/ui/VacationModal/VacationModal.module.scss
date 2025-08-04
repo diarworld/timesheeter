@@ -1,0 +1,13 @@
+.vacationModal {
+  :global(.ant-modal-body) {
+    padding: 24px;
+  }
+
+  :global(.ant-form-item-label) {
+    font-weight: 500;
+  }
+
+  :global(.ant-alert) {
+    border-radius: 6px;
+  }
+} 

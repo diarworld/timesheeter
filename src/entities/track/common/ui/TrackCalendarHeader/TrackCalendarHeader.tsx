@@ -29,6 +29,7 @@ import { localeApi } from 'entities/locale/model/api';
 import { selectHasLdapCredentials } from 'entities/track/common/model/selectors';
 import { track } from 'entities/track/common/model/reducers';
 import { RulesManage } from 'entities/track/common/ui/RulesManage';
+import { VacationModal } from 'entities/track/common/ui/VacationModal';
 
 import { DarkModeSwitch, ThemeMode } from 'entities/track/common/ui/DarkModeSwitch';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
@@ -188,6 +189,7 @@ export function TrackCalendarHeader({
   const [calendarData, setCalendarData] = useState<IEwsCalendarResponse | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
+  const [vacationModalVisible, setVacationModalVisible] = useState(false);
   const [photoUploadModalVisible, setPhotoUploadModalVisible] = useState(false);
   // const handleClickTheme = () => setIsDarkMode((prev) => !prev);
   const [themeMode, setThemeMode] = useState(isDarkMode ? ThemeMode.Dark : ThemeMode.Light);
@@ -474,6 +476,17 @@ export function TrackCalendarHeader({
           >
             {message('calendar.export')}
           </Button>
+          <Button
+            type="link"
+            disabled={!isEdit || !hasLdapCredentials}
+            loading={loadings[1] || isCalendarLoading}
+            icon="✈︎"
+            onClick={() => setVacationModalVisible(true)}
+            style={{ paddingLeft: '0px' }}
+          >
+            {' '}
+            {message('menu.vacation.track')}{' '}
+          </Button>
           <TrackTimeButton className={styles.addTrackBtn} isEdit={isEdit} />
           <Col flex="auto">
             <TimePeriodStepper loader={<GlobalFetching />} isDarkMode={isDarkMode} currentMenuKey={currentMenuKey} />
@@ -506,6 +519,7 @@ export function TrackCalendarHeader({
       >
         <RulesManage tracker={tracker} isDarkMode={isDarkMode} />
       </Modal>
+      <VacationModal visible={vacationModalVisible} onCancel={() => setVacationModalVisible(false)} tracker={tracker} />
       {/* TODO: The import of PhotoUploadModal may violate a restricted import pattern. If so, refactor its location or usage as needed. */}
       <PhotoUploadModal
         visible={photoUploadModalVisible}

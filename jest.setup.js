@@ -4,6 +4,57 @@ const utc = require('dayjs/plugin/utc');
 
 dayjs.extend(utc);
 
+// Mock window.getComputedStyle to fix JSDOM errors
+Object.defineProperty(window, 'getComputedStyle', {
+  value: () => ({
+    getPropertyValue: () => '',
+  }),
+});
+
+// Mock ResizeObserver
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
+// Mock IntersectionObserver
+global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
+// Mock scrollTo
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: jest.fn(),
+});
+
+// Mock fetch for SSR environments
+global.fetch = jest.fn();
+
+// Suppress console warnings for known JSDOM limitations
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('Not implemented: window.getComputedStyle') ||
+       args[0].includes('In HTML, <tfoot> cannot be a child of <div>') ||
+       args[0].includes('validateDOMNesting') ||
+       args[0].includes('This will cause a hydration error'))
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
+
+afterAll(() => {
+  console.error = originalError;
+});
+
 // Mock window.matchMedia for Ant Design responsive components
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

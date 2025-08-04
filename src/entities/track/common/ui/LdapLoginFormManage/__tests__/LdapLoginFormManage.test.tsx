@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { track } from 'entities/track/common/model/reducers';
 import { LdapLoginFormManage } from 'entities/track/common/ui/LdapLoginFormManage';
+import { EnvProvider } from 'shared/lib/EnvContext';
 
 // Mock the EWS API hook
 const authenticateEwsMock = jest.fn(() => ({
@@ -15,6 +16,30 @@ jest.mock('entities/track/common/model/ews-api', () => ({
 // Mock the message hook
 jest.mock('entities/locale/lib/hooks', () => ({
   useMessage: () => (key: string) => key,
+}));
+
+// Mock the env variables hook
+jest.mock('shared/lib/useEnvVariables', () => ({
+  useEnvVariables: () => ({
+    envVariables: {
+      RESTORE_PASSWORD_URL: 'https://example.com/restore',
+    },
+    loading: false,
+    error: null,
+  }),
+}));
+
+// Mock Ant Design App
+jest.mock('antd', () => ({
+  ...jest.requireActual('antd'),
+  App: {
+    useApp: () => ({
+      message: {
+        success: jest.fn(),
+        error: jest.fn(),
+      },
+    }),
+  },
 }));
 
 // Mock localStorage
@@ -36,7 +61,11 @@ const createTestStore = () =>
 
 const renderWithProvider = (component: React.ReactElement) => {
   const store = createTestStore();
-  return render(<Provider store={store}>{component}</Provider>);
+  return render(
+    <Provider store={store}>
+      <EnvProvider>{component}</EnvProvider>
+    </Provider>,
+  );
 };
 
 describe('LdapLoginFormManage', () => {
