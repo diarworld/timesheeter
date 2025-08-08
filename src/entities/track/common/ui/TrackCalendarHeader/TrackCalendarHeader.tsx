@@ -479,7 +479,6 @@ export function TrackCalendarHeader({
           <Button
             type="link"
             disabled={!isEdit}
-            loading={loadings[1] || isCalendarLoading}
             icon="✈︎"
             onClick={() => setVacationModalVisible(true)}
             style={{ paddingLeft: '0px' }}
