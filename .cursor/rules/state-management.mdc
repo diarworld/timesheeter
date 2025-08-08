@@ -1,0 +1,277 @@
+# State Management with Redux Toolkit and RTK Query
+
+## Redux Toolkit Patterns
+
+### Store Configuration
+The main store is configured in [src/app/store.ts](mdc:src/app/store.ts) using Redux Toolkit's `configureStore`.
+
+### Custom Hooks
+Use the custom hooks from [src/shared/lib/hooks.ts](mdc:src/shared/lib/hooks.ts):
+```typescript
+import { useAppDispatch, useAppSelector } from 'shared/lib/hooks';
+
+// In components
+const dispatch = useAppDispatch();
+const data = useAppSelector((state) => state.entity.data);
+```
+
+## Entity State Management
+
+### Entity Structure
+Each entity should have its state managed in `entities/entity-name/model/`:
+
+```
+entities/track/
+├── model/
+│   ├── reducers.ts      # Redux slice reducers
+│   ├── selectors.ts     # State selectors
+│   ├── api.ts          # RTK Query API definitions
+│   └── types.ts        # TypeScript types
+```
+
+### Slice Pattern
+```typescript
+// entities/track/model/reducers.ts
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+interface TrackState {
+  tracks: Track[];
+  loading: boolean;
+  error: string | null;
+}
+
+const initialState: TrackState = {
+  tracks: [],
+  loading: false,
+  error: null,
+};
+
+const trackSlice = createSlice({
+  name: 'track',
+  initialState,
+  reducers: {
+    setTracks: (state, action: PayloadAction<Track[]>) => {
+      state.tracks = action.payload;
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+    },
+  },
+});
+
+export const { setTracks, setLoading, setError } = trackSlice.actions;
+export default trackSlice.reducer;
+```
+
+### Selectors Pattern
+```typescript
+// entities/track/model/selectors.ts
+import { RootState } from 'app/store';
+
+export const selectTracks = (state: RootState) => state.track.tracks;
+export const selectTrackLoading = (state: RootState) => state.track.loading;
+export const selectTrackError = (state: RootState) => state.track.error;
+
+// Memoized selectors
+export const selectTrackById = (state: RootState, id: string) =>
+  state.track.tracks.find(track => track.id === id);
+```
+
+## RTK Query Patterns
+
+### API Definition
+```typescript
+// entities/track/model/api.ts
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+export const trackApi = createApi({
+  reducerPath: 'trackApi',
+  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  tagTypes: ['Track'],
+  endpoints: (builder) => ({
+    getTracks: builder.query<Track[], void>({
+      query: () => 'tracks',
+      providesTags: ['Track'],
+    }),
+    createTrack: builder.mutation<Track, CreateTrackRequest>({
+      query: (track) => ({
+        url: 'tracks',
+        method: 'POST',
+        body: track,
+      }),
+      invalidatesTags: ['Track'],
+    }),
+    updateTrack: builder.mutation<Track, { id: string; data: Partial<Track> }>({
+      query: ({ id, data }) => ({
+        url: `tracks/${id}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: ['Track'],
+    }),
+  }),
+});
+
+export const {
+  useGetTracksQuery,
+  useCreateTrackMutation,
+  useUpdateTrackMutation,
+} = trackApi;
+```
+
+### Using RTK Query Hooks
+```typescript
+// In components
+import { useGetTracksQuery, useCreateTrackMutation } from 'entities/track/model/api';
+
+const MyComponent: React.FC = () => {
+  const { data: tracks, isLoading, error } = useGetTracksQuery();
+  const [createTrack, { isLoading: isCreating }] = useCreateTrackMutation();
+
+  const handleCreateTrack = async (trackData: CreateTrackRequest) => {
+    try {
+      await createTrack(trackData).unwrap();
+      // Success handling
+    } catch (error) {
+      // Error handling
+    }
+  };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {tracks?.map(track => (
+        <div key={track.id}>{track.name}</div>
+      ))}
+    </div>
+  );
+};
+```
+
+## State Organization
+
+### Root State Structure
+```typescript
+// app/store.ts
+import { configureStore } from '@reduxjs/toolkit';
+import trackReducer from 'entities/track/model/reducers';
+import { trackApi } from 'entities/track/model/api';
+
+export const store = configureStore({
+  reducer: {
+    track: trackReducer,
+    [trackApi.reducerPath]: trackApi.reducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(trackApi.middleware),
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+```
+
+### Provider Setup
+```typescript
+// app/providers.tsx
+import { Provider } from 'react-redux';
+import { store } from './store';
+
+export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <Provider store={store}>
+      {children}
+    </Provider>
+  );
+};
+```
+
+## Best Practices
+
+### State Updates
+- Use Redux Toolkit's `createSlice` for immutable updates
+- Leverage RTK Query for server state management
+- Use selectors for derived state
+- Implement proper error handling
+
+### Performance
+- Use `useSelector` with shallow equality for object comparisons
+- Implement memoized selectors for expensive computations
+- Use RTK Query's caching and invalidation features
+
+### Testing
+```typescript
+// Test Redux slices
+import { trackReducer, setTracks } from 'entities/track/model/reducers';
+
+describe('track reducer', () => {
+  it('should handle setTracks', () => {
+    const initialState = { tracks: [], loading: false, error: null };
+    const tracks = [{ id: '1', name: 'Test Track' }];
+    
+    const newState = trackReducer(initialState, setTracks(tracks));
+    expect(newState.tracks).toEqual(tracks);
+  });
+});
+
+// Test RTK Query hooks
+import { renderHook, waitFor } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { store } from 'app/store';
+import { useGetTracksQuery } from 'entities/track/model/api';
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <Provider store={store}>{children}</Provider>
+);
+
+test('useGetTracksQuery', async () => {
+  const { result } = renderHook(() => useGetTracksQuery(), { wrapper });
+  
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+});
+```
+
+## Common Patterns
+
+### Loading States
+```typescript
+const { data, isLoading, isFetching, isError } = useGetTracksQuery();
+
+// Show loading spinner for initial load
+if (isLoading) return <Spinner />;
+
+// Show subtle loading indicator for refetch
+if (isFetching) return <div>Refreshing...</div>;
+```
+
+### Error Handling
+```typescript
+const { data, error, isError } = useGetTracksQuery();
+
+if (isError) {
+  return <ErrorMessage error={error} />;
+}
+```
+
+### Optimistic Updates
+```typescript
+const [updateTrack] = useUpdateTrackMutation();
+
+const handleUpdate = async (id: string, data: Partial<Track>) => {
+  try {
+    await updateTrack({ id, data }).unwrap();
+  } catch (error) {
+    // Handle error and potentially revert optimistic update
+  }
+};
+```
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,84 @@
+# React 19 Compatibility and Dependency Management
+
+## React 19 Specific Requirements
+
+### Type Definitions
+- Use `@types/react@^19.1.9` and `@types/react-dom@^19.0.0` for React 19 compatibility
+- Always provide initial values to `useRef` hooks: `useRef<Type>(initialValue)`
+- Use `React.JSX.Element` instead of `JSX.Element` for component return types
+
+### useRef Changes
+```typescript
+// ❌ React 19 - This will cause TypeScript errors
+const timeoutRef = useRef<number | undefined>();
+
+// ✅ React 19 - Provide initial value
+const timeoutRef = useRef<number | undefined>(undefined);
+const inputRef = useRef<HTMLInputElement>(null);
+const stateRef = useRef<string>('');
+```
+
+### JSX Namespace
+```typescript
+// ❌ React 19 - May cause namespace issues
+render(): JSX.Element {
+
+// ✅ React 19 - Use React.JSX.Element
+render(): React.JSX.Element {
+```
+
+## Dependency Management
+
+### React 19 Compatible Dependencies
+Ensure these versions are compatible with React 19:
+```json
+{
+  "react": "^19.1.1",
+  "react-dom": "^19.1.1",
+  "@types/react": "^19.1.9",
+  "@types/react-dom": "^19.0.0",
+  "@ant-design/v5-patch-for-react-19": "^1.0.3"
+}
+```
+
+### Common Dependency Conflicts
+- **@types/react-dom** requires matching React types version
+- **@testing-library/react** should be compatible with React 19
+- **Storybook** addons may need updates for React 19
+
+### Resolution Strategy
+1. Always install matching `@types/react` and `@types/react-dom` versions
+2. Use `npm install` instead of `npm ci` when adding new type dependencies
+3. Regenerate Prisma client after dependency changes: `npx prisma generate`
+4. Run `npm run check-types` to verify TypeScript compatibility
+
+## Migration Checklist
+
+When upgrading to React 19:
+- [ ] Update React and React DOM to 19.x
+- [ ] Update `@types/react` and `@types/react-dom` to 19.x
+- [ ] Add `@ant-design/v5-patch-for-react-19` for Ant Design compatibility
+- [ ] Fix all `useRef` calls to provide initial values
+- [ ] Update JSX return types to use `React.JSX.Element`
+- [ ] Test all components for compatibility issues
+- [ ] Update testing libraries if needed
+- [ ] Regenerate Prisma client
+
+## Troubleshooting
+
+### Common Errors
+1. **"Cannot find namespace 'JSX'"** - Use `React.JSX.Element`
+2. **"Expected 1 arguments, but got 0"** - Provide initial value to `useRef`
+3. **Peer dependency conflicts** - Ensure matching React type versions
+4. **Prisma client errors** - Run `npx prisma generate`
+
+### Debugging Steps
+1. Check `package.json` for version mismatches
+2. Clear `node_modules` and `package-lock.json`
+3. Reinstall dependencies with `npm install`
+4. Run type checking with `npm run check-types`
+5. Regenerate Prisma client if needed
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,181 @@
+# Development Workflow and Common Tasks
+
+## Development Commands
+
+### Core Development Scripts
+```bash
+# Start development server with Turbopack
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+
+# Type checking
+npm run check-types
+
+# Linting
+npm run lint
+npm run lint:fix
+
+# Testing
+npm run test:unit
+npm run ci:test:unit  # Silent mode for CI
+```
+
+### Storybook Development
+```bash
+# Start Storybook development server
+npm run storybook
+
+# Build Storybook for deployment
+npm run build-storybook
+```
+
+## Common Development Tasks
+
+### Adding New Dependencies
+1. **Production dependencies**: `npm install package-name`
+2. **Development dependencies**: `npm install --save-dev package-name`
+3. **Type definitions**: `npm install --save-dev @types/package-name`
+4. **Check for conflicts**: Run `npm run check-types` after installation
+
+### Database Operations
+```bash
+# Generate Prisma client (after schema changes)
+npx prisma generate
+
+# Run database migrations
+npx prisma migrate dev
+
+# Reset database (development only)
+npx prisma migrate reset
+
+# Open Prisma Studio
+npx prisma studio
+```
+
+### Code Quality Checks
+```bash
+# Full code quality check
+npm run lint && npm run check-types && npm run test:unit
+
+# Fix auto-fixable issues
+npm run lint:fix
+```
+
+## File Organization Patterns
+
+### Component Creation
+When creating a new component:
+1. Create directory: `components/ComponentName/`
+2. Create files:
+   - `ComponentName.tsx` - Main component
+   - `ComponentName.module.scss` - Styles
+   - `index.ts` - Export file
+   - `ComponentName.stories.tsx` - Storybook stories (optional)
+
+### Entity Structure
+For new entities in `entities/`:
+```
+entities/entity-name/
+├── common/
+│   ├── lib/          # Shared utilities and hooks
+│   ├── model/        # Redux state, types, API
+│   └── ui/           # UI components
+├── jira/             # Jira-specific implementation
+└── yandex/           # Yandex-specific implementation
+```
+
+### Feature Structure
+For new features in `features/`:
+```
+features/feature-name/
+├── lib/              # Business logic
+└── ui/               # UI components
+```
+
+## Import Organization
+
+Follow this import order in all files:
+```typescript
+// 1. External libraries
+import { useState, useEffect } from 'react';
+import { Button, Modal } from 'antd';
+
+// 2. Internal shared utilities
+import { useAppDispatch } from 'shared/lib/hooks';
+
+// 3. Entity imports
+import { useMessage } from 'entities/locale/lib/hooks';
+
+// 4. Feature imports
+import { DateWrapper } from 'features/date/lib/DateWrapper';
+
+// 5. Component imports
+import { Text } from 'components';
+
+// 6. Relative imports (same file)
+import './Component.module.scss';
+```
+
+## Testing Workflow
+
+### Running Tests
+```bash
+# Run all tests
+npm run test:unit
+
+# Run tests in watch mode
+npm run test:unit -- --watch
+
+# Run tests for specific file
+npm run test:unit -- ComponentName.test.tsx
+
+# Run tests with coverage
+npm run test:unit -- --coverage
+```
+
+### Test File Organization
+- Place test files in `__tests__/` directories
+- Use `.test.ts` or `.test.tsx` extensions
+- Mock external dependencies in `__mocks__/` directories
+- Use existing mocks from `src/__mocks__/` when available
+
+## Debugging Tips
+
+### Common Issues
+1. **TypeScript errors**: Run `npm run check-types`
+2. **Linting errors**: Run `npm run lint:fix`
+3. **Prisma issues**: Run `npx prisma generate`
+4. **Dependency conflicts**: Clear `node_modules` and reinstall
+
+### Development Tools
+- Use React DevTools for component debugging
+- Use Redux DevTools for state debugging
+- Use Storybook for component isolation testing
+- Use TypeScript for type safety
+
+## Git Workflow
+
+### Commit Messages
+Use conventional commit format:
+```
+feat: add new component
+fix: resolve dependency conflict
+docs: update README
+test: add unit tests for component
+refactor: improve code organization
+```
+
+### Branch Naming
+- `feature/component-name` - New features
+- `fix/issue-description` - Bug fixes
+- `refactor/component-name` - Code refactoring
+- `docs/update-description` - Documentation updates
+description:
+globs:
+alwaysApply: false
+---

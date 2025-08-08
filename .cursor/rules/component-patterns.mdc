@@ -1,0 +1,423 @@
+# Component Patterns and UI Development with Ant Design
+
+## Component Structure
+
+### Basic Component Template
+```typescript
+// components/ComponentName/ComponentName.tsx
+import React from 'react';
+import { Button, Modal } from 'antd';
+import { useAppDispatch } from 'shared/lib/hooks';
+import { useMessage } from 'entities/locale/lib/hooks';
+import './ComponentName.module.scss';
+
+interface IComponentNameProps {
+  title: string;
+  onClose: () => void;
+  visible: boolean;
+}
+
+export const ComponentName: React.FC<IComponentNameProps> = ({
+  title,
+  onClose,
+  visible,
+}) => {
+  const dispatch = useAppDispatch();
+  const message = useMessage();
+
+  const handleSubmit = async () => {
+    try {
+      // Component logic
+      message.success('Success message');
+    } catch (error) {
+      message.error('Error message');
+    }
+  };
+
+  return (
+    <Modal
+      title={title}
+      open={visible}
+      onCancel={onClose}
+      onOk={handleSubmit}
+    >
+      {/* Component content */}
+    </Modal>
+  );
+};
+```
+
+### Component Export Pattern
+```typescript
+// components/ComponentName/index.ts
+export { ComponentName } from './ComponentName';
+export type { IComponentNameProps } from './ComponentName';
+```
+
+## Ant Design Integration
+
+### React 19 Compatibility
+The project uses `@ant-design/v5-patch-for-react-19` for React 19 compatibility. Ensure this is properly configured in your app.
+
+### Common Ant Design Patterns
+```typescript
+// Form handling with Ant Design
+import { Form, Input, Button, message } from 'antd';
+import { useForm } from 'antd/lib/form/Form';
+
+const MyForm: React.FC = () => {
+  const [form] = useForm();
+
+  const onFinish = async (values: any) => {
+    try {
+      // Handle form submission
+      message.success('Form submitted successfully');
+    } catch (error) {
+      message.error('Form submission failed');
+    }
+  };
+
+  return (
+    <Form form={form} onFinish={onFinish}>
+      <Form.Item
+        name="name"
+        label="Name"
+        rules={[{ required: true, message: 'Please enter a name' }]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          Submit
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
+```
+
+### Modal Patterns
+```typescript
+// Modal component with proper typing
+interface IModalProps {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+export const CustomModal: React.FC<IModalProps> = ({
+  visible,
+  onClose,
+  title,
+  children,
+}) => {
+  return (
+    <Modal
+      title={title}
+      open={visible}
+      onCancel={onClose}
+      footer={null}
+      destroyOnClose
+    >
+      {children}
+    </Modal>
+  );
+};
+```
+
+## Styling Patterns
+
+### SCSS Modules
+```scss
+// ComponentName.module.scss
+.componentName {
+  padding: 16px;
+  
+  &__header {
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  
+  &__content {
+    display: flex;
+    gap: 8px;
+  }
+  
+  &__button {
+    flex: 1;
+  }
+}
+```
+
+### Using SCSS Modules
+```typescript
+import styles from './ComponentName.module.scss';
+
+export const ComponentName: React.FC = () => {
+  return (
+    <div className={styles.componentName}>
+      <div className={styles.componentName__header}>
+        Header
+      </div>
+      <div className={styles.componentName__content}>
+        <Button className={styles.componentName__button}>
+          Action
+        </Button>
+      </div>
+    </div>
+  );
+};
+```
+
+## Hook Patterns
+
+### Custom Hooks
+```typescript
+// hooks/useComponentState.ts
+import { useState, useCallback } from 'react';
+
+interface IComponentState {
+  loading: boolean;
+  data: any[];
+  error: string | null;
+}
+
+export const useComponentState = () => {
+  const [state, setState] = useState<IComponentState>({
+    loading: false,
+    data: [],
+    error: null,
+  });
+
+  const setLoading = useCallback((loading: boolean) => {
+    setState(prev => ({ ...prev, loading }));
+  }, []);
+
+  const setData = useCallback((data: any[]) => {
+    setState(prev => ({ ...prev, data, error: null }));
+  }, []);
+
+  const setError = useCallback((error: string) => {
+    setState(prev => ({ ...prev, error, loading: false }));
+  }, []);
+
+  return {
+    ...state,
+    setLoading,
+    setData,
+    setError,
+  };
+};
+```
+
+### Form Hooks
+```typescript
+// hooks/useFormSubmit.ts
+import { useState } from 'react';
+import { message } from 'antd';
+
+export const useFormSubmit = <T>(submitFn: (data: T) => Promise<void>) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (data: T) => {
+    setLoading(true);
+    try {
+      await submitFn(data);
+      message.success('Operation completed successfully');
+    } catch (error) {
+      message.error('Operation failed');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { handleSubmit, loading };
+};
+```
+
+## Error Handling
+
+### Error Boundaries
+```typescript
+// components/ErrorBoundary/ErrorBoundary.tsx
+import React from 'react';
+import { Result, Button } from 'antd';
+
+interface IErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends React.Component<
+  React.PropsWithChildren<{}>,
+  IErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): IErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Result
+          status="error"
+          title="Something went wrong"
+          subTitle="Please try refreshing the page"
+          extra={[
+            <Button type="primary" key="refresh" onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>,
+          ]}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+## Loading States
+
+### Loading Components
+```typescript
+// components/LoadingSpinner/LoadingSpinner.tsx
+import { Spin } from 'antd';
+
+interface ILoadingSpinnerProps {
+  size?: 'small' | 'default' | 'large';
+  tip?: string;
+}
+
+export const LoadingSpinner: React.FC<ILoadingSpinnerProps> = ({
+  size = 'default',
+  tip = 'Loading...',
+}) => {
+  return <Spin size={size} tip={tip} />;
+};
+```
+
+### Conditional Rendering
+```typescript
+// Component with loading states
+export const DataComponent: React.FC = () => {
+  const { data, loading, error } = useGetDataQuery();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <ErrorMessage error={error} />;
+  }
+
+  return (
+    <div>
+      {data?.map(item => (
+        <div key={item.id}>{item.name}</div>
+      ))}
+    </div>
+  );
+};
+```
+
+## Accessibility
+
+### ARIA Labels
+```typescript
+// Accessible form components
+export const AccessibleForm: React.FC = () => {
+  return (
+    <Form>
+      <Form.Item
+        name="email"
+        label="Email"
+        rules={[{ required: true, type: 'email' }]}
+      >
+        <Input
+          aria-describedby="email-help"
+          aria-required="true"
+        />
+      </Form.Item>
+      <div id="email-help" className="sr-only">
+        Please enter a valid email address
+      </div>
+    </Form>
+  );
+};
+```
+
+### Keyboard Navigation
+```typescript
+// Keyboard accessible component
+export const KeyboardComponent: React.FC = () => {
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      // Handle action
+    }
+  };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      onClick={() => {/* handle click */}}
+    >
+      Clickable content
+    </div>
+  );
+};
+```
+
+## Testing Components
+
+### Component Testing
+```typescript
+// ComponentName.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { store } from 'app/store';
+import { ComponentName } from './ComponentName';
+
+const renderWithProvider = (component: React.ReactElement) => {
+  return render(
+    <Provider store={store}>
+      {component}
+    </Provider>
+  );
+};
+
+describe('ComponentName', () => {
+  it('should render correctly', () => {
+    renderWithProvider(<ComponentName title="Test" onClose={jest.fn()} visible={true} />);
+    expect(screen.getByText('Test')).toBeInTheDocument();
+  });
+
+  it('should call onClose when modal is closed', () => {
+    const onClose = jest.fn();
+    renderWithProvider(<ComponentName title="Test" onClose={onClose} visible={true} />);
+    
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    fireEvent.click(closeButton);
+    
+    expect(onClose).toHaveBeenCalled();
+  });
+});
+```
+description:
+globs:
+alwaysApply: false
+---
