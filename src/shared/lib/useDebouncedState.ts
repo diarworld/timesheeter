@@ -8,7 +8,7 @@ import { startTransition, useCallback, useRef, useState } from 'react';
 export const useDebouncedState = <T>(initialValue: T, delay: number = 500) => {
   const [value, setValue] = useState(initialValue);
   const [isDebouncing, setIsDebouncing] = useState(false);
-  const timeoutRef = useRef<number | undefined>();
+  const timeoutRef = useRef<number | undefined>(undefined);
 
   const seValueDebounced = useCallback(
     (nextValue: T) => {

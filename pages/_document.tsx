@@ -4,7 +4,7 @@ import React from 'react';
 const font = 'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons&display=swap';
 
 class MyDocument extends Document {
-  render(): JSX.Element {
+  render(): React.JSX.Element {
     return (
       <Html>
         <Head>
