@@ -19,7 +19,7 @@
     "ci:test:unit": "jest --silent"
   },
   "dependencies": {
-    "@ant-design/icons": "^5.2.6",
+    "@ant-design/icons": "^6.0.0",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@openreplay/tracker": "^16.4.3",
     "@openreplay/tracker-assist": "^11.0.8",
