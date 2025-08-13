@@ -34,7 +34,7 @@
     "ews-javascript-api": "^0.15.3",
     "final-form": "^5.0.0",
     "iso8601-duration": "^2.1.2",
-    "js-cookie": "^2.2.1",
+    "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "next": "^15.4.5",
     "parse-duration": "^2.1.4",
