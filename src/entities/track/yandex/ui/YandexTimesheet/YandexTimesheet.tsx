@@ -29,7 +29,6 @@ import { LdapLoginModalCreate } from 'entities/track/common/ui/LdapLoginModalCre
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 
 import { useAppSelector } from 'shared/lib/hooks';
-import { selectTeam } from 'entities/track/common/model/selectors';
 import { track } from 'entities/track/common/model/reducers';
 import dayjs from 'dayjs';
 
@@ -39,6 +38,20 @@ import { TYandexUser } from 'entities/user/yandex/model/types';
 import { ReportsTable } from './ReportsTable';
 import { Select, Space } from 'antd';
 import { Typography } from 'antd';
+
+interface ITeamForReports {
+  id: string;
+  name: string;
+  creatorId: string;
+  members: TYandexUser[];
+}
+
+interface IDatabaseTeam {
+  id: string;
+  name: string;
+  creatorId: string;
+  members: TYandexUser[];
+}
 
 type TProps = {
   language: TCurrentLocale | undefined;
@@ -88,13 +101,10 @@ export const YandexTimesheet: FC<TProps> = ({
     { skip: !uId },
   );
 
-  // Wrap team in useMemo to stabilize reference for useEffect deps
-  const teamRaw = useAppSelector(selectTeam);
-  const team = useMemo(() => teamRaw || [], [teamRaw]);
   // const currentUser = team.find((user) => user.uid === uId);
 
   // Get teams data for reports
-  const teams = useAppSelector((state: any) => state.track.teams || []);
+  const teams = useAppSelector((state: { track: { teams: ITeamForReports[] } }) => state.track.teams || []);
   const [reportTeamId, setReportTeamId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationRef = useRef(false);
@@ -102,9 +112,9 @@ export const YandexTimesheet: FC<TProps> = ({
   // Initialize reportTeamId with activeTeamId from localStorage on component mount
   useEffect(() => {
     if (initializationRef.current) return; // Prevent multiple initializations
-    
+
     const savedActiveTeamId = localStorage.getItem('activeTeamId');
-    
+
     if (savedActiveTeamId) {
       // If we have a saved activeTeamId, use it
       setReportTeamId(savedActiveTeamId);
@@ -119,7 +129,7 @@ export const YandexTimesheet: FC<TProps> = ({
       const savedActiveTeamId = localStorage.getItem('activeTeamId');
       if (!savedActiveTeamId) {
         // Find first own team, otherwise use first team
-        const ownTeam = teams.find((t: any) => t.creatorId === self?.uid.toString());
+        const ownTeam = teams.find((t: ITeamForReports) => t.creatorId === self?.uid.toString());
         const defaultTeamId = ownTeam ? ownTeam.id : teams[0].id;
         setReportTeamId(defaultTeamId);
       }
@@ -155,7 +165,7 @@ export const YandexTimesheet: FC<TProps> = ({
             const data = await res.json();
             if (data.teams && Array.isArray(data.teams)) {
               // Transform database teams to our format and dispatch to Redux
-              const transformedTeams = data.teams.map((dbTeam: any) => ({
+              const transformedTeams = data.teams.map((dbTeam: IDatabaseTeam) => ({
                 id: dbTeam.id,
                 name: dbTeam.name,
                 creatorId: dbTeam.creatorId,
@@ -204,16 +214,16 @@ export const YandexTimesheet: FC<TProps> = ({
 
     if (currentMenuKey === 'reports' && reportTeamId && teams.length > 0) {
       setLoadingUserTracks(true);
-      
+
       // Find the selected team
-      const selectedTeam = teams.find((t: any) => t.id === reportTeamId);
+      const selectedTeam = teams.find((t: ITeamForReports) => t.id === reportTeamId);
       if (!selectedTeam) {
         setLoadingUserTracks(false);
         return;
       }
 
       Promise.all(
-        selectedTeam.members.map((user: any) =>
+        selectedTeam.members.map((user: { uid: number; display: string }) =>
           triggerGetYandexTracks({
             from,
             to,
@@ -349,7 +359,7 @@ export const YandexTimesheet: FC<TProps> = ({
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
         <Spin spinning={loadingUserTracks}>
           <ReportsTable
-            team={reportTeamId ? teams.find((t: any) => t.id === reportTeamId)?.members || [] : []}
+            team={reportTeamId ? teams.find((t: ITeamForReports) => t.id === reportTeamId)?.members || [] : []}
             tracks={userTracks}
             from={from}
             to={to}
@@ -401,24 +411,27 @@ export const YandexTimesheet: FC<TProps> = ({
                     allowClear
                     showSearch
                     filterOption={(input, option) =>
-                      (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                      (option?.searchText as string)?.toLowerCase().includes(input.toLowerCase())
                     }
-                    options={teams?.map((team: any) => ({
-                      value: team.id,
-                      label: (
-                        <Space>
-                          <span>{team.name}</span>
-                          {team.creatorId === self?.uid.toString() && (
-                            <Typography.Text type="success" style={{ fontSize: '12px' }}>
-                              (Own)
+                    options={
+                      teams?.map((team: ITeamForReports) => ({
+                        value: team.id,
+                        label: (
+                          <Space>
+                            <span>{team.name}</span>
+                            {team.creatorId === self?.uid.toString() && (
+                              <Typography.Text type="success" style={{ fontSize: '12px' }}>
+                                (Own)
+                              </Typography.Text>
+                            )}
+                            <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                              {team.members.length} members
                             </Typography.Text>
-                          )}
-                          <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                            {team.members.length} members
-                          </Typography.Text>
-                        </Space>
-                      ),
-                    })) || []}
+                          </Space>
+                        ),
+                        searchText: team.name,
+                      })) || []
+                    }
                     value={reportTeamId}
                     onChange={setReportTeamId}
                   />

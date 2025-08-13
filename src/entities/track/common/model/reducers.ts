@@ -48,7 +48,7 @@ export const track = createSlice({
     },
     updateTeam: (state, { payload }: PayloadAction<{ teamId: string; updates: Partial<TTeam> }>) => {
       if (state.teams) {
-        const teamIndex = state.teams.findIndex(team => team.id === payload.teamId);
+        const teamIndex = state.teams.findIndex((team) => team.id === payload.teamId);
         if (teamIndex !== -1) {
           state.teams[teamIndex] = { ...state.teams[teamIndex], ...payload.updates };
         }
@@ -56,7 +56,7 @@ export const track = createSlice({
     },
     removeTeam: (state, { payload }: PayloadAction<string>) => {
       if (state.teams) {
-        state.teams = state.teams.filter(team => team.id !== payload);
+        state.teams = state.teams.filter((team) => team.id !== payload);
       }
       if (state.selectedTeamId === payload) {
         state.selectedTeamId = null;

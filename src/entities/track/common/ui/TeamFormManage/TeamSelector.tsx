@@ -35,8 +35,7 @@ export const TeamSelector: React.FC<ITeamSelectorProps> = ({
     }
   }, [teams, selectedTeamId, onTeamSelect]);
 
-
-  const teamOptions = teams.map(team => ({
+  const teamOptions = teams.map((team) => ({
     value: team.id,
     label: (
       <Space>
@@ -70,31 +69,20 @@ export const TeamSelector: React.FC<ITeamSelectorProps> = ({
             return option?.searchText?.toLowerCase().includes(input.toLowerCase()) || false;
           }}
         />
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={onTeamCreate}
-        >
+        <Button type="primary" icon={<PlusOutlined />} onClick={onTeamCreate}>
           <Message id="manage.team.create" />
         </Button>
       </Space>
-      
+
       {selectedTeamId && (
         <Space>
           {/* Only show delete button for teams where user is creator */}
-          {teams.find(t => t.id === selectedTeamId)?.creatorId === currentUserId && (
+          {teams.find((t) => t.id === selectedTeamId)?.creatorId === currentUserId && (
             <>
-              <Button
-                icon={<EditOutlined />}
-                onClick={() => onTeamRename(teams.find(t => t.id === selectedTeamId)!)}
-              >
+              <Button icon={<EditOutlined />} onClick={() => onTeamRename(teams.find((t) => t.id === selectedTeamId)!)}>
                 <Message id="manage.team.rename" />
               </Button>
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => onTeamDelete(selectedTeamId)}
-              >
+              <Button danger icon={<DeleteOutlined />} onClick={() => onTeamDelete(selectedTeamId)}>
                 <Message id="manage.team.delete" />
               </Button>
             </>

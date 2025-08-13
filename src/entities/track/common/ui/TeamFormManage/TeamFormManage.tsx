@@ -1,8 +1,21 @@
-import { Button, InputNumber, Avatar, Flex, Select, Spin, Space, Divider, Typography, message as antdMessage, Modal, Input } from 'antd';
+import {
+  Button,
+  InputNumber,
+  Avatar,
+  Flex,
+  Select,
+  Spin,
+  Space,
+  Divider,
+  Typography,
+  message as antdMessage,
+  Modal,
+  Input,
+} from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamFormManageCreate, TTeam } from 'entities/track/common/ui/TeamFormManage/types';
-import React, { FC, useState, useCallback, useRef, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect } from 'react';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
 import { TYandexUser } from 'entities/user/yandex/model/types';
@@ -15,7 +28,7 @@ import { useGetUserExtrasQuery } from 'entities/user/common/model/api';
 
 import { useAppDispatch, useAppSelector } from 'shared/lib/hooks';
 import { track } from 'entities/track/common/model/reducers';
-import { RootState } from 'app/store';
+import { TRootState } from 'app/store';
 
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
@@ -62,7 +75,7 @@ type TProps = {
 export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCreateLoading }) => {
   // Redux state
   const dispatch = useAppDispatch();
-  const trackState = useAppSelector((state: RootState) => state.track);
+  const trackState = useAppSelector((state: TRootState) => state.track);
   const teams = trackState.teams || [];
   const selectedTeamId = trackState.selectedTeamId || null;
   const currentTeam = trackState.team;
@@ -75,7 +88,13 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   const [userData, setUserData] = useState<TYandexUser>();
   const [ldapNumber, _setLdapNumber] = useState<string | number | null>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [teamSearchOptions, setTeamSearchOptions] = useState<any[]>([]);
+  const [teamSearchOptions, setTeamSearchOptions] = useState<
+    Array<{
+      value: string;
+      label: string;
+      members: TYandexUser[];
+    }>
+  >([]);
   const [teamSearchLoading, setTeamSearchLoading] = useState(false);
   const [selectedTeamIdToAdd, setSelectedTeamIdToAdd] = useState<string | null>(null);
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -99,10 +118,58 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
   const message = useMessage();
 
+  // Load teams from database
+  const loadTeamsFromDatabase = async () => {
+    if (!self) return;
+
+    // Don't load from database if we already have teams
+    if (teams && teams.length > 0) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/team', {
+        headers: {
+          'x-user-id': self.uid.toString(),
+          'x-user-email': self.email,
+          'x-user-display': self.display ? encodeURIComponent(self.display) : '',
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.teams && Array.isArray(data.teams)) {
+          // Transform database teams to our format
+          const transformedTeams = data.teams.map(
+            (dbTeam: { id: string; name: string; creatorId: string; members: TYandexUser[] }) => ({
+              id: dbTeam.id,
+              name: dbTeam.name,
+              creatorId: dbTeam.creatorId,
+              members: dbTeam.members || [],
+              isActive: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }),
+          );
+
+          dispatch(track.actions.setTeams(transformedTeams));
+
+          // If there's only one team, make it active
+          if (transformedTeams.length === 1) {
+            dispatch(track.actions.setSelectedTeamId(transformedTeams[0].id));
+            dispatch(track.actions.setTeam(transformedTeams[0].members));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading teams from database:', error);
+    }
+  };
+
   // Initialize teams from localStorage on component mount
   useEffect(() => {
     const savedTeams = localStorage.getItem('teams');
-    
+
     if (savedTeams) {
       try {
         const parsedTeams = JSON.parse(savedTeams);
@@ -124,53 +191,6 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       loadTeamsFromDatabase();
     }
   }, [dispatch, self]);
-
-  // Load teams from database
-  const loadTeamsFromDatabase = async () => {
-    if (!self) return;
-    
-    // Don't load from database if we already have teams
-    if (teams && teams.length > 0) {
-      return;
-    }
-    
-    
-    try {
-      const res = await fetch('/api/team', {
-        headers: {
-          'x-user-id': self.uid.toString(),
-          'x-user-email': self.email,
-          'x-user-display': self.display ? encodeURIComponent(self.display) : '',
-        },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.teams && Array.isArray(data.teams)) {
-          // Transform database teams to our format
-          const transformedTeams = data.teams.map((dbTeam: any) => ({
-            id: dbTeam.id,
-            name: dbTeam.name,
-            creatorId: dbTeam.creatorId,
-            members: dbTeam.members || [],
-            isActive: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }));
-
-          dispatch(track.actions.setTeams(transformedTeams));
-          
-          // If there's only one team, make it active
-          if (transformedTeams.length === 1) {
-            dispatch(track.actions.setSelectedTeamId(transformedTeams[0].id));
-            dispatch(track.actions.setTeam(transformedTeams[0].members));
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading teams from database:', error);
-    }
-  };
 
   // Save teams to localStorage when they change
   useEffect(() => {
@@ -200,9 +220,9 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
     if (teams && teams.length > 0 && self && !selectedTeamId) {
       // If we have teams but no active team, try to restore the last active team
       const lastActiveTeamId = localStorage.getItem('activeTeamId');
-      if (lastActiveTeamId && teams.find(t => t.id === lastActiveTeamId)) {
+      if (lastActiveTeamId && teams.find((t: TTeam) => t.id === lastActiveTeamId)) {
         dispatch(track.actions.setSelectedTeamId(lastActiveTeamId));
-        const lastActiveTeam = teams.find(t => t.id === lastActiveTeamId);
+        const lastActiveTeam = teams.find((t: TTeam) => t.id === lastActiveTeamId);
         if (lastActiveTeam) {
           dispatch(track.actions.setTeam(lastActiveTeam.members));
         }
@@ -243,7 +263,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           const filteredUsers = users
             .filter((teamUser) => !teamUser.dismissed)
             .filter((teamUser) => teamUser.login.startsWith('60'));
-          
+
           const minimalUsers = filteredUsers.map((teamUser) => ({
             uid: teamUser.uid,
             login: teamUser.login,
@@ -257,21 +277,27 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           if (selectedTeamId && currentTeam) {
             setIsModifyingTeam(true); // Mark that we're modifying team data
             const updatedTeam = [...currentTeam, ...minimalUsers];
-            const deduped = Array.from(new Map(updatedTeam.map((teamUser: TYandexUser) => [teamUser.login, teamUser])).values());
+            const deduped = Array.from(
+              new Map(updatedTeam.map((teamUser: TYandexUser) => [teamUser.login, teamUser])).values(),
+            );
             const sorted = deduped
               .slice()
-              .sort((a: TYandexUser, b: TYandexUser) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-            
+              .sort((a: TYandexUser, b: TYandexUser) =>
+                (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }),
+              );
+
             dispatch(track.actions.setTeam(sorted));
-            
+
             // Update team in teams array
             if (teams) {
               const teamIndex = teams.findIndex((t: TTeam) => t.id === selectedTeamId);
               if (teamIndex !== -1) {
-                dispatch(track.actions.updateTeam({
-                  teamId: selectedTeamId,
-                  updates: { members: sorted }
-                }));
+                dispatch(
+                  track.actions.updateTeam({
+                    teamId: selectedTeamId,
+                    updates: { members: sorted },
+                  }),
+                );
               }
             }
           }
@@ -293,18 +319,22 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       const newTeam = [...(currentTeam || []), userData];
       const sorted = newTeam
         .slice()
-        .sort((a: TYandexUser, b: TYandexUser) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-      
+        .sort((a: TYandexUser, b: TYandexUser) =>
+          (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }),
+        );
+
       dispatch(track.actions.setTeam(sorted));
-      
+
       // Update team in teams array
       if (teams) {
         const teamIndex = teams.findIndex((t: TTeam) => t.id === selectedTeamId);
         if (teamIndex !== -1) {
-          dispatch(track.actions.updateTeam({
-            teamId: selectedTeamId,
-            updates: { members: sorted }
-          }));
+          dispatch(
+            track.actions.updateTeam({
+              teamId: selectedTeamId,
+              updates: { members: sorted },
+            }),
+          );
         }
       }
     }
@@ -317,18 +347,22 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       const filtered = currentTeam.filter((member: TYandexUser) => member.login !== ldap);
       const sorted = filtered
         .slice()
-        .sort((a: TYandexUser, b: TYandexUser) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-      
+        .sort((a: TYandexUser, b: TYandexUser) =>
+          (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }),
+        );
+
       dispatch(track.actions.setTeam(sorted));
-      
+
       // Update team in teams array
       if (teams) {
         const teamIndex = teams.findIndex((t: TTeam) => t.id === selectedTeamId);
         if (teamIndex !== -1) {
-          dispatch(track.actions.updateTeam({
-            teamId: selectedTeamId,
-            updates: { members: sorted }
-          }));
+          dispatch(
+            track.actions.updateTeam({
+              teamId: selectedTeamId,
+              updates: { members: sorted },
+            }),
+          );
         }
       }
     }
@@ -390,7 +424,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           const teamToDelete = teams.find((t: TTeam) => t.id === teamId);
           if (teamToDelete) {
             dispatch(track.actions.removeTeam(teamId));
-            
+
             // If this was the selected team, clear the current team
             if (teamId === selectedTeamId) {
               dispatch(track.actions.setTeam([]));
@@ -432,11 +466,13 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
       if (res.ok) {
         // Update team in Redux state
-        dispatch(track.actions.updateTeam({
-          teamId: teamToRename.id,
-          updates: { name: newTeamName.trim() }
-        }));
-        
+        dispatch(
+          track.actions.updateTeam({
+            teamId: teamToRename.id,
+            updates: { name: newTeamName.trim() },
+          }),
+        );
+
         antdMessage.success('Team renamed successfully!');
         setShowRenameModal(false);
         setTeamToRename(null);
@@ -457,7 +493,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       try {
         // Always create empty teams - the creator will be added as the only member
         const members = [self];
-        
+
         const res = await fetch('/api/team', {
           method: 'POST',
           headers: {
@@ -481,18 +517,18 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
-            
+
             dispatch(track.actions.addTeam(newTeam));
             dispatch(track.actions.setSelectedTeamId(newTeam.id));
             setShowCreateModal(false);
-            
+
             // Show success message
             antdMessage.success(`Team "${teamData.name}" created successfully!`);
           }
         } else {
           const errorData = await res.json();
           console.error('Error creating team:', errorData);
-          
+
           // Show error message to user
           if (errorData.error) {
             antdMessage.error(`Failed to create team: ${errorData.error}`);
@@ -534,17 +570,19 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       // Merge and dedupe by uid (as string)
       const merged = [...(currentTeam || []), ...selectedTeam.members];
       const deduped = Array.from(new Map(merged.map((u) => [String(u.uid), u])).values());
-      
+
       dispatch(track.actions.setTeam(deduped));
-      
+
       // Update team in teams array
       if (teams) {
         const teamIndex = teams.findIndex((t: TTeam) => t.id === selectedTeamId);
         if (teamIndex !== -1) {
-          dispatch(track.actions.updateTeam({
-            teamId: selectedTeamId,
-            updates: { members: deduped }
-          }));
+          dispatch(
+            track.actions.updateTeam({
+              teamId: selectedTeamId,
+              updates: { members: deduped },
+            }),
+          );
         }
       }
     }
@@ -555,12 +593,10 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       <div>
         <Title level={5}>{message('manage.team.title') || 'Team Management'}</Title>
         <Space direction="vertical" style={{ width: '100%' }}>
-          <Text type="secondary">{message('manage.team.no.teams.message') || 'No teams available. Create your first team to get started.'}</Text>
-          <Button
-            type="primary"
-            onClick={handleTeamCreate}
-            style={{ marginTop: 16 }}
-          >
+          <Text type="secondary">
+            {message('manage.team.no.teams.message') || 'No teams available. Create your first team to get started.'}
+          </Text>
+          <Button type="primary" onClick={handleTeamCreate} style={{ marginTop: 16 }}>
             <Message id="manage.team.create" />
           </Button>
         </Space>
@@ -571,8 +607,11 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   return (
     <>
       <Space direction="vertical" style={{ width: '100%' }}>
-        <Text type="secondary" style={{ whiteSpace: 'pre-line' }}>{message('manage.team.view.manage.message') ||  'You can view all teams you are a member of, but only manage teams you created.'}</Text>
-        
+        <Text type="secondary" style={{ whiteSpace: 'pre-line' }}>
+          {message('manage.team.view.manage.message') ||
+            'You can view all teams you are a member of, but only manage teams you created.'}
+        </Text>
+
         <TeamSelector
           teams={teams}
           selectedTeamId={selectedTeamId}
@@ -685,61 +724,72 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
                     </li>
                   )}
                 </ul>
-            <Divider style={{ marginTop: 0 }}/>
-            <Title level={5}>{message('manage.team.active.team') || 'Team'}: {teams.find((t: TTeam) => t.id === selectedTeamId)?.name}</Title>
-            
-            {/* Always show team members, but only show management controls for creator teams */}
-            <ul style={{ padding: '0px' }}>
-              {teams.find((t: TTeam) => t.id === selectedTeamId)?.members.map((teamUser: TYandexUser) => (
-                <li key={teamUser.uid} style={{ display: 'flex', marginBottom: 5 }}>
-                  <span style={{ flex: 1 }}>
-                    <UserDisplayWithPhoto
-                      uid={teamUser.uid}
-                      login={teamUser.login}
-                      display={teamUser.display}
-                      position={teamUser.position}
-                    />
-                  </span>
-                  {/* Only show remove button for teams where user is creator */}
-                  {teams.find((t: TTeam) => t.id === selectedTeamId)?.creatorId === self?.uid.toString() && (
-                    <Button
-                      type="primary"
-                      name="addLdap"
-                      htmlType="button"
-                      onClick={() => handleRemove(teamUser.login)}
-                      style={{ marginLeft: 8 }}
-                      loading={isTrackCreateLoading}
-                    >
-                      <Message id="manage.team.remove" />
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
+                <Divider style={{ marginTop: 0 }} />
+                <Title level={5}>
+                  {message('manage.team.active.team') || 'Team'}:{' '}
+                  {teams.find((t: TTeam) => t.id === selectedTeamId)?.name}
+                </Title>
+
+                {/* Always show team members, but only show management controls for creator teams */}
+                <ul style={{ padding: '0px' }}>
+                  {teams
+                    .find((t: TTeam) => t.id === selectedTeamId)
+                    ?.members.map((teamUser: TYandexUser) => (
+                      <li key={teamUser.uid} style={{ display: 'flex', marginBottom: 5 }}>
+                        <span style={{ flex: 1 }}>
+                          <UserDisplayWithPhoto
+                            uid={teamUser.uid}
+                            login={teamUser.login}
+                            display={teamUser.display}
+                            position={teamUser.position}
+                          />
+                        </span>
+                        {/* Only show remove button for teams where user is creator */}
+                        {teams.find((t: TTeam) => t.id === selectedTeamId)?.creatorId === self?.uid.toString() && (
+                          <Button
+                            type="primary"
+                            name="addLdap"
+                            htmlType="button"
+                            onClick={() => handleRemove(teamUser.login)}
+                            style={{ marginLeft: 8 }}
+                            loading={isTrackCreateLoading}
+                          >
+                            <Message id="manage.team.remove" />
+                          </Button>
+                        )}
+                      </li>
+                    ))}
+                </ul>
               </>
             ) : (
               <>
                 <Divider />
-                <Title level={5}>{message('manage.team.active.team') || 'Team'}: {teams.find((t: TTeam) => t.id === selectedTeamId)?.name}</Title>
-                
+                <Title level={5}>
+                  {message('manage.team.active.team') || 'Team'}:{' '}
+                  {teams.find((t: TTeam) => t.id === selectedTeamId)?.name}
+                </Title>
+
                 {/* Show team members for viewing (non-creator teams) */}
                 <ul style={{ padding: '0px' }}>
-                  {teams.find((t: TTeam) => t.id === selectedTeamId)?.members.map((teamUser: TYandexUser) => (
-                    <li key={teamUser.uid} style={{ display: 'flex', marginBottom: 5 }}>
-                      <span style={{ flex: 1 }}>
-                        <UserDisplayWithPhoto
-                          uid={teamUser.uid}
-                          login={teamUser.login}
-                          display={teamUser.display}
-                          position={teamUser.position}
-                        />
-                      </span>
-                    </li>
-                  ))}
+                  {teams
+                    .find((t: TTeam) => t.id === selectedTeamId)
+                    ?.members.map((teamUser: TYandexUser) => (
+                      <li key={teamUser.uid} style={{ display: 'flex', marginBottom: 5 }}>
+                        <span style={{ flex: 1 }}>
+                          <UserDisplayWithPhoto
+                            uid={teamUser.uid}
+                            login={teamUser.login}
+                            display={teamUser.display}
+                            position={teamUser.position}
+                          />
+                        </span>
+                      </li>
+                    ))}
                 </ul>
-                
+
                 <Text type="secondary" style={{ whiteSpace: 'pre-line' }}>
-                  {message('manage.team.view.only.message') || 'You can view team members but cannot modify them. Only the team creator can manage members.'}
+                  {message('manage.team.view.only.message') ||
+                    'You can view team members but cannot modify them. Only the team creator can manage members.'}
                 </Text>
               </>
             )}
@@ -753,7 +803,6 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
         onSubmit={handleCreateTeam}
         loading={false}
         initialMembers={[]}
-        allowEmptyTeam={true}
       />
 
       {/* Team Rename Modal */}
@@ -771,9 +820,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
         okButtonProps={{ disabled: !newTeamName.trim() || newTeamName.trim() === teamToRename?.name }}
       >
         <div style={{ marginBottom: 16 }}>
-          <Text type="secondary">
-            {message('manage.team.rename.description') || 'Enter a new name for your team:'}
-          </Text>
+          <Text type="secondary">{message('manage.team.rename.description') || 'Enter a new name for your team:'}</Text>
         </div>
         <Input
           placeholder={message('manage.team.rename.placeholder') || 'Enter team name'}

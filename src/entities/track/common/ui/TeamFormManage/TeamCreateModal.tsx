@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Button, Space, Typography, message } from 'antd';
+import { Modal, Form, Input, Button, Space, Typography } from 'antd';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { TTeamFormManageCreate } from './types';
 import { Message } from 'entities/locale/ui/Message';
@@ -13,7 +13,6 @@ interface ITeamCreateModalProps {
   onSubmit: (teamData: TTeamFormManageCreate) => void;
   loading?: boolean;
   initialMembers?: TYandexUser[];
-  allowEmptyTeam?: boolean;
 }
 
 export const TeamCreateModal: React.FC<ITeamCreateModalProps> = ({
@@ -22,7 +21,6 @@ export const TeamCreateModal: React.FC<ITeamCreateModalProps> = ({
   onSubmit,
   loading = false,
   initialMembers = [],
-  allowEmptyTeam = false,
 }) => {
   const [form] = Form.useForm();
   const messageHook = useMessage();
@@ -61,13 +59,7 @@ export const TeamCreateModal: React.FC<ITeamCreateModalProps> = ({
         <Button key="cancel" onClick={handleCancel}>
           <Message id="common.cancel" />
         </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          loading={loading}
-          onClick={handleSubmit}
-          disabled={!canCreateTeam}
-        >
+        <Button key="submit" type="primary" loading={loading} onClick={handleSubmit} disabled={!canCreateTeam}>
           <Message id="manage.team.create" />
         </Button>,
       ]}
@@ -87,16 +79,16 @@ export const TeamCreateModal: React.FC<ITeamCreateModalProps> = ({
             onChange={(e) => setTeamName(e.target.value)}
           />
         </Form.Item>
-        
-        <Form.Item
-          label={messageHook('manage.team.members.label') || 'Team Members'}
-        >
+
+        <Form.Item label={messageHook('manage.team.members.label') || 'Team Members'}>
           <Space direction="vertical" style={{ width: '100%' }}>
             <Text type="secondary">
-              {messageHook('manage.team.members.creator.info') || 'You will be the creator and first member of this team.'}
+              {messageHook('manage.team.members.creator.info') ||
+                'You will be the creator and first member of this team.'}
             </Text>
             <Text type="secondary" italic>
-              {messageHook('manage.team.members.add.later') || 'You can add more members later using the team management tools.'}
+              {messageHook('manage.team.members.add.later') ||
+                'You can add more members later using the team management tools.'}
             </Text>
           </Space>
         </Form.Item>
