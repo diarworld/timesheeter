@@ -298,5 +298,9 @@
   "manage.team.rename.description": "Enter a new name for your team:",
   "manage.team.rename.placeholder": "Enter team name",
   "manage.team.rename.submit": "Rename",
-  "manage.team.rename.cancel": "Cancel"
+  "manage.team.rename.cancel": "Cancel",
+  "manage.team.rename.success": "Team renamed successfully!",
+  "manage.team.rename.error": "Failed to rename team. Please try again.",
+  "manage.team.create.success": "Team \"{name}\" created successfully!",
+  "manage.team.create.error": "Failed to create team. Please try again."
 }

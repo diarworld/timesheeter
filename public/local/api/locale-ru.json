@@ -74,7 +74,7 @@
   "ldap.auth.password.hint": "Пароль сохраняется в локальном кеше брузера",
   "ldap.auth.success": "Аутентификация прошла успешно!",
   "ldap.auth.title": "Авторизация в календаре",
-  "manage.team": "Настройки команды",
+  "manage.team": "Настройки команд",
   "manage.team.add": "Добавить",
   "manage.team.create": "Создать команду",
   "manage.team.create.empty.title": "Создать новую пустую команду",
@@ -298,5 +298,9 @@
   "manage.team.rename.description": "Введите новое название для вашей команды:",
   "manage.team.rename.placeholder": "Введите название команды",
   "manage.team.rename.submit": "Переименовать",
-  "manage.team.rename.cancel": "Отмена"
+  "manage.team.rename.cancel": "Отмена",
+  "manage.team.rename.success": "Команда успешно переименована!",
+  "manage.team.rename.error": "Не удалось переименовать команду. Пожалуйста, попробуйте еще раз.",
+  "manage.team.create.success": "Команда \"{name}\" успешно создана!",
+  "manage.team.create.error": "Не удалось создать команду. Пожалуйста, попробуйте еще раз."
 }

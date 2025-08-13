@@ -8,14 +8,14 @@ import {
   Space,
   Divider,
   Typography,
-  message as antdMessage,
   Modal,
   Input,
+  message as antdMessage,
 } from 'antd';
 import { useMessage } from 'entities/locale/lib/hooks';
 import { Message } from 'entities/locale/ui/Message';
 import { TTeamFormManageCreate, TTeam } from 'entities/track/common/ui/TeamFormManage/types';
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect, useRef } from 'react';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { yandexUserApi } from 'entities/user/yandex/model/yandex-api';
 import { TYandexUser } from 'entities/user/yandex/model/types';
@@ -101,6 +101,10 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   const [teamToRename, setTeamToRename] = useState<TTeam | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
   const [isModifyingTeam, setIsModifyingTeam] = useState(false);
+  const currentTeamRef = useRef<TYandexUser[]>([]);
+  const teamsRef = useRef<TTeam[]>([]);
+  const processedQueueRef = useRef<{ [teamId: string]: string }>({});
+  const lastSyncedTeamRef = useRef<string>('');
 
   // API hooks
   const { currentData: queueList, isFetching: isFetchingQueueList } = yandexQueueApi.useGetQueuesQuery({ tracker });
@@ -117,6 +121,24 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   const [triggerGetUserById, { isLoading: isLoadingUsersFromTeam }] = yandexUserApi.useLazyGetYandexUserByIdQuery();
 
   const message = useMessage();
+  const [messageApi, contextHolder] = antdMessage.useMessage();
+
+  // Function to reset all selected states after adding members
+  const resetSelectedStates = useCallback(() => {
+    setTeamQueue([]);
+    setTeamQueueYT([]);
+    setSelectedTeamIdToAdd(null);
+    setTeamSearchOptions([]);
+    setLdapValue('');
+    _setLdapNumber('');
+    setUserData(undefined);
+    setError('');
+
+    // Clear the processed queue for the current team to allow re-processing
+    if (selectedTeamId) {
+      delete processedQueueRef.current[selectedTeamId];
+    }
+  }, [selectedTeamId]);
 
   // Load teams from database
   const loadTeamsFromDatabase = async () => {
@@ -139,13 +161,16 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       if (res.ok) {
         const data = await res.json();
         if (data.teams && Array.isArray(data.teams)) {
-          // Transform database teams to our format
+          // Transform database teams to our format, ensuring all members have valid emails
           const transformedTeams = data.teams.map(
             (dbTeam: { id: string; name: string; creatorId: string; members: TYandexUser[] }) => ({
               id: dbTeam.id,
               name: dbTeam.name,
               creatorId: dbTeam.creatorId,
-              members: dbTeam.members || [],
+              members: (dbTeam.members || []).map((member: TYandexUser) => ({
+                ...member,
+                email: member.email || `${member.login}@${process.env.COMPANY_DOMAIN || 'company.com'}`,
+              })),
               isActive: false,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -156,8 +181,15 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
           // If there's only one team, make it active
           if (transformedTeams.length === 1) {
-            dispatch(track.actions.setSelectedTeamId(transformedTeams[0].id));
-            dispatch(track.actions.setTeam(transformedTeams[0].members));
+            const firstTeam = transformedTeams[0];
+            dispatch(track.actions.setSelectedTeamId(firstTeam.id));
+            dispatch(track.actions.setTeam(firstTeam.members));
+
+            // Save to localStorage
+            localStorage.setItem('activeTeamId', firstTeam.id);
+            if (firstTeam.members && firstTeam.members.length > 0) {
+              localStorage.setItem('team', JSON.stringify(firstTeam.members));
+            }
           }
         }
       }
@@ -174,7 +206,15 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
       try {
         const parsedTeams = JSON.parse(savedTeams);
         if (parsedTeams && Array.isArray(parsedTeams) && parsedTeams.length > 0) {
-          dispatch(track.actions.setTeams(parsedTeams));
+          // Ensure all team members have valid emails when loading from localStorage
+          const teamsWithValidEmails = parsedTeams.map((team) => ({
+            ...team,
+            members: (team.members || []).map((member: TYandexUser) => ({
+              ...member,
+              email: member.email || `${member.login}@${process.env.COMPANY_DOMAIN || 'company.com'}`,
+            })),
+          }));
+          dispatch(track.actions.setTeams(teamsWithValidEmails));
         }
       } catch (error) {
         console.error('Error parsing saved teams:', error);
@@ -184,18 +224,46 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
     const savedActiveTeamId = localStorage.getItem('activeTeamId');
     if (savedActiveTeamId) {
       dispatch(track.actions.setSelectedTeamId(savedActiveTeamId));
+
+      // Also restore the current team members if we have teams loaded
+      const savedTeams = localStorage.getItem('teams');
+      if (savedTeams) {
+        try {
+          const parsedTeams = JSON.parse(savedTeams);
+          const activeTeam = parsedTeams.find((t: TTeam) => t.id === savedActiveTeamId);
+          if (activeTeam) {
+            dispatch(track.actions.setTeam(activeTeam.members));
+            // Ensure localStorage is updated with valid team data
+            if (activeTeam.members && activeTeam.members.length > 0) {
+              localStorage.setItem('team', JSON.stringify(activeTeam.members));
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing saved teams for active team:', error);
+        }
+      }
     }
 
     // Only load from database if we have no teams at all (not even in localStorage)
     if (!savedTeams && self) {
       loadTeamsFromDatabase();
     }
+
+    // Cleanup function to reset flags when component unmounts
+    return () => {
+      setIsModifyingTeam(false);
+      currentTeamRef.current = [];
+      teamsRef.current = [];
+      processedQueueRef.current = {};
+      lastSyncedTeamRef.current = '';
+    };
   }, [dispatch, self]);
 
   // Save teams to localStorage when they change
   useEffect(() => {
     if (teams) {
       localStorage.setItem('teams', JSON.stringify(teams));
+      teamsRef.current = teams;
     }
   }, [teams]);
 
@@ -203,15 +271,71 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   useEffect(() => {
     if (selectedTeamId) {
       localStorage.setItem('activeTeamId', selectedTeamId);
+      const selectedTeam = teams.find((t: TTeam) => t.id === selectedTeamId);
+      if (selectedTeam && selectedTeam.members && selectedTeam.members.length > 0) {
+        localStorage.setItem('team', JSON.stringify(selectedTeam.members));
+      }
     }
-  }, [selectedTeamId]);
+  }, [selectedTeamId, teams]);
+
+  // Update refs when currentTeam changes
+  useEffect(() => {
+    if (currentTeam) {
+      currentTeamRef.current = currentTeam;
+    }
+  }, [currentTeam]);
+
+  // Reset selected states when selected team changes (but not when initializing)
+  useEffect(() => {
+    // Only reset if we're not in the initial loading state
+    if (teams && teams.length > 0) {
+      // Don't reset queue states when switching teams to allow queue processing to complete
+      // Only reset other form states
+      setSelectedTeamIdToAdd(null);
+      setTeamSearchOptions([]);
+      setLdapValue('');
+      _setLdapNumber('');
+      setUserData(undefined);
+      setError('');
+
+      // Clear the processed queue for the current team to allow re-processing
+      if (selectedTeamId) {
+        delete processedQueueRef.current[selectedTeamId];
+      }
+
+      // Clear the last synced team ref to allow future syncs
+      lastSyncedTeamRef.current = '';
+    }
+  }, [selectedTeamId, teams]);
 
   // Sync current team to database when it changes (but not when just selecting a team)
   useEffect(() => {
     if (currentTeam && self && selectedTeamId && currentTeam.length > 0 && isModifyingTeam) {
-      // Only sync when we're actually modifying team data
-      syncTeamToDb(currentTeam, self, selectedTeamId);
-      setIsModifyingTeam(false); // Reset the flag after syncing
+      // Create a hash of the current team to prevent duplicate syncs
+      const teamHash = JSON.stringify({
+        teamId: selectedTeamId,
+        members: currentTeam.map((u) => u.uid).sort(),
+      });
+
+      // Only sync if this is different from the last synced team data
+      if (teamHash !== lastSyncedTeamRef.current) {
+        lastSyncedTeamRef.current = teamHash;
+
+        // Sync immediately to ensure it happens
+        syncTeamToDb(currentTeam, self, selectedTeamId)
+          .then(() => {
+            // Sync completed successfully
+          })
+          .catch((error) => {
+            console.error('❌ Sync failed:', error);
+          })
+          .finally(() => {
+            setIsModifyingTeam(false); // Reset the flag after syncing completes
+          });
+      } else {
+        // If no sync needed, still reset the modifying flag
+        setIsModifyingTeam(false);
+      }
     }
   }, [currentTeam, self, selectedTeamId, isModifyingTeam]);
 
@@ -224,12 +348,29 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
         dispatch(track.actions.setSelectedTeamId(lastActiveTeamId));
         const lastActiveTeam = teams.find((t: TTeam) => t.id === lastActiveTeamId);
         if (lastActiveTeam) {
-          dispatch(track.actions.setTeam(lastActiveTeam.members));
+          // Ensure all team members have valid emails
+          const membersWithValidEmails = lastActiveTeam.members.map((member: TYandexUser) => ({
+            ...member,
+            email: member.email || `${member.login}@${process.env.COMPANY_DOMAIN || 'company.com'}`,
+          }));
+          dispatch(track.actions.setTeam(membersWithValidEmails));
         }
       } else if (teams.length === 1) {
         // If only one team exists, make it active
-        dispatch(track.actions.setSelectedTeamId(teams[0].id));
-        dispatch(track.actions.setTeam(teams[0].members));
+        const singleTeam = teams[0];
+        dispatch(track.actions.setSelectedTeamId(singleTeam.id));
+        // Ensure all team members have valid emails
+        const membersWithValidEmails = singleTeam.members.map((member: TYandexUser) => ({
+          ...member,
+          email: member.email || `${member.login}@${process.env.COMPANY_DOMAIN || 'company.com'}`,
+        }));
+        dispatch(track.actions.setTeam(membersWithValidEmails));
+
+        // Save to localStorage
+        localStorage.setItem('activeTeamId', singleTeam.id);
+        if (membersWithValidEmails.length > 0) {
+          localStorage.setItem('team', JSON.stringify(membersWithValidEmails));
+        }
       }
     }
   }, [teams, self, selectedTeamId, dispatch]);
@@ -251,7 +392,14 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
   const processTeamData = useCallback(
     (teamYTData: typeof teamYT) => {
-      if (teamYTData) {
+      // Only process if we haven't processed this queue for the current team yet
+      const queueHash = JSON.stringify(teamQueueYT);
+      const currentTeamId = selectedTeamId;
+
+      if (teamYTData && currentTeamId && queueHash !== processedQueueRef.current[currentTeamId]) {
+        // Track that this queue has been processed for this specific team
+        processedQueueRef.current[currentTeamId] = queueHash;
+
         const allIds = teamYTData.flatMap((queue) => [
           queue.lead.id,
           ...(queue.teamUsers ?? []).map((teamUser) => teamUser.id),
@@ -259,70 +407,92 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
         const uniqueIds = Array.from(new Set(allIds));
 
         // Fetch all users in parallel
-        Promise.all(uniqueIds.map((id) => triggerGetUserById({ userId: id, tracker }).unwrap())).then((users) => {
-          const filteredUsers = users
-            .filter((teamUser) => !teamUser.dismissed)
-            .filter((teamUser) => teamUser.login.startsWith('60'));
+        Promise.all(uniqueIds.map((id) => triggerGetUserById({ userId: id, tracker }).unwrap()))
+          .then((users) => {
+            const filteredUsers = users
+              .filter((teamUser) => !teamUser.dismissed)
+              .filter((teamUser) => teamUser.login.startsWith('60'));
 
-          const minimalUsers = filteredUsers.map((teamUser) => ({
-            uid: teamUser.uid,
-            login: teamUser.login,
-            email: teamUser.email,
-            display: teamUser.display,
-            position: teamUser.position,
-            lastLoginDate: teamUser.lastLoginDate,
-          }));
+            const minimalUsers = filteredUsers.map((teamUser) => ({
+              uid: teamUser.uid,
+              login: teamUser.login,
+              email: teamUser.email || `${teamUser.login}@${process.env.COMPANY_DOMAIN || 'company.com'}`,
+              display: teamUser.display,
+              position: teamUser.position,
+              lastLoginDate: teamUser.lastLoginDate,
+            }));
 
-          // Update current team if active
-          if (selectedTeamId && currentTeam) {
-            setIsModifyingTeam(true); // Mark that we're modifying team data
-            const updatedTeam = [...currentTeam, ...minimalUsers];
-            const deduped = Array.from(
-              new Map(updatedTeam.map((teamUser: TYandexUser) => [teamUser.login, teamUser])).values(),
-            );
-            const sorted = deduped
-              .slice()
-              .sort((a: TYandexUser, b: TYandexUser) =>
-                (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }),
+            // Update current team if active
+            if (selectedTeamId && currentTeamRef.current) {
+              const updatedTeam = [...currentTeamRef.current, ...minimalUsers];
+              const deduped = Array.from(
+                new Map(updatedTeam.map((teamUser: TYandexUser) => [teamUser.login, teamUser])).values(),
               );
-
-            dispatch(track.actions.setTeam(sorted));
-
-            // Update team in teams array
-            if (teams) {
-              const teamIndex = teams.findIndex((t: TTeam) => t.id === selectedTeamId);
-              if (teamIndex !== -1) {
-                dispatch(
-                  track.actions.updateTeam({
-                    teamId: selectedTeamId,
-                    updates: { members: sorted },
-                  }),
+              const sorted = deduped
+                .slice()
+                .sort((a: TYandexUser, b: TYandexUser) =>
+                  (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }),
                 );
+              // Mark that we're modifying team data
+              setIsModifyingTeam(true);
+
+              dispatch(track.actions.setTeam(sorted));
+
+              // Update team in teams array
+              if (teamsRef.current) {
+                const teamIndex = teamsRef.current.findIndex((t: TTeam) => t.id === selectedTeamId);
+                if (teamIndex !== -1) {
+                  dispatch(
+                    track.actions.updateTeam({
+                      teamId: selectedTeamId,
+                      updates: { members: sorted },
+                    }),
+                  );
+                }
               }
+
+              // Reset all selected states after successfully adding members
+              resetSelectedStates();
             }
-          }
-        });
+          })
+          .catch((error) => {
+            console.error('Error processing team data:', error);
+          });
       }
     },
-    [tracker, triggerGetUserById, dispatch, selectedTeamId, currentTeam, teams],
+    [tracker, triggerGetUserById, dispatch, selectedTeamId, resetSelectedStates],
   );
 
   React.useEffect(() => {
     if (teamYT && teamQueueYT.length > 0) {
-      processTeamData(teamYT);
+      const currentQueueKeys = teamQueueYT.sort();
+      const dataQueueKeys = teamYT?.map((q) => q.key).sort() || [];
+      const queueKeysMatch = JSON.stringify(currentQueueKeys) === JSON.stringify(dataQueueKeys);
+      if (queueKeysMatch) {
+        processTeamData(teamYT);
+      }
     }
+
+    // Reset the hash when team queue changes to allow processing new data
+    return () => {
+      processedQueueRef.current = {};
+    };
   }, [teamYT, processTeamData, teamQueueYT]);
 
   const handleAdd = () => {
     if (userData && selectedTeamId) {
       setIsModifyingTeam(true); // Mark that we're modifying team data
-      const newTeam = [...(currentTeam || []), userData];
+      // Ensure userData has a valid email
+      const userWithValidEmail = {
+        ...userData,
+        email: userData.email || `${userData.login}@${process.env.COMPANY_DOMAIN || 'company.com'}`,
+      };
+      const newTeam = [...(currentTeam || []), userWithValidEmail];
       const sorted = newTeam
         .slice()
         .sort((a: TYandexUser, b: TYandexUser) =>
           (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }),
         );
-
       dispatch(track.actions.setTeam(sorted));
 
       // Update team in teams array
@@ -337,6 +507,9 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           );
         }
       }
+
+      // Reset all selected states after successfully adding member
+      resetSelectedStates();
     }
   };
 
@@ -391,15 +564,41 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
   const handleAddFromTeam = () => {
     if (teamQueue.length > 0 && JSON.stringify(teamQueue) !== JSON.stringify(teamQueueYT)) {
       setTeamQueueYT(teamQueue);
+
+      // Clear the processed queue for the current team when setting new queue
+      if (selectedTeamId) {
+        delete processedQueueRef.current[selectedTeamId];
+      }
     }
   };
 
   const handleTeamQueueChange = (newQueue: string[]) => {
     setTeamQueue(newQueue);
+
+    // Clear the processed queue for the current team when queue changes
+    if (selectedTeamId) {
+      delete processedQueueRef.current[selectedTeamId];
+    }
   };
 
   const handleTeamSelect = (teamId: string) => {
     dispatch(track.actions.setSelectedTeamId(teamId));
+
+    // Also set the current team members when selecting a team
+    const selectedTeam = teams.find((t: TTeam) => t.id === teamId);
+    if (selectedTeam) {
+      dispatch(track.actions.setTeam(selectedTeam.members));
+    }
+
+    // Clear the processed queue for the new team to allow processing
+    delete processedQueueRef.current[teamId];
+
+    // Clear the last synced team ref when switching teams
+    lastSyncedTeamRef.current = '';
+
+    // Clear queue data when switching teams to prevent cross-contamination
+    setTeamQueueYT([]);
+    setTeamQueue([]);
   };
 
   const handleTeamCreate = () => {
@@ -473,18 +672,18 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           }),
         );
 
-        antdMessage.success('Team renamed successfully!');
+        messageApi.success(message('manage.team.rename.success'));
         setShowRenameModal(false);
         setTeamToRename(null);
         setNewTeamName('');
       } else {
         const errorData = await res.json();
         console.error('Error renaming team:', errorData);
-        antdMessage.error(`Failed to rename team: ${errorData.error || 'Unknown error'}`);
+        messageApi.error(message('manage.team.rename.error'));
       }
     } catch (error) {
       console.error('Error renaming team:', error);
-      antdMessage.error('Failed to rename team. Please try again.');
+      messageApi.error(message('manage.team.rename.error'));
     }
   };
 
@@ -520,25 +719,22 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
 
             dispatch(track.actions.addTeam(newTeam));
             dispatch(track.actions.setSelectedTeamId(newTeam.id));
+            dispatch(track.actions.setTeam(newTeam.members));
             setShowCreateModal(false);
 
             // Show success message
-            antdMessage.success(`Team "${teamData.name}" created successfully!`);
+            messageApi.success(message('manage.team.create.success', { name: teamData.name }));
           }
         } else {
           const errorData = await res.json();
           console.error('Error creating team:', errorData);
 
           // Show error message to user
-          if (errorData.error) {
-            antdMessage.error(`Failed to create team: ${errorData.error}`);
-          } else {
-            antdMessage.error('Failed to create team. Please try again.');
-          }
+          messageApi.error(message('manage.team.create.error'));
         }
       } catch (error) {
         console.error('Error creating team:', error);
-        antdMessage.error('Failed to create team. Please try again.');
+        messageApi.error(message('manage.team.create.error'));
       }
     }
   };
@@ -567,8 +763,12 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
     const selectedTeam = teamSearchOptions.find((t) => t.value === teamId);
     if (selectedTeam && selectedTeamId && self) {
       setIsModifyingTeam(true); // Mark that we're modifying team data
-      // Merge and dedupe by uid (as string)
-      const merged = [...(currentTeam || []), ...selectedTeam.members];
+      // Merge and dedupe by uid (as string), ensuring all users have valid emails
+      const membersWithValidEmails = selectedTeam.members.map((user: TYandexUser) => ({
+        ...user,
+        email: user.email || `${user.login}@${process.env.COMPANY_DOMAIN || 'company.com'}`,
+      }));
+      const merged = [...(currentTeam || []), ...membersWithValidEmails];
       const deduped = Array.from(new Map(merged.map((u) => [String(u.uid), u])).values());
 
       dispatch(track.actions.setTeam(deduped));
@@ -585,6 +785,9 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           );
         }
       }
+
+      // Reset all selected states after successfully adding members
+      resetSelectedStates();
     }
   };
 
@@ -829,6 +1032,7 @@ export const TeamFormManage: FC<TProps> = ({ _initialValues, tracker, isTrackCre
           onPressEnter={handleRenameSubmit}
         />
       </Modal>
+      {contextHolder}
     </>
   );
 };

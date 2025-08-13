@@ -143,6 +143,10 @@ export const YandexTimesheet: FC<TProps> = ({
     if (isInitialized && reportTeamId) {
       // Only save to localStorage after initialization and when we have a valid selection
       localStorage.setItem('activeTeamId', reportTeamId);
+      const foundTeam = teams.find((t: ITeamForReports) => t.id === reportTeamId);
+      if (foundTeam && Array.isArray(foundTeam.members) && foundTeam.members.length > 0) {
+        localStorage.setItem('team', JSON.stringify(foundTeam.members));
+      }
     }
   }, [reportTeamId, isInitialized]);
 

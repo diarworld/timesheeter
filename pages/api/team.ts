@@ -225,20 +225,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Team with this name already exists for this creator" });
     }
 
-    // Check if a team with exactly the same members already exists (optional - you can remove this if you want to allow duplicate member combinations)
-    if (members.length > 0) {
-      const emails = members.map((m: any) => m.email).sort();
-      const allTeams = await prisma.team.findMany({ include: { members: true } });
-      let foundTeam = allTeams.find((team: any) => {
-        const teamEmails = team.members.map((m: any) => m.email).sort();
-        return teamEmails.length === emails.length && teamEmails.every((e: any, i: number) => e === emails[i]);
-      });
-
-      if (foundTeam) {
-        return res.status(400).json({ "error": "Team with these exact members already exists" });
-      }
-    }
-
     // Create new team
     const newTeam = await prisma.team.create({
       data: {

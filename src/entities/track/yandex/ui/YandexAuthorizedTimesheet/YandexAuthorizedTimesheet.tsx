@@ -8,7 +8,6 @@ import { UserLoadFail } from 'entities/auth/ui/UserLoadFail/UserLoadFail';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useSetTrackerUsername } from 'entities/tracker/lib/useSetTrackerUsername';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
-import { syncTeamToDb } from 'entities/track/common/lib/sync-team';
 
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { useAppDispatch } from 'shared/lib/hooks';
@@ -70,18 +69,81 @@ export const YandexAuthorizedTimesheet = ({
     }
   }, [self]);
   useEffect(() => {
+    if (!self) return; // Don't proceed if user is not loaded yet
+
     let team: TYandexUser[] = [];
+    let shouldFetchFromDatabase = false;
+
     try {
       const stored = localStorage.getItem('team');
-      team = stored ? JSON.parse(stored) : [];
+      if (stored) {
+        team = JSON.parse(stored);
+        // Validate that the stored team data is valid
+        if (Array.isArray(team) && team.length > 0) {
+          // Check if current user is in the stored team
+          const hasCurrentUser = team.some((member) => member.login === self.login);
+          if (!hasCurrentUser) {
+            shouldFetchFromDatabase = true;
+          }
+        } else {
+          shouldFetchFromDatabase = true;
+        }
+      } else {
+        shouldFetchFromDatabase = true;
+      }
     } catch {
-      team = [];
+      shouldFetchFromDatabase = true;
     }
-    // Sort by display field (case-insensitive)
-    team = team
-      .slice()
-      .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
-    if (team.length <= 1 && self) {
+
+    // Try to restore team from stored teams array if team is empty but we have activeTeamId
+    if (team.length === 0) {
+      const activeTeamId = localStorage.getItem('activeTeamId');
+      const storedTeams = localStorage.getItem('teams');
+
+      if (activeTeamId && storedTeams) {
+        try {
+          const teams = JSON.parse(storedTeams);
+          if (Array.isArray(teams)) {
+            // First, try to find the active team by ID
+            const activeTeam = teams.find((t: TTeam) => t.id === activeTeamId);
+            if (activeTeam && activeTeam.members && activeTeam.members.length > 0) {
+              // Found the active team, restore its members
+              team = activeTeam.members;
+              shouldFetchFromDatabase = false;
+
+              // Update localStorage with the restored team
+              localStorage.setItem('team', JSON.stringify(team));
+
+              // Also restore the teams array to Redux state
+              dispatch(track.actions.setTeams(teams));
+              dispatch(track.actions.setSelectedTeamId(activeTeamId));
+            } else {
+              // Active team not found or has no members, but we still have teams data
+              // Don't fetch from database, just restore the teams structure
+              dispatch(track.actions.setTeams(teams));
+              dispatch(track.actions.setSelectedTeamId(activeTeamId));
+
+              // Set team to empty array for now, let TeamFormManage handle the restoration
+              team = [];
+              shouldFetchFromDatabase = false;
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing stored teams:', error);
+        }
+      }
+    }
+
+    // If we have valid team data, set it immediately
+    if (team.length > 0 && !shouldFetchFromDatabase) {
+      const sortedTeam = team
+        .slice()
+        .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+      dispatch(track.actions.setTeam(sortedTeam));
+    }
+
+    // Fetch from database if needed
+    if (shouldFetchFromDatabase) {
       fetch('/api/team', {
         method: 'GET',
         headers: {
@@ -97,31 +159,51 @@ export const YandexAuthorizedTimesheet = ({
           let updateTeamId: string | undefined;
 
           if (Array.isArray(data.teams) && self) {
-            // Find team where creatorId matches current user
-            const myTeam = data.teams.find((teamG: TTeam) => teamG.creatorId === self.uid.toString());
-            if (myTeam) {
-              updateTeam = myTeam.members;
-              updateTeamId = myTeam.id;
-            } else if (data.teams.length > 0) {
-              // Fallback: use members from the first team
-              updateTeam = data.teams[0].members;
-              // updateTeamId = data.teams[0].id;
+            // First, check if we have an active team ID from localStorage
+            const activeTeamId = localStorage.getItem('activeTeamId');
+            let activeTeam: TTeam | undefined;
+
+            if (activeTeamId) {
+              // Try to find the active team from the database response
+              activeTeam = data.teams.find((teamG: TTeam) => teamG.id === activeTeamId);
+            }
+
+            if (activeTeam) {
+              // Use the active team from database
+              updateTeam = activeTeam.members;
+              updateTeamId = activeTeam.id;
+            } else {
+              // Fallback: find team where creatorId matches current user
+              const myTeam = data.teams.find((teamG: TTeam) => teamG.creatorId === self.uid.toString());
+              if (myTeam) {
+                updateTeam = myTeam.members;
+                updateTeamId = myTeam.id;
+              } else if (data.teams.length > 0) {
+                // Last fallback: use members from the first team
+                updateTeam = data.teams[0].members;
+                updateTeamId = data.teams[0].id;
+              }
             }
           } else if (Array.isArray(data.members)) {
             // Legacy/fallback: use members directly
             updateTeam = data.members;
           }
 
-          if (updateTeam) {
+          if (updateTeam && updateTeam.length > 0) {
             localStorage.setItem('team', JSON.stringify(updateTeam));
             if (updateTeamId) {
               localStorage.setItem('teamId', updateTeamId);
+              localStorage.setItem('activeTeamId', updateTeamId);
             }
             dispatch(track.actions.setTeam(updateTeam));
-          } else if (self && !team?.some((e) => e?.login === self?.login)) {
-            // Refactored to avoid lonely if
+
+            // Also update the teams array in localStorage if we have it
+            if (Array.isArray(data.teams)) {
+              localStorage.setItem('teams', JSON.stringify(data.teams));
+            }
+          } else if (self) {
+            // If no team found, create a team with just the current user
             const updatedTeam = [
-              ...(Array.isArray(team) ? team : []),
               {
                 uid: self.uid,
                 display: self.display,
@@ -130,15 +212,29 @@ export const YandexAuthorizedTimesheet = ({
                 position: self.position,
                 lastLoginDate: self.lastLoginDate,
               },
-            ]
-              .slice()
-              .sort((a, b) => (a.display || '').localeCompare(b.display || '', undefined, { sensitivity: 'base' }));
+            ];
             localStorage.setItem('team', JSON.stringify(updatedTeam));
             dispatch(track.actions.setTeam(updatedTeam));
           }
+        })
+        .catch((error) => {
+          console.error('Error fetching team data:', error);
+          // Fallback: create team with just current user if fetch fails
+          if (self) {
+            const fallbackTeam = [
+              {
+                uid: self.uid,
+                display: self.display,
+                email: self.email,
+                login: self.login,
+                position: self.position,
+                lastLoginDate: self.lastLoginDate,
+              },
+            ];
+            localStorage.setItem('team', JSON.stringify(fallbackTeam));
+            dispatch(track.actions.setTeam(fallbackTeam));
+          }
         });
-    } else if (team.length > 1 && self) {
-      syncTeamToDb(team, self);
     }
   }, [self, dispatch]);
 
