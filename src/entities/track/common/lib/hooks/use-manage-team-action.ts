@@ -6,6 +6,6 @@ export const useManageTeamAction = () => {
   const dispatch = useAppDispatch();
 
   return useCallback(() => {
-    dispatch(track.actions.setTeamManageCreate({}));
+    dispatch(track.actions.setTeamManageCreate({ name: '', members: [] }));
   }, [dispatch]);
 };
