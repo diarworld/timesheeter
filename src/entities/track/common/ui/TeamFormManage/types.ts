@@ -5,23 +5,37 @@ export type TTeam = {
   name: string;
   creatorId: string;
   members: TYandexUser[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type TTeamFormManageCreate = {
-  team: string;
+  name: string;
   members: TYandexUser[];
 };
 
 export type TTeamFormManageFields = {
   ldap: string;
-  team: string;
+  teamId: string;
 };
 
 export type TTeamFormManageUpdate = {
-  team: string;
+  teamId: string;
+  name?: string;
   members: TYandexUser[];
 };
 
 export type TTeamFormManageDelete = {
-  team: string;
+  teamId: string;
+};
+
+export type TTeamFormManageSelect = {
+  teamId: string;
+  members: TYandexUser[];
+};
+
+export type TTeamFormManageState = {
+  teams: TTeam[];
+  selectedTeamId: string | null;
 };

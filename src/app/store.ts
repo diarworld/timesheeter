@@ -38,3 +38,6 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware).concat(trackersMiddleware),
   preloadedState: isClient ? getInitialState() : undefined,
 });
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

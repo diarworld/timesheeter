@@ -13,8 +13,8 @@ function replacer(key: string, value: any) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   
-  if (req.method !== 'POST' && req.method !== 'PATCH' && req.method !== 'GET') {
-    res.setHeader('Allow', ['GET', 'POST', 'PATCH']);
+  if (req.method !== 'POST' && req.method !== 'PATCH' && req.method !== 'GET' && req.method !== 'DELETE') {
+    res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'DELETE']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
   const [userId, userEmail, userDisplay] = getUserIdFromRequest(req);
@@ -101,39 +101,87 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PATCH') {
-    const { teamId, members } = req.body;
-    if (!teamId || !Array.isArray(members)) {
-      return res.status(400).json({ error: 'Missing teamId or members' });
+    const { teamId, members, name } = req.body;
+    if (!teamId) {
+      return res.status(400).json({ error: 'Missing teamId' });
     }
+    
     try {
-    // Ensure all users exist
-    const userRecords = await Promise.all(members.map(async (m: any) => {
-      let user = await prisma.user.findUnique({ where: { uid: BigInt(m.uid) } });
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            uid: BigInt(m.uid),
-            email: m.email,
-            login: m.login,
-            display: m.display,
-            position: m.position,
+      // Check if user is the creator of the team
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+        include: { creator: true },
+      });
+      
+      if (!team) {
+        return res.status(404).json({ error: 'Team not found' });
+      }
+      
+      if (team.creatorId.toString() !== userId) {
+        return res.status(403).json({ error: 'Only team creator can modify the team' });
+      }
+
+      let updateData: any = {};
+      
+      // Handle team name update
+      if (name !== undefined) {
+        if (!name || name.trim() === '') {
+          return res.status(400).json({ error: 'Team name cannot be empty' });
+        }
+        
+        // Check if a team with the same name and creator already exists
+        const existingTeamWithSameName = await prisma.team.findFirst({
+          where: { 
+            name: name.trim(),
+            creatorId: BigInt(userId || '1'),
+            id: { not: teamId } // Exclude current team
           },
         });
+
+        if (existingTeamWithSameName) {
+          return res.status(400).json({ error: "Team with this name already exists for this creator" });
+        }
+        
+        updateData.name = name.trim();
       }
-      return user;
-    }));
-    // Update team members
-    const updatedTeam = await prisma.team.update({
-      where: { id: teamId },
-      data: {
-        members: {
+      
+      // Handle team members update
+      if (members !== undefined) {
+        if (!Array.isArray(members)) {
+          return res.status(400).json({ error: 'Members must be an array' });
+        }
+        
+        // Ensure all users exist
+        const userRecords = await Promise.all(members.map(async (m: any) => {
+          let user = await prisma.user.findUnique({ where: { uid: BigInt(m.uid) } });
+          if (!user) {
+            user = await prisma.user.create({
+              data: {
+                uid: BigInt(m.uid),
+                email: m.email,
+                login: m.login,
+                display: m.display,
+                position: m.position,
+              },
+            });
+          }
+          return user;
+        }));
+        
+        updateData.members = {
           set: userRecords.map(u => ({ uid: u.uid })),
-        },
-      },
-      include: { members: true },
-    });
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(200).end(JSON.stringify({ team: updatedTeam }, replacer));
+        };
+      }
+      
+      // Update team
+      const updatedTeam = await prisma.team.update({
+        where: { id: teamId },
+        data: updateData,
+        include: { members: true },
+      });
+      
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(200).end(JSON.stringify({ team: updatedTeam }, replacer));
     } catch (error) {
       console.error('Error updating team:', error);
       return res.status(500).json({ error: 'Internal server error' });
@@ -143,8 +191,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
     const { members, name } = req.body;
-    if (!Array.isArray(members) || members.length === 0) {
-      return res.status(400).json({ error: 'Необходимо сначала настроить свою команду' });
+    if (!Array.isArray(members)) {
+      return res.status(400).json({ error: 'Members must be an array' });
     }
 
     // Ensure all users exist in DB
@@ -165,28 +213,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return user;
     }));
 
-    const teamCreator = await prisma.team.findFirst({
-      where: { creatorId: BigInt(userId || '1') },
+    // Check if a team with the same name and creator already exists
+    const existingTeamWithSameName = await prisma.team.findFirst({
+      where: { 
+        name: name,
+        creatorId: BigInt(userId || '1')
+      },
     });
 
-    if (teamCreator) {
-      return res.json({ teamId: teamCreator.id });
+    if (existingTeamWithSameName) {
+      return res.status(400).json({ error: "Team with this name already exists for this creator" });
     }
-    // Use email as unique identifier for users
-    const emails = members.map((m: any) => m.email).sort();
 
-    // Try to find a team with exactly these members (by email)
-    const allTeams = await prisma.team.findMany({ include: { members: true } });
-    let foundTeam = allTeams.find((team: any) => {
-      const teamEmails = team.members.map((m: any) => m.email).sort();
-      return teamEmails.length === emails.length && teamEmails.every((e: any, i: number) => e === emails[i]);
-    });
+    // Check if a team with exactly the same members already exists (optional - you can remove this if you want to allow duplicate member combinations)
+    if (members.length > 0) {
+      const emails = members.map((m: any) => m.email).sort();
+      const allTeams = await prisma.team.findMany({ include: { members: true } });
+      let foundTeam = allTeams.find((team: any) => {
+        const teamEmails = team.members.map((m: any) => m.email).sort();
+        return teamEmails.length === emails.length && teamEmails.every((e: any, i: number) => e === emails[i]);
+      });
 
-    if (foundTeam) {
-      // console.log('foundTeam', foundTeam);
-      return res.json({ "error": "Team with these members already exists" });
+      if (foundTeam) {
+        return res.status(400).json({ "error": "Team with these exact members already exists" });
+      }
     }
-    // Create new team if not found existing team
+
+    // Create new team
     const newTeam = await prisma.team.create({
       data: {
         name: name || `Команда ${decodedDisplay}`,
@@ -200,6 +253,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.json({ teamId: newTeam.id });
     } catch (error) {
       console.error('Error creating team:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  if (req.method === 'DELETE') {
+    const { teamId } = req.body;
+    if (!teamId) {
+      return res.status(400).json({ error: 'Missing teamId' });
+    }
+    
+    try {
+      // Check if user is the creator of the team
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+        include: { creator: true },
+      });
+      
+      if (!team) {
+        return res.status(404).json({ error: 'Team not found' });
+      }
+      
+      if (team.creatorId.toString() !== userId) {
+        return res.status(403).json({ error: 'Only team creator can delete the team' });
+      }
+      
+      // Delete the team (this will cascade to related rules)
+      await prisma.team.delete({
+        where: { id: teamId },
+      });
+      
+      return res.status(200).json({ message: 'Team deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting team:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }

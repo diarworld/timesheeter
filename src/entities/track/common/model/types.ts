@@ -20,6 +20,8 @@ export type TTrackStore = {
   ldapLogin?: TTeamLdapLogin;
   hasLdapCredentials?: boolean;
   team?: TYandexUser[];
+  teams?: TTeam[];
+  selectedTeamId?: string | null;
 };
 
 export type TTrack = {
@@ -70,8 +72,8 @@ export type TTrackInputDelete = {
 };
 
 export type TTeamManageCreate = {
-  ldap?: string;
-  team?: string;
+  name: string;
+  members: TYandexUser[];
 };
 
 export type TTeamLdapLogin = {
@@ -100,4 +102,14 @@ export type TBusinessDurationData = {
   hours: number;
   minutes: number;
   seconds: number;
+};
+
+export type TTeam = {
+  id: string;
+  name: string;
+  creatorId: string;
+  members: TYandexUser[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
