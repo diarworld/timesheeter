@@ -67,7 +67,7 @@ const getUserIssuesQuery = ({
 const getSearchIssuesQuery = ({ search }: TSearchIssuesParams) =>
   new QueryBuilder(
     new QLogic.OR(new YandexQParam('Summary', search), new YandexQParam('Key', search?.toUpperCase())),
-    new YandexQSorting('Summary', 'ASC'),
+    new YandexQSorting('Updated', 'DESC'),
   ).buildQuery();
 
 export const createYandexIssueRequest = (params: TGetIssuesParams) => {

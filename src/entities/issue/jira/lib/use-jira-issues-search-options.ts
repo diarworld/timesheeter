@@ -5,8 +5,24 @@ import { TTrackerConfig } from 'entities/tracker/model/types';
 import { TOption } from 'shared/lib/types';
 import { getOptionFromIssue } from 'entities/issue/common/lib/get-option-from-issue';
 import { jiraIssueApi } from 'entities/issue/jira/model/jira-api';
+import { TIssue } from 'entities/issue/common/model/types';
 
 const emptyArray: TOption[] = [];
+
+// Sort issues to prioritize exact key matches
+const sortIssuesBySearchPriority = (issues: TIssue[], searchTerm: string): TIssue[] => {
+  if (!searchTerm) return issues;
+
+  return [...issues].sort((a, b) => {
+    const aKeyExactMatch = a.key.toLowerCase() === searchTerm.toLowerCase();
+    const bKeyExactMatch = b.key.toLowerCase() === searchTerm.toLowerCase();
+
+    if (aKeyExactMatch && !bKeyExactMatch) return -1;
+    if (!aKeyExactMatch && bKeyExactMatch) return 1;
+
+    return 0;
+  });
+};
 
 export const useJiraIssuesSearchOptions = (tracker: TTrackerConfig, value: string | undefined) => {
   const [search, setSearch, isDebouncingSearch] = useDebouncedState('');
@@ -21,7 +37,12 @@ export const useJiraIssuesSearchOptions = (tracker: TTrackerConfig, value: strin
     { skip: !initialIssueKey },
   );
 
-  const foundIssuesAsOptions = useMemo(() => issueList?.map(getOptionFromIssue) ?? emptyArray, [issueList]);
+  const foundIssuesAsOptions = useMemo(() => {
+    if (!issueList) return emptyArray;
+
+    const sortedIssues = sortIssuesBySearchPriority(issueList, search);
+    return sortedIssues.map((issue) => getOptionFromIssue(issue, search));
+  }, [issueList, search]);
 
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),
