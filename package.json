@@ -38,7 +38,7 @@
     "lodash": "^4.17.21",
     "next": "^15.4.5",
     "parse-duration": "^2.1.4",
-    "query-string": "^8.1.0",
+    "query-string": "^9.2.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-final-form": "^7.0.0",
