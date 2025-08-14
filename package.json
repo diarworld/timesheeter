@@ -30,7 +30,7 @@
     "clsx": "^2.0.0",
     "cookie": "^1.0.2",
     "dayjs": "^1.11.3",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.2.1",
     "ews-javascript-api": "^0.15.3",
     "final-form": "^5.0.0",
     "iso8601-duration": "^2.1.2",
