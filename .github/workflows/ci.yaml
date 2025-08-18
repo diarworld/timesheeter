@@ -8,7 +8,7 @@ jobs:
     name: Install and cache dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -29,7 +29,7 @@ jobs:
     needs: [install_deps]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: './.github/actions/setup-front-job'
       - run: npm run lint
 
@@ -37,7 +37,7 @@ jobs:
     needs: [install_deps]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: './.github/actions/setup-front-job'
       - run: npm run check-types
 
@@ -45,7 +45,7 @@ jobs:
     needs: [install_deps]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: './.github/actions/setup-front-job'
       - run: npm run ci:test:unit
 
@@ -53,6 +53,6 @@ jobs:
     needs: [ install_deps ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: './.github/actions/setup-front-job'
       - run: npm run build
