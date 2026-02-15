@@ -339,7 +339,7 @@ export const MonthCalendar: React.FC<IMonthCalendarProps> = ({
           ))}
         </ul>
         <div style={{ display: 'flex' }}>
-          <TrackTimeButton isEdit={isEdit} />
+          <TrackTimeButton isEdit={isEdit} date={calendarModal.date} />
         </div>
         <Typography.Text strong>
           {message('track.total.logged')}: <DurationFormat duration={sumIsoDurations(tracks.map((t) => t.duration))} />{' '}
