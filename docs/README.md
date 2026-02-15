@@ -67,6 +67,7 @@ Timesheet родился из реальной боли разработчико
 | Переменная | Тип | Описание | Обязательно |
 |------------|-----|----------|-------------|
 | `CLIENT_ID` | string | Yandex OAuth2 App ID | ✅ Да |
+| `ENCRYPTION_KEY` | string | Salt for encripting LDAP passwords | ✅ Да |
 | `DATABASE_URL` | string | PostgreSQL подключение | ✅ Да |
 | `EWS_SERVICE_URL` | string | Exchange Web Services URL | ❌ Нет |
 | `EWS_DOMAIN` | string | Домен для EWS аутентификации | ❌ Нет |

@@ -34,6 +34,7 @@ create_env_file() {
 
 # Required variables
 CLIENT_ID=${CLIENT_ID}
+ENCRYPTION_KEY=${ENCRYPTION_KEY}
 
 # OpenReplay configuration
 COMPANY_OPENREPLAY_KEY=${COMPANY_OPENREPLAY_KEY}
@@ -48,6 +49,7 @@ EOF
   echo ".env file created successfully"
   echo "Environment variables loaded:"
   echo "  - CLIENT_ID: ${CLIENT_ID}"
+  echo "  - ENCRYPTION_KEY: ${ENCRYPTION_KEY}"
   echo "  - COMPANY_OPENREPLAY_KEY: ${COMPANY_OPENREPLAY_KEY}"
   echo "  - COMPANY_OPENREPLAY_URL: ${COMPANY_OPENREPLAY_URL}"
   echo "  - COMPANY_POWERBI_URL: ${COMPANY_POWERBI_URL}"
