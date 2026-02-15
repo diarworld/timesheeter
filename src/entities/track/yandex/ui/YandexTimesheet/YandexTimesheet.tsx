@@ -19,7 +19,7 @@ import { useFilters } from 'features/filters/lib/useFilters';
 import { YandexUserSelectConnected } from 'entities/track/yandex/ui/YandexUserSelectConnected/YandexUserSelectConnected';
 import { YandexIssueStatusSelectConnected } from 'entities/issue/yandex/ui/YandexIssueStatusSelectConnected/YandexIssueStatusSelectConnected';
 import { QueueSelect } from 'entities/queue/common/ui/QueueSelect/QueueSelect';
-import { IssueSummarySearch } from 'entities/issue/common/ui/IssueSummarySearch/IssueSummarySearch';
+import { YandexIssueSummarySearchConnected } from 'entities/track/yandex/ui/YandexIssueSummarySearchConnected/YandexIssueSummarySearchConnected';
 import { Spin } from 'antd';
 import { YANDEX_ISSUE_SORTING_KEY } from 'entities/issue/yandex/model/constants';
 import { useDispatch } from 'react-redux';
@@ -401,7 +401,12 @@ export const YandexTimesheet: FC<TProps> = ({
                     queueList={queueList}
                     isFetchingQueueList={isFetchingQueueList}
                   />
-                  <IssueSummarySearch defaultValue={summary} onSearch={updateSummary} />
+                  <YandexIssueSummarySearchConnected
+                    tracker={tracker}
+                    value={summary}
+                    defaultValue={summary}
+                    onChange={updateSummary}
+                  />
                 </>
               );
             case 'calendar':

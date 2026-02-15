@@ -42,6 +42,28 @@ export const yandexIssueApi = api.injectEndpoints({
         );
       },
     }),
+    getYandexIssuesPage: build.query<
+      { issues: TYandexIssue[]; totalPages: number },
+      TGetIssuesParams & { page: number }
+    >({
+      async queryFn(arg, _, __, fetchWithBQ) {
+        const result = await fetchWithBQ({
+          url: yandexIssueEndpoints.issues,
+          method: 'POST',
+          body: createYandexIssueRequest(arg),
+          params: { page: arg.page, perPage: arg.perPage ?? 50 },
+          headers: getTrackerHeaders(arg.tracker, {
+            'Accept-language': arg.language ?? undefined,
+          }),
+          credentials: 'omit',
+        });
+
+        if (result.error) return { error: result.error };
+
+        const totalPages = parseInt(result.meta?.response?.headers.get('X-Total-Pages') ?? '1', 10);
+        return { data: { issues: (result.data as TYandexIssue[]) ?? [], totalPages } };
+      },
+    }),
     getYandexStatuses: build.query<TIssueStatusDescription[], TGetIssuesStatusesQuery>({
       async queryFn(arg, _, __, fetchWithBQ) {
         return fetchAllPages(

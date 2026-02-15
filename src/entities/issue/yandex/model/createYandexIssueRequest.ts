@@ -22,6 +22,11 @@ const getUserIssuesQuery = ({
   sortOrder,
   utcOffsetInMinutes,
 }: TGetUserIssuesParams) => {
+  if (summary) {
+    const queryBuilder = new QueryBuilder(new YandexQParam('Key', summary), new YandexQSorting('Updated', 'DESC'));
+    return queryBuilder.buildQuery();
+  }
+
   const formattedFrom = DateWrapper.getDateFormat(
     DateWrapper.getDate({ date: from, utcOffsetInMinutes }),
     DATE_FORMAT_DATE_API,
