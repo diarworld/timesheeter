@@ -74,6 +74,7 @@
   "ldap.auth.password.hint": "Password saved only in local browser cache",
   "ldap.auth.success": "Authentication successful!",
   "ldap.auth.title": "Calendar authorization",
+  "ldap.auth.nokey": "Encryption key not loaded. Please refresh the page",
   "manage.team": "Manage team",
   "manage.team.add": "Add",
   "manage.team.create": "Create team",

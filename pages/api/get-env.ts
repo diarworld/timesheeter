@@ -22,4 +22,4 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     console.error('Error reading environment:', error);
     res.status(500).json({ error: 'Error reading environment' });
   }
-} 
+}

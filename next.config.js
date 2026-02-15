@@ -15,6 +15,8 @@ module.exports = {
     NEXT_TELEMETRY_DISABLED: '1',
     // Disable tracker in development by default to prevent HMR issues
     NEXT_PUBLIC_ENABLE_TRACKER: process.env.NODE_ENV === 'production' ? 'true' : 'false',
+    // Encryption key for client-side encryption
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   },
   reactStrictMode: true,
   output: 'standalone',

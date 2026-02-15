@@ -230,7 +230,7 @@ export function TrackCalendarHeader({
         const savedCredentials = cookieData ? JSON.parse(cookieData) : {};
 
         if (!savedCredentials.username || !savedCredentials.token) {
-          console.error('No saved credentials found');
+          antdMessage.error(message('calendar.export.no.credentials'));
           return;
         }
 

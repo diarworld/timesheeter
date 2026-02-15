@@ -26,7 +26,7 @@ export const LdapLoginFormManage: FC<ILdapLoginFormManageProps> = ({ tracker }) 
   const [form] = Form.useForm();
   const [authenticateEws, { isLoading: isAuthenticating }] = useAuthenticateEwsMutation();
   const { restorePasswordUrl } = useRuntimeConfig();
-  const { envVariables } = useEnvVariables();
+  const { envVariables, loading: envLoading } = useEnvVariables();
   const { userId, login } = useFilters();
   const { self } = useYandexUser(tracker, userId, login);
 
@@ -49,7 +49,15 @@ export const LdapLoginFormManage: FC<ILdapLoginFormManageProps> = ({ tracker }) 
   const handleSubmit = useCallback(
     async (values: { username: string; token: string; type?: string }) => {
       try {
-        const encryptedToken = await encrypt(values.token, envVariables?.ENCRYPTION_KEY);
+        if (envLoading) {
+          antMessage.error('Still loading. Please wait.');
+          return;
+        }
+        if (!envVariables?.ENCRYPTION_KEY) {
+          antMessage.error(message('ldap.auth.nokey'));
+          return;
+        }
+        const encryptedToken = await encrypt(values.token, envVariables.ENCRYPTION_KEY);
         const credentials = {
           username: values.username,
           token: encryptedToken,
@@ -74,7 +82,7 @@ export const LdapLoginFormManage: FC<ILdapLoginFormManageProps> = ({ tracker }) 
         antMessage.error(message('ldap.auth.error'));
       }
     },
-    [dispatch, authenticateEws, message],
+    [dispatch, authenticateEws, message, envVariables, envLoading],
   );
 
   const userEmail = self?.email || '';
@@ -135,7 +143,12 @@ export const LdapLoginFormManage: FC<ILdapLoginFormManageProps> = ({ tracker }) 
 
       <Flex gap="middle" justify="space-evenly" vertical>
         {/* TODO SET ERROR STATE */}
-        <Button type="primary" htmlType="submit" loading={isAuthenticating}>
+        <Button
+          type="primary"
+          htmlType="submit"
+          loading={isAuthenticating || envLoading}
+          disabled={!envVariables?.ENCRYPTION_KEY}
+        >
           {message('share.save.action')}
         </Button>
         <Button onClick={handleCancel}>{message('share.cancel.action')}</Button>
