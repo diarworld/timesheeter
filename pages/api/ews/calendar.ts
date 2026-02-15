@@ -1,16 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { 
-  ExchangeService, 
-  ExchangeVersion, 
-  CalendarFolder, 
-  Uri, 
-  WebCredentials, 
+import {
+  ExchangeService,
+  ExchangeVersion,
+  CalendarFolder,
+  Uri,
+  WebCredentials,
   WellKnownFolderName,
   CalendarView,
   DateTime,
   AppointmentSchema,
-  PropertySet
+  PropertySet,
 } from 'ews-javascript-api';
+import { decrypt, isEncrypted } from 'shared/lib/encrypt';
 
 // Helper to process promises in batches
 async function batchPromises<T>(items: T[], batchSize: number, fn: (item: T) => Promise<any>) {
@@ -26,8 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { username, token, start_date, end_date } = req.body;
-    
+    let { username, token, start_date, end_date } = req.body;
+
+    if (isEncrypted(token)) {
+      token = await decrypt(token);
+    }
+
     const service = new ExchangeService(ExchangeVersion.Exchange2016);
     const usernameOnly = username.split('@')[0];
     const ewsDomain = process.env.EWS_DOMAIN;
@@ -40,25 +45,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error('EWS_SERVICE_URL is not defined in environment variables');
     }
     service.Url = new Uri(ewsServiceUrl);
-    
+
     // Access calendar
     const calendar = await CalendarFolder.Bind(service, WellKnownFolderName.Calendar);
-    
+
     // Use provided date range
     const ewsStartDate = new DateTime(new Date(start_date));
     const ewsEndDate = new DateTime(new Date(end_date));
-    
+
     // Create calendar view
     const calendarView = new CalendarView(ewsStartDate, ewsEndDate);
     calendarView.PropertySet = new PropertySet(
-      AppointmentSchema.Subject, 
-      AppointmentSchema.Start, 
-      AppointmentSchema.End, 
+      AppointmentSchema.Subject,
+      AppointmentSchema.Start,
+      AppointmentSchema.End,
       AppointmentSchema.Location,
       AppointmentSchema.Duration,
-      AppointmentSchema.IsAllDayEvent
+      AppointmentSchema.IsAllDayEvent,
     );
-    
+
     // Find appointments
     const appointments = await calendar.FindAppointments(calendarView);
     // Load details for each appointment (all needed properties)
@@ -72,17 +77,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       AppointmentSchema.IsAllDayEvent,
       AppointmentSchema.RequiredAttendees,
       AppointmentSchema.OptionalAttendees,
-      AppointmentSchema.Organizer
+      AppointmentSchema.Organizer,
     );
-    
-    await batchPromises(appointments.Items, 20, appt => appt.Load(fullPropertySet));
+
+    await batchPromises(appointments.Items, 20, (appt) => appt.Load(fullPropertySet));
     // Convert to JSON format
-    const meetings = appointments.Items.map(appointment => {
+    const meetings = appointments.Items.map((appointment) => {
       // Extract all attendee emails
       const requiredEmails: string[] = [];
       if (appointment.RequiredAttendees && appointment.RequiredAttendees.Count > 0) {
         const attendees = (appointment.RequiredAttendees as any).Items as any[];
-        
+
         for (let i = 0; i < attendees.length; i++) {
           const attendee = attendees[i];
           if (attendee && attendee.Address) {
@@ -116,7 +121,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         optionalAttendees: optionalEmails,
         participants: participants.length,
         body: '', // Default value since property not available
-        categories: [] // Simplified for now
+        categories: [], // Simplified for now
       };
     });
 
@@ -128,14 +133,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         start: ewsStartDate.ToISOString(),
         end: ewsEndDate.ToISOString(),
         start_date: start_date,
-        end_date: end_date
-      }
+        end_date: end_date,
+      },
     });
   } catch (error) {
     console.error('Calendar fetch error:', error);
     res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : String(error)
+      message: error instanceof Error ? error.message : String(error),
     });
   }
-} 
+}

@@ -4,6 +4,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { track } from 'entities/track/common/model/reducers';
 import { LdapLoginFormManage } from 'entities/track/common/ui/LdapLoginFormManage';
 import { EnvProvider } from 'shared/lib/EnvContext';
+import { mockTracker } from '__mocks__/tracker';
 
 // Mock the EWS API hook
 const authenticateEwsMock = jest.fn(() => ({
@@ -42,6 +43,27 @@ jest.mock('antd', () => ({
   },
 }));
 
+// Mock useYandexUser
+jest.mock('entities/user/yandex/hooks/use-yandex-user', () => ({
+  useYandexUser: () => ({ self: { email: 'test@example.com' } }),
+}));
+
+// Mock useFilters
+jest.mock('features/filters/lib/useFilters', () => ({
+  useFilters: () => ({ userId: undefined, login: undefined }),
+}));
+
+// Mock js-cookie
+jest.mock('js-cookie', () => ({
+  get: jest.fn(() => JSON.stringify({ username: 'test@example.com' })),
+  set: jest.fn(),
+}));
+
+// Mock encrypt
+jest.mock('shared/lib/encrypt', () => ({
+  encrypt: jest.fn(() => Promise.resolve('encrypted_token')),
+}));
+
 // Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
@@ -75,7 +97,7 @@ describe('LdapLoginFormManage', () => {
   });
 
   it('should dispatch setHasLdapCredentials when authentication succeeds', async () => {
-    const { getByLabelText, container } = renderWithProvider(<LdapLoginFormManage />);
+    const { getByLabelText, container } = renderWithProvider(<LdapLoginFormManage tracker={mockTracker} />);
 
     const passwordInput = getByLabelText('ldap.auth.password');
     fireEvent.change(passwordInput, { target: { value: 'testpassword' } });

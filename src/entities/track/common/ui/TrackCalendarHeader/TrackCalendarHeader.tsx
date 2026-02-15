@@ -1,4 +1,5 @@
 import { Button, Col, Row, Menu, MenuProps, Modal, Typography, Card, Avatar, App } from 'antd';
+import Cookies from 'js-cookie';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
 import { timezoneTimeOffsetOptions } from 'features/date/ui/TimeOffsetSelect/TimeOffsetSelect';
 import {
@@ -23,6 +24,8 @@ import { TTrackerConfig } from 'entities/tracker/model/types';
 import { useLdapLoginAction } from 'entities/track/common/lib/hooks/use-ldap-login-action';
 import { useManageTeamAction } from 'entities/track/common/lib/hooks/use-manage-team-action';
 import { useLogoutTracker } from 'entities/tracker/lib/useLogoutTracker';
+
+const LDAP_COOKIE_NAME = 'ldap_credentials';
 import { useAppDispatch, useAppSelector } from 'shared/lib/hooks';
 import { actionLocaleSetCurrent } from 'entities/locale/model/actions';
 import { selectLocaleCurrent } from 'entities/locale/model/selectors';
@@ -223,8 +226,8 @@ export function TrackCalendarHeader({
       });
 
       try {
-        // Get saved credentials from localStorage
-        const savedCredentials = JSON.parse(localStorage.getItem('ldapCredentials') || '{}');
+        const cookieData = Cookies.get(LDAP_COOKIE_NAME);
+        const savedCredentials = cookieData ? JSON.parse(cookieData) : {};
 
         if (!savedCredentials.username || !savedCredentials.token) {
           console.error('No saved credentials found');

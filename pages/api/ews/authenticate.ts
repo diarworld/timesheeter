@@ -1,5 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { ExchangeService, ExchangeVersion, CalendarFolder, Uri, WebCredentials, WellKnownFolderName } from 'ews-javascript-api';
+import {
+  ExchangeService,
+  ExchangeVersion,
+  CalendarFolder,
+  Uri,
+  WebCredentials,
+  WellKnownFolderName,
+} from 'ews-javascript-api';
+import { decrypt, isEncrypted } from 'shared/lib/encrypt';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -7,11 +15,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { username, token } = req.body;
-    
+    let { username, token } = req.body;
+
+    if (isEncrypted(token)) {
+      token = await decrypt(token);
+    }
+
     // var autod = new AutodiscoverService(username.split('@')[1], ExchangeVersion.Exchange2016);
     // autod.Credentials = new WebCredentials(username, token);
-    
+
     const service = new ExchangeService(ExchangeVersion.Exchange2016);
     const usernameOnly = username.split('@')[0];
     const ewsDomain = process.env.EWS_DOMAIN;
@@ -24,9 +36,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error('EWS_SERVICE_URL is not defined in environment variables');
     }
     service.Url = new Uri(ewsServiceUrl);
-    
+
     // console.log('Service URL set to:', service.Url.toString());
-    
+
     // Test connection by accessing inbox
     const inbox = await CalendarFolder.Bind(service, WellKnownFolderName.Calendar);
 
@@ -34,14 +46,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       userInfo: {
         displayName: inbox.DisplayName,
-        email: username
-      }
+        email: username,
+      },
     });
   } catch (error) {
     console.error('EWS Authentication error:', error);
     res.status(401).json({
       success: false,
-      message: error instanceof Error ? error.message : String(error)
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 }

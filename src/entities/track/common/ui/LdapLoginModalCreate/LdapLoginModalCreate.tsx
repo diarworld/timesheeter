@@ -9,7 +9,12 @@ import { selectLdapLoginManage } from 'entities/track/common/model/selectors';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import styles from './LdapLoginModalCreate.module.scss';
 
-export const LdapLoginModalCreate: FC<{ tracker: TTrackerConfig; isTrackCreateLoading: boolean }> = () => {
+interface ILdapLoginModalCreateProps {
+  tracker: TTrackerConfig;
+  isTrackCreateLoading: boolean;
+}
+
+export const LdapLoginModalCreate: FC<ILdapLoginModalCreateProps> = ({ tracker }) => {
   const message = useMessage();
   const dispatch = useAppDispatch();
   const trackInput = useAppSelector(selectLdapLoginManage);
@@ -29,7 +34,7 @@ export const LdapLoginModalCreate: FC<{ tracker: TTrackerConfig; isTrackCreateLo
       footer={null}
       width="fit-content"
     >
-      <LdapLoginFormManage />
+      <LdapLoginFormManage tracker={tracker} />
     </Modal>
   );
 };
