@@ -8,6 +8,7 @@ import { track } from 'entities/track/common/model/reducers';
 import { useAuthenticateEwsMutation } from 'entities/track/common/model/ews-api';
 import { useRuntimeConfig } from 'shared/lib/useRuntimeConfig';
 import { encrypt } from 'shared/lib/encrypt';
+import { useEnvVariables } from 'shared/lib/useEnvVariables';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { useYandexUser } from 'entities/user/yandex/hooks/use-yandex-user';
 import { useFilters } from 'features/filters/lib/useFilters';
@@ -25,6 +26,7 @@ export const LdapLoginFormManage: FC<ILdapLoginFormManageProps> = ({ tracker }) 
   const [form] = Form.useForm();
   const [authenticateEws, { isLoading: isAuthenticating }] = useAuthenticateEwsMutation();
   const { restorePasswordUrl } = useRuntimeConfig();
+  const { envVariables } = useEnvVariables();
   const { userId, login } = useFilters();
   const { self } = useYandexUser(tracker, userId, login);
 
@@ -47,7 +49,7 @@ export const LdapLoginFormManage: FC<ILdapLoginFormManageProps> = ({ tracker }) 
   const handleSubmit = useCallback(
     async (values: { username: string; token: string; type?: string }) => {
       try {
-        const encryptedToken = await encrypt(values.token);
+        const encryptedToken = await encrypt(values.token, envVariables?.ENCRYPTION_KEY);
         const credentials = {
           username: values.username,
           token: encryptedToken,

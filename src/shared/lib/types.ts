@@ -46,6 +46,7 @@ export interface IEnvVariables {
   COMPANY_POWERBI_URL?: string;
   SUPPORT_URL?: string;
   RESTORE_PASSWORD_URL?: string;
+  ENCRYPTION_KEY?: string;
 }
 
 export interface IEnvContextType {

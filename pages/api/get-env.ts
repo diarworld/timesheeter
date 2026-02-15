@@ -13,6 +13,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         COMPANY_POWERBI_URL: process.env.COMPANY_POWERBI_URL,
         SUPPORT_URL: process.env.SUPPORT_URL,
         RESTORE_PASSWORD_URL: process.env.RESTORE_PASSWORD_URL,
+        ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
       }
     };
     

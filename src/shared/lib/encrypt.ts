@@ -3,16 +3,16 @@ const PREFIX = 'ENC:';
 const IV_LENGTH = 12;
 const KEY_BYTES = 32;
 
-function getKeyHex(): string {
-  const keyHex = process.env.ENCRYPTION_KEY;
+function getKeyHex(encryptionKey?: string): string {
+  const keyHex = encryptionKey || process.env.ENCRYPTION_KEY;
   if (!keyHex) {
     throw new Error('ENCRYPTION_KEY environment variable is not defined');
   }
   return keyHex;
 }
 
-async function getCryptoKey(): Promise<CryptoKey> {
-  const keyHex = getKeyHex();
+async function getCryptoKey(encryptionKey?: string): Promise<CryptoKey> {
+  const keyHex = getKeyHex(encryptionKey);
   const keyData = Uint8Array.from(Buffer.from(keyHex, 'hex'));
 
   return await crypto.subtle.importKey('raw', keyData, { name: ALGORITHM, length: KEY_BYTES * 8 }, false, [
@@ -21,8 +21,8 @@ async function getCryptoKey(): Promise<CryptoKey> {
   ]);
 }
 
-export async function encrypt(plaintext: string): Promise<string> {
-  const key = await getCryptoKey();
+export async function encrypt(plaintext: string, encryptionKey?: string): Promise<string> {
+  const key = await getCryptoKey(encryptionKey);
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
   const encrypted = await crypto.subtle.encrypt({ name: ALGORITHM, iv }, key, new TextEncoder().encode(plaintext));
@@ -34,8 +34,8 @@ export async function encrypt(plaintext: string): Promise<string> {
   return `${PREFIX}${Buffer.from(iv).toString('hex')}:${Buffer.from(authTag).toString('hex')}:${Buffer.from(ciphertext).toString('hex')}`;
 }
 
-export async function decrypt(encryptedData: string): Promise<string> {
-  const key = await getCryptoKey();
+export async function decrypt(encryptedData: string, encryptionKey?: string): Promise<string> {
+  const key = await getCryptoKey(encryptionKey);
   const [ivHex, authTagHex, ciphertextHex] = encryptedData.slice(PREFIX.length).split(':');
 
   const iv = Uint8Array.from(Buffer.from(ivHex, 'hex'));
@@ -55,6 +55,6 @@ export function isEncrypted(token: string): boolean {
   return token.startsWith(PREFIX);
 }
 
-export function getEncryptionKey(): string {
-  return getKeyHex();
+export function getEncryptionKey(encryptionKey?: string): string {
+  return getKeyHex(encryptionKey);
 }
