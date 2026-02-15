@@ -1,5 +1,6 @@
 import { Button, Col, Row, Menu, MenuProps, Modal, Typography, Card, Avatar, App } from 'antd';
 import { TrackTimeButton } from 'entities/track/common/ui/TrackCalendarHeader/TrackTimeButton';
+import { timezoneTimeOffsetOptions } from 'features/date/ui/TimeOffsetSelect/TimeOffsetSelect';
 import {
   ScheduleFilled,
   DashboardOutlined,
@@ -182,7 +183,7 @@ export function TrackCalendarHeader({
   const message = useMessage();
   const { message: antdMessage } = App.useApp();
   const [getCalendarMeetings, { isLoading: isCalendarLoading }] = useGetCalendarMeetingsMutation();
-  const { from, to } = useFilters();
+  const { from, to, utcOffsetInMinutes, updateTimeOffset } = useFilters();
 
   const [loadings, setLoadings] = useState<boolean[]>([]);
   const hasLdapCredentials = useAppSelector(selectHasLdapCredentials) || false;
@@ -283,36 +284,32 @@ export function TrackCalendarHeader({
   };
 
   // Doesn't use for now
-  // const currentTzIdx = timezoneTimeOffsetOptions.findIndex(opt => opt.value === utcOffsetInMinutes);
-  // const nextTzIdx = (currentTzIdx + 1) % timezoneTimeOffsetOptions.length;
-  // const currentTzLabel = timezoneTimeOffsetOptions[currentTzIdx]?.label ?? message('timeOffset.placeholder');
+  const currentTzIdx = timezoneTimeOffsetOptions.findIndex((opt) => opt.value === utcOffsetInMinutes);
+  const _nextTzIdx = (currentTzIdx + 1) % timezoneTimeOffsetOptions.length;
+  const currentTzLabel = timezoneTimeOffsetOptions[currentTzIdx]?.label ?? message('timeOffset.placeholder');
 
-  // const handleClickTimezoneSwitch = () => {
-  //   updateTimeOffset(timezoneTimeOffsetOptions[nextTzIdx].value);
-  // };
-
-  // const timezoneMenuItems: MenuItem[] = [
-  //   // Current timezone on top, highlighted
-  //   {
-  //     label: (
-  //       <span>
-  //         {currentTzLabel} <strong>({message('timeOffset.placeholder')})</strong>
-  //       </span>
-  //     ),
-  //     key: `timezone-current`,
-  //     icon: <FieldTimeOutlined style={{ color: '#1890ff' }} />,
-  //     disabled: true,
-  //   },
-  //   // Divider (optional)
-  //   { type: 'divider' as const },
-  //   // All timezones
-  //   ...timezoneTimeOffsetOptions.map((tz) => ({
-  //     label: tz.label,
-  //     key: `timezone-${tz.value}`,
-  //     icon: tz.value === utcOffsetInMinutes ? <FieldTimeOutlined style={{ color: '#1890ff' }} /> : undefined,
-  //     onClick: () => updateTimeOffset(tz.value),
-  //   })),
-  // ];
+  const timezoneMenuItems: TMenuItem[] = [
+    // Current timezone on top, highlighted
+    {
+      label: (
+        <span>
+          {currentTzLabel} <strong>({message('timeOffset.placeholder')})</strong>
+        </span>
+      ),
+      key: `timezone-current`,
+      icon: <FieldTimeOutlined style={{ color: '#1890ff' }} />,
+      disabled: true,
+    },
+    // Divider (optional)
+    { type: 'divider' as const },
+    // All timezones
+    ...timezoneTimeOffsetOptions.map((tz) => ({
+      label: tz.label,
+      key: `timezone-${tz.value}`,
+      icon: tz.value === utcOffsetInMinutes ? <FieldTimeOutlined style={{ color: '#1890ff' }} /> : undefined,
+      onClick: () => updateTimeOffset(tz.value),
+    })),
+  ];
 
   const logoutTracker = useLogoutTracker(tracker);
   const { userId, login } = useFilterValues();
@@ -357,12 +354,12 @@ export function TrackCalendarHeader({
               onClick: handleClickLocaleSwitch,
             },
             // Remove tz edit, because it breacs time logging
-            // {
-            //   label: currentTzLabel,
-            //   icon: <FieldTimeOutlined />,
-            //   key: 'timezone-selector',
-            //   children: timezoneMenuItems
-            // }
+            {
+              label: currentTzLabel,
+              icon: <FieldTimeOutlined />,
+              key: 'timezone-selector',
+              children: timezoneMenuItems,
+            },
           ],
         },
       ],

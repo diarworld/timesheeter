@@ -55,7 +55,7 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [issueKeys, setIssueKeys] = useState<Record<string, string>>({});
   const [issueDurations, setIssueDurations] = useState<Record<string, number>>({});
-  const { userId, login } = useFilterValues();
+  const { userId, login, utcOffsetInMinutes } = useFilterValues();
   const { self } = useYandexUser(tracker, userId, login);
 
   // Load default issue key from localStorage on component mount
@@ -693,8 +693,12 @@ export const CalendarExportModal: React.FC<ICalendarExportModalProps> = ({
       title: message('calendar.export.table.start'),
       dataIndex: 'start',
       key: 'start',
-      width: 160,
-      render: (date: string) => <Text>{dayjs(date).format('MMM DD, YYYY HH:mm')}</Text>,
+      width: 200,
+      render: (date: string) => {
+        const dateObj =
+          utcOffsetInMinutes !== undefined ? DateWrapper.getDate({ date, utcOffsetInMinutes }) : dayjs(date);
+        return <Text>{dateObj.format('DD.MM.YYYY HH:mm Z')}</Text>;
+      },
     },
     {
       title: message('calendar.export.table.duration'),

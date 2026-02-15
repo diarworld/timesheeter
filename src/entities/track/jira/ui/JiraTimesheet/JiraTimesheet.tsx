@@ -103,7 +103,7 @@ export const JiraTimesheet: FC<TProps> = ({ tracker, language, uId }) => {
   }, []);
 
   const viewingAnotherUser = !!userIdFromFilter;
-  const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined;
+  const isEdit = !viewingAnotherUser;
 
   return (
     <div>

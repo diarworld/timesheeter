@@ -312,7 +312,7 @@ export const YandexTimesheet: FC<TProps> = ({
   const getIssueUrl = useCallback((issueKey: string) => new URL(issueKey, tracker.url).href, [tracker]);
   const viewingAnotherUser =
     userIdFromFilter !== undefined && self.uid !== undefined && Number(userIdFromFilter) !== Number(self.uid);
-  const isEdit = !viewingAnotherUser && utcOffsetInMinutes === undefined; // TODO Offset critically affect us, need to refactor and check
+  const isEdit = !viewingAnotherUser;
   // Removed: const isLoading = isLoadingIssues || isLoadingTracks;
 
   // Refactor nested ternary for main content rendering

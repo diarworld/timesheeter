@@ -2,6 +2,8 @@ import { useRouter } from 'next/router';
 import { useCallback } from 'react';
 import { useFilterValues } from 'features/filters/lib/useFilterValues';
 import { TSortOrder } from 'shared/lib/types';
+import { saveTimezonePreference } from 'features/filters/lib/useTimeOffsetFilter';
+import { DateWrapper } from 'features/date/lib/DateWrapper';
 
 export const useFilters = () => {
   const router = useRouter();
@@ -97,12 +99,28 @@ export const useFilters = () => {
 
   const updateTimeOffset = useCallback(
     (timeOffsetInMinutes: number) => {
+      saveTimezonePreference(timeOffsetInMinutes);
+
+      const currentFrom = router.query.from as string | undefined;
+      const currentTo = router.query.to as string | undefined;
+
+      let newFrom: string;
+      let newTo: string;
+
+      if (currentFrom && currentTo) {
+        newFrom = DateWrapper.getDate({ date: currentFrom, utcOffsetInMinutes: timeOffsetInMinutes }).format();
+        newTo = DateWrapper.getDate({ date: currentTo, utcOffsetInMinutes: timeOffsetInMinutes }).format();
+      } else {
+        newFrom = DateWrapper.getDate({ utcOffsetInMinutes: timeOffsetInMinutes }).startOf('week').format();
+        newTo = DateWrapper.getDate({ utcOffsetInMinutes: timeOffsetInMinutes }).endOf('week').format();
+      }
+
       router.replace({
         query: {
           ...router.query,
           time_offset: timeOffsetInMinutes,
-          from: undefined,
-          to: undefined,
+          from: newFrom,
+          to: newTo,
         },
       });
     },
