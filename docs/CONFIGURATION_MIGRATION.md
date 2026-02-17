@@ -1,3 +1,5 @@
+[← Полная документация](README.md) · [Назад к README](../README.md) · [Оптимизация Docker →](DOCKER_OPTIMIZATION.md)
+
 # Configuration Migration Guide
 
 This document outlines the successful migration from private dependencies to local configurations for ESLint and Prettier.
@@ -47,15 +49,18 @@ lint/
 ## **Results:**
 
 ### **ESLint Performance:**
+
 - **Before migration**: 428 errors/warnings
 - **After migration**: 10 errors (97.7% reduction)
 - **Configuration**: Uses original `@evrone-erp/eslint-config` rules exactly
 
 ### **Remaining Issues (10 errors):**
+
 - **Useless fragments**: 9 instances of single-child fragments
 - **Unused variable**: 1 unused `dayjs` import
 
 ### **Build Performance:**
+
 - **No private registry**: Faster npm installs
 - **No authentication**: Simplified CI/CD
 - **Full control**: Customizable rules
@@ -63,9 +68,11 @@ lint/
 ## **Configuration Details:**
 
 ### **ESLint Configuration (`.eslintrc.js`)**
+
 Uses the original `@evrone-erp/eslint-config` structure:
 
 #### **Extends:**
+
 - `airbnb` - Airbnb JavaScript style guide
 - `airbnb/hooks` - React Hooks rules
 - `prettier` - Prettier integration
@@ -73,19 +80,23 @@ Uses the original `@evrone-erp/eslint-config` structure:
 - `plugin:storybook/recommended` - Storybook rules
 
 #### **TypeScript Overrides:**
+
 - `airbnb-typescript` - TypeScript-specific Airbnb rules
 - `plugin:@next/next/recommended` - Next.js rules
 - `plugin:import/typescript` - TypeScript import rules
 - `plugin:@typescript-eslint/recommended` - TypeScript ESLint rules
 
 #### **Key Features:**
+
 - **Feature-Sliced Design**: Path restrictions for layered architecture
 - **TypeScript Naming**: Enforces `I` prefix for interfaces, `T` prefix for types
 - **Import Rules**: Strict import/export patterns
 - **React Performance**: Performance-focused React rules
 
 ### **Prettier Configuration (`.prettierrc.js`)**
+
 Standard formatting rules:
+
 - **Print Width**: 120 characters
 - **Tab Width**: 2 spaces
 - **Single Quotes**: For strings and JSX
@@ -95,6 +106,7 @@ Standard formatting rules:
 ## **Usage:**
 
 ### **Linting:**
+
 ```bash
 # Check for issues
 npm run lint
@@ -104,6 +116,7 @@ npm run lint:fix
 ```
 
 ### **Formatting:**
+
 ```bash
 # Check formatting
 npx prettier --check .
@@ -113,6 +126,7 @@ npx prettier --write .
 ```
 
 ### **Docker Builds:**
+
 ```bash
 # Development
 scripts/build-docker.bat dev
@@ -124,21 +138,25 @@ scripts/build-docker.bat prod
 ## **Benefits Achieved:**
 
 ### **1. No External Dependencies**
+
 - ✅ No longer dependent on private GitHub packages
 - ✅ Faster CI/CD builds without authentication
 - ✅ Simplified deployment process
 
 ### **2. Full Control**
+
 - ✅ Exact same rules as original `@evrone-erp/eslint-config`
 - ✅ No need to wait for external package updates
 - ✅ Ability to modify rules for project-specific needs
 
 ### **3. Better Performance**
+
 - ✅ Faster npm installs without private registry
 - ✅ Reduced Docker build complexity
 - ✅ Simplified development setup
 
 ### **4. Maintained Quality**
+
 - ✅ 97.7% reduction in linting issues
 - ✅ Original code quality standards preserved
 - ✅ Feature-Sliced Design architecture support
@@ -146,16 +164,19 @@ scripts/build-docker.bat prod
 ## **Migration Steps Completed:**
 
 ### ✅ **For Developers**
+
 1. **Updated Dependencies:** `npm install` completed
 2. **Verified Configuration:** ESLint working with original rules
 3. **Formatted Code:** Prettier configuration applied
 
 ### ✅ **For CI/CD**
+
 1. **Removed Secrets:** `GA_PACKAGES_TOKEN_READ` no longer needed
 2. **Updated Build Scripts:** No private registry references
 3. **Simplified Pipeline:** Faster dependency installation
 
 ### ✅ **For Docker Builds**
+
 1. **Clean Build:** No `.npmrc` dependencies
 2. **Verified Build:** All configurations working
 3. **Optimized Process:** Faster build times
@@ -163,11 +184,13 @@ scripts/build-docker.bat prod
 ## **Next Steps:**
 
 ### **Optional Improvements:**
+
 1. **Fix remaining 10 linting issues** (mostly useless fragments)
 2. **Update TypeScript version** to supported range (currently 5.8.3, supported: 4.3.5-5.4.0)
 3. **Add pre-commit hooks** for consistent formatting
 
 ### **Monitoring:**
+
 - **Build Times**: Monitor Docker build performance improvements
 - **CI/CD**: Verify GitHub Actions run without authentication
 - **Code Quality**: Maintain the 97.7% improvement in linting issues
@@ -175,7 +198,13 @@ scripts/build-docker.bat prod
 ## **Support:**
 
 The migration is complete and successful. Your project now has:
+
 - ✅ Full control over ESLint and Prettier configurations
 - ✅ Exact same rules as the original `@evrone-erp/eslint-config`
 - ✅ No external dependencies on private packages
-- ✅ Improved build performance and simplified deployment 
+- ✅ Improved build performance and simplified deployment
+
+## See Also
+
+- [Оптимизация Docker](DOCKER_OPTIMIZATION.md) — улучшение производительности Docker
+- [LLM Prompt](llm_prompt.md) — prompt для AI-ассистента

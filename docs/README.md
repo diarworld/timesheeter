@@ -1,3 +1,5 @@
+[← Руководство пользователя](user_doc.md) · [Назад к README](../README.md) · [Миграция конфигурации →](CONFIGURATION_MIGRATION.md)
+
 # 🕒 Timesheet - Учет рабочего времени в Yandex Tracker для разработчиков
 
 [![DeepWiki](https://img.shields.io/badge/DeepWiki-diarworld%2Ftimesheeter-blue.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAyCAYAAAAnWDnqAAAAAXNSR0IArs4c6QAAA05JREFUaEPtmUtyEzEQhtWTQyQLHNak2AB7ZnyXZMEjXMGeK/AIi+QuHrMnbChYY7MIh8g01fJoopFb0uhhEqqcbWTp06/uv1saEDv4O3n3dV60RfP947Mm9/SQc0ICFQgzfc4CYZoTPAswgSJCCUJUnAAoRHOAUOcATwbmVLWdGoH//PB8mnKqScAhsD0kYP3j/Yt5LPQe2KvcXmGvRHcDnpxfL2zOYJ1mFwrryWTz0advv1Ut4CJgf5uhDuDj5eUcAUoahrdY/56ebRWeraTjMt/00Sh3UDtjgHtQNHwcRGOC98BJEAEymycmYcWwOprTgcB6VZ5JK5TAJ+fXGLBm3FDAmn6oPPjR4rKCAoJCal2eAiQp2x0vxTPB3ALO2CRkwmDy5WohzBDwSEFKRwPbknEggCPB/imwrycgxX2NzoMCHhPkDwqYMr9tRcP5qNrMZHkVnOjRMWwLCcr8ohBVb1OMjxLwGCvjTikrsBOiA6fNyCrm8V1rP93iVPpwaE+gO0SsWmPiXB+jikdf6SizrT5qKasx5j8ABbHpFTx+vFXp9EnYQmLx02h1QTTrl6eDqxLnGjporxl3NL3agEvXdT0WmEost648sQOYAeJS9Q7bfUVoMGnjo4AZdUMQku50McDcMWcBPvr0SzbTAFDfvJqwLzgxwATnCgnp4wDl6Aa+Ax283gghmj+vj7feE2KBBRMW3FzOpLOADl0Isb5587h/U4gGvkt5v60Z1VLG8BhYjbzRwyQZemwAd6cCR5/XFWLYZRIMpX39AR0tjaGGiGzLVyhse5C9RKC6ai42ppWPKiBagOvaYk8lO7DajerabOZP46Lby5wKjw1HCRx7p9sVMOWGzb/vA1hwiWc6jm3MvQDTogQkiqIhJV0nBQBTU+3okKCFDy9WwferkHjtxib7t3xIUQtHxnIwtx4mpg26/HfwVNVDb4oI9RHmx5WGelRVlrtiw43zboCLaxv46AZeB3IlTkwouebTr1y2NjSpHz68WNFjHvupy3q8TFn3Hos2IAk4Ju5dCo8B3wP7VPr/FGaKiG+T+v+TQqIrOqMTL1VdWV1DdmcbO8KXBz6esmYWYKPwDL5b5FA1a0hwapHiom0r/cKaoqr+27/XcrS5UwSMbQAAAABJRU5ErkJggg==)](https://deepwiki.com/diarworld/timesheeter)
@@ -18,34 +20,43 @@ Timesheet родился из реальной боли разработчико
 ## 🎯 Ключевые возможности
 
 ### 📅 Интеграция с календарем (Outlook/Exchange)
+
 Массово выгружайте встречи из календаря прямо в ворклоги Yandex Tracker:
 ![calendar](calendar.png)
 
 ### 📈 Детальные отчеты
+
 Получайте полную картину затраченного времени с красивой визуализацией:
 ![reports](reports.png)
 
 ### 🚨 Мониторинг ошибок
+
 Отслеживайте проблемы со списанием времени в реальном времени:
 ![alerts](alerts.png)
 
 ### 👥 Управление командой
+
 Добавляйте и удаляйте участников команды с легкостью:
 ![team](team.png)
 
 ### 📋 Таблица треков
+
 Просматривайте треки по задачам в удобной таблице с автоматическим подсчетом времени:
+
 - Задачи назначаются на текущего пользователя
 - Фильтрация по датам создания/обновления
 - Отображение закрепленных задач
 - Фильтры по ответственному, статусам, очередям
 
 ### 📌 Закрепление задач
+
 Закрепляйте важные задачи одним кликом — они всегда будут в таблице:
 ![pin.png](pin.png)
 
 ### ⚡ Быстрое создание треков
+
 Создавайте треки несколькими способами:
+
 - Клик по ячейке в таблице
 - Кнопка "Add new track"
 - Модальные окна с предзаполненными данными
@@ -53,34 +64,36 @@ Timesheet родился из реальной боли разработчико
 ![create.png](create.png)
 
 ### 🔧 Гибкое редактирование
+
 Редактируйте треки прямо в таблице или через модальные окна:
 ![tracks.png](tracks.png)
 
 ## 🚀 Быстрый старт
 
 ### Предварительные требования
+
 - [NodeJS](https://www.digitalocean.com/community/tutorials/node-js-ubuntu-18-04-ru#Установка-при-помощи-nvm)
 - Настроенные переменные окружения (см. таблицу ниже)
 
 ### Переменные окружения
 
-| Переменная | Тип | Описание | Обязательно |
-|------------|-----|----------|-------------|
-| `CLIENT_ID` | string | Yandex OAuth2 App ID | ✅ Да |
-| `ENCRYPTION_KEY` | string | Salt for encripting LDAP passwords | ✅ Да |
-| `DATABASE_URL` | string | PostgreSQL подключение | ✅ Да |
-| `EWS_SERVICE_URL` | string | Exchange Web Services URL | ❌ Нет |
-| `EWS_DOMAIN` | string | Домен для EWS аутентификации | ❌ Нет |
-| `DIFY_API_TOKEN` | string | API токен для AI функциональности | ❌ Нет |
-| `DIFY_URL` | string | URL сервиса Dify | ❌ Нет |
-| `DIFY_COST` | number | Стоимость AI запроса | ❌ Нет |
-| `SHADOW_DATABASE_URL` | string | Теневая БД для миграций | ❌ Нет |
-| `SUPPORT_URL` | string | URL канала поддержки | ❌ Нет |
-| `RESTORE_PASSWORD_URL` | string | URL восстановления пароля | ❌ Нет |
-| `COMPANY_DOMAIN` | string | Домен компании | ❌ Нет |
-| `COMPANY_POWERBI_URL` | string | URL PowerBI дашборда для отчетов | ❌ Нет |
-| `COMPANY_OPENREPLAY_KEY` | string | API ключ для сервиса OpenReplay (запись сессий) | ❌ Нет |
-| `COMPANY_OPENREPLAY_URL` | string | URL сервиса OpenReplay | ❌ Нет |
+| Переменная               | Тип    | Описание                                        | Обязательно |
+| ------------------------ | ------ | ----------------------------------------------- | ----------- |
+| `CLIENT_ID`              | string | Yandex OAuth2 App ID                            | ✅ Да       |
+| `ENCRYPTION_KEY`         | string | Salt for encripting LDAP passwords              | ✅ Да       |
+| `DATABASE_URL`           | string | PostgreSQL подключение                          | ✅ Да       |
+| `EWS_SERVICE_URL`        | string | Exchange Web Services URL                       | ❌ Нет      |
+| `EWS_DOMAIN`             | string | Домен для EWS аутентификации                    | ❌ Нет      |
+| `DIFY_API_TOKEN`         | string | API токен для AI функциональности               | ❌ Нет      |
+| `DIFY_URL`               | string | URL сервиса Dify                                | ❌ Нет      |
+| `DIFY_COST`              | number | Стоимость AI запроса                            | ❌ Нет      |
+| `SHADOW_DATABASE_URL`    | string | Теневая БД для миграций                         | ❌ Нет      |
+| `SUPPORT_URL`            | string | URL канала поддержки                            | ❌ Нет      |
+| `RESTORE_PASSWORD_URL`   | string | URL восстановления пароля                       | ❌ Нет      |
+| `COMPANY_DOMAIN`         | string | Домен компании                                  | ❌ Нет      |
+| `COMPANY_POWERBI_URL`    | string | URL PowerBI дашборда для отчетов                | ❌ Нет      |
+| `COMPANY_OPENREPLAY_KEY` | string | API ключ для сервиса OpenReplay (запись сессий) | ❌ Нет      |
+| `COMPANY_OPENREPLAY_URL` | string | URL сервиса OpenReplay                          | ❌ Нет      |
 
 ### 🛠️ Установка и запуск
 
@@ -129,9 +142,11 @@ docker-compose up --build
 ## 🐛 Решение проблем
 
 ### Chrome ошибка 400 Bad Request
+
 В режиме разработки иногда возникает ошибка из-за устаревших куков. **Решение**: очистите куки в настройках браузера.
 
 ### Проблемы с Docker
+
 - Убедитесь, что передаете `CLIENT_ID` при запуске контейнера
 - Для изменения переменных окружения перезапустите контейнер
 
@@ -154,3 +169,9 @@ docker-compose up --build
 ---
 
 **Создано с ❤️ для разработчиков, которые ценят свое время**
+
+## See Also
+
+- [Пользовательская документация](user_doc.md) — руководство для конечных пользователей
+- [Миграция конфигурации](CONFIGURATION_MIGRATION.md) — переход между версиями конфигурации
+- [Оптимизация Docker](DOCKER_OPTIMIZATION.md) — улучшение производительности контейнеров

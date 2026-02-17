@@ -1,0 +1,31 @@
+{
+  "version": "1.8.0",
+  "agent": "opencode",
+  "skillsDir": ".opencode/skills",
+  "installedSkills": [
+    "ai-factory",
+    "architecture",
+    "best-practices",
+    "build-automation",
+    "ci",
+    "commit",
+    "deploy",
+    "dockerize",
+    "docs",
+    "evolve",
+    "feature",
+    "fix",
+    "implement",
+    "improve",
+    "review",
+    "security-checklist",
+    "skill-generator",
+    "task",
+    "verify"
+  ],
+  "mcp": {
+    "github": true,
+    "filesystem": true,
+    "postgres": true
+  }
+}
