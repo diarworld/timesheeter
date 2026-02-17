@@ -59,12 +59,7 @@ export const IssueSummarySearch = ({
   );
 
   if (options) {
-    const dropdownContent = (menu: React.ReactNode) => (
-      <Spin spinning={isFetchingIssues}>
-        {menu}
-      </Spin>
-    );
-
+    const dropdownContent = (menu: React.ReactNode) => <Spin spinning={isFetchingIssues}>{menu}</Spin>;
     return (
       <Space.Compact>
         <Select

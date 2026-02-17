@@ -36,8 +36,14 @@ import { MonthCalendar } from 'entities/track/common/ui/MonthCalendar/MonthCalen
 import { TrackModalCreate } from 'entities/track/common/ui/TrackModalCreate/TrackModalCreate';
 import { TYandexUser } from 'entities/user/yandex/model/types';
 import { ReportsTable } from './ReportsTable';
-import { Select, Space } from 'antd';
+import { IssueSummaryTable } from './IssueSummaryTable';
+import { transformTracksByIssue } from 'entities/track/common/lib/transform-tracks-by-issue';
+import { Select, Space, Radio, RadioChangeEvent } from 'antd';
 import { Typography } from 'antd';
+import { useMessage } from 'entities/locale/lib/hooks';
+
+const DEFAULT_REPORT_TYPE = 'timeByDay' as const;
+type TReportType = 'timeByDay' | 'issueSummary';
 
 interface ITeamForReports {
   id: string;
@@ -106,8 +112,10 @@ export const YandexTimesheet: FC<TProps> = ({
   // Get teams data for reports
   const teams = useAppSelector((state: { track: { teams: ITeamForReports[] } }) => state.track.teams || []);
   const [reportTeamId, setReportTeamId] = useState<string | null>(null);
+  const [reportType, setReportType] = useState<TReportType>(DEFAULT_REPORT_TYPE);
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationRef = useRef(false);
+  const message = useMessage();
 
   // Initialize reportTeamId with activeTeamId from localStorage on component mount
   useEffect(() => {
@@ -359,18 +367,38 @@ export const YandexTimesheet: FC<TProps> = ({
       </div>
     );
   } else {
+    const reportTeamMembers = reportTeamId
+      ? teams.find((t: ITeamForReports) => t.id === reportTeamId)?.members || []
+      : [];
+
+    const issueSummaryData =
+      reportType === 'issueSummary' ? transformTracksByIssue(userTracks, reportTeamMembers) : null;
+
     content = (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
         <Spin spinning={loadingUserTracks}>
-          <ReportsTable
-            team={reportTeamId ? teams.find((t: ITeamForReports) => t.id === reportTeamId)?.members || [] : []}
-            tracks={userTracks}
-            from={from}
-            to={to}
-            utcOffsetInMinutes={utcOffsetInMinutes}
-            showWeekends={showWeekends}
-            isDarkMode={isDarkMode}
-          />
+          {reportType === 'issueSummary' && issueSummaryData ? (
+            <IssueSummaryTable
+              team={reportTeamMembers}
+              issueSummaryData={issueSummaryData.rows}
+              isDarkMode={isDarkMode}
+              trackerUrl={tracker.url}
+              from={from}
+              to={to}
+              utcOffsetInMinutes={utcOffsetInMinutes}
+              showWeekends={showWeekends}
+            />
+          ) : (
+            <ReportsTable
+              team={reportTeamMembers}
+              tracks={userTracks}
+              from={from}
+              to={to}
+              utcOffsetInMinutes={utcOffsetInMinutes}
+              showWeekends={showWeekends}
+              isDarkMode={isDarkMode}
+            />
+          )}
         </Spin>
       </div>
     );
@@ -443,6 +471,15 @@ export const YandexTimesheet: FC<TProps> = ({
                     }
                     value={reportTeamId}
                     onChange={setReportTeamId}
+                  />
+                  <Radio.Group
+                    options={[
+                      { label: message('report.timeByDay'), value: 'timeByDay' },
+                      { label: message('report.issueSummary'), value: 'issueSummary' },
+                    ]}
+                    optionType="button"
+                    value={reportType}
+                    onChange={(e: RadioChangeEvent) => setReportType(e.target.value as TReportType)}
                   />
                 </Space>
               );

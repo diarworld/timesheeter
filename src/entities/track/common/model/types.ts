@@ -31,6 +31,7 @@ export type TTrack = {
   start: string;
   duration: TISODuration;
   authorId?: string;
+  issueSummary?: string;
 };
 
 export type TTransformedTracksByDateRange = {

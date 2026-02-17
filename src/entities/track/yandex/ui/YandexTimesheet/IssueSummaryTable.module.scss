@@ -1,0 +1,14 @@
+.sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: #fff;
+}
+
+.sticky_dark {
+  background: #1f1f1f;
+}
+
+.sticky_light {
+  background: #fff;
+}

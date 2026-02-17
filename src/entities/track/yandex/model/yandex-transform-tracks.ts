@@ -7,6 +7,7 @@ export const yandexTransformTrack = ({ id, issue, comment, start, duration }: TY
   comment,
   start,
   duration,
+  issueSummary: issue.display,
 });
 
 export const yandexTransformTracks = (tracks: TYandexTrack[]): TTrack[] => tracks.map(yandexTransformTrack);
