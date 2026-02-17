@@ -109,11 +109,7 @@ export function IssueSummaryTable({
       render: (issueKey: string, record: any) => {
         const issueUrl = trackerUrl ? `${trackerUrl}${issueKey}` : undefined;
         return (
-          <Flex
-            vertical
-            gap={2}
-            style={{ width: '100%', minWidth: 0, maxWidth: 250, padding: '4px 0', overflow: 'hidden' }}
-          >
+          <Flex vertical gap={2} style={{ width: '100%', minWidth: 0, padding: '4px 0' }}>
             <Flex align="center" gap={8}>
               <Button
                 type="link"
