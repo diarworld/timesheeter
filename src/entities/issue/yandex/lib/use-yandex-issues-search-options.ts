@@ -100,7 +100,6 @@ export const useYandexIssuesSearchOptions = (
 
   const userIssuesAsOptions = useMemo(() => {
     if (!accumulatedIssues.length || search) return emptyArray;
-    console.warn('[useYandexIssuesSearchOptions] Loaded user issues', { count: accumulatedIssues.length });
     return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
   }, [accumulatedIssues, search]);
 
@@ -113,14 +112,6 @@ export const useYandexIssuesSearchOptions = (
 
   const isLoadingUserIssues = isUserSearch && isFetchingUser;
   const isLoadingSearch = !!search && isFetchingSearch;
-
-  console.warn('[useYandexIssuesSearchOptions]', {
-    search,
-    isUserSearch,
-    isLoadingUserIssues,
-    isLoadingSearch,
-    accumulatedIssuesCount: accumulatedIssues.length,
-  });
 
   return {
     isFetching: isFetchingSearch || isFetchingIssue || isDebouncingSearch || isLoadingUserIssues || isLoadingSearch,
@@ -209,7 +200,6 @@ export const useYandexIssuesSearchOptionsPaginated = (
 
   const userIssuesAsOptions = useMemo(() => {
     if (!accumulatedIssues.length) return emptyArray;
-    console.warn('[useYandexIssuesSearchOptionsPaginated] Loaded user issues', { count: accumulatedIssues.length });
     return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
   }, [accumulatedIssues]);
 
@@ -222,13 +212,6 @@ export const useYandexIssuesSearchOptionsPaginated = (
 
   const isLoadingUserIssues = isUserSearch && isFetchingUser;
   const isLoadingSearch = !!search && isFetchingSearch;
-
-  console.warn('[useYandexIssuesSearchOptionsPaginated]', {
-    search,
-    isUserSearch,
-    isLoadingUserIssues,
-    isLoadingSearch,
-  });
 
   return {
     isFetching: isFetchingSearch || isFetchingIssue || isDebouncingSearch || isLoadingUserIssues || isLoadingSearch,

@@ -53,7 +53,6 @@ export const useJiraIssuesSearchOptions = (tracker: TTrackerConfig, value: strin
 
   const userIssuesAsOptions = useMemo(() => {
     if (!userIssues) return emptyArray;
-    console.warn('[useJiraIssuesSearchOptions] Loaded user issues', { count: userIssues.length });
     return userIssues.map((issue) => getOptionFromIssue(issue, ''));
   }, [userIssues]);
 
@@ -64,14 +63,6 @@ export const useJiraIssuesSearchOptions = (tracker: TTrackerConfig, value: strin
 
   const isLoadingUserIssues = isUserSearch && isFetchingUser;
   const isLoadingSearch = !!search && isFetchingSearch;
-
-  console.warn('[useJiraIssuesSearchOptions]', {
-    search,
-    isUserSearch,
-    isLoadingUserIssues,
-    isLoadingSearch,
-    userIssuesCount: userIssues?.length ?? 0,
-  });
 
   return {
     isFetching: isFetchingIssue || isDebouncingSearch || isLoadingUserIssues || isLoadingSearch,
