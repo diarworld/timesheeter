@@ -9,6 +9,9 @@ export type TIssuesSearchProps = AutoCompleteProps<string> &
     options: TOption[];
     isFetchingIssues: boolean;
     onSearch(value: string): void;
+    loadMore?: () => void;
+    hasMore?: boolean;
+    isLoadingMore?: boolean;
     perPage?: number;
     maxItems?: number;
   };
@@ -19,6 +22,9 @@ export const IssuesSearch = ({
   options,
   onSearch,
   isFetchingIssues,
+  loadMore,
+  hasMore,
+  isLoadingMore,
   perPage: _perPage = DEFAULT_ISSUES_PER_PAGE,
   maxItems: _maxItems = DEFAULT_ISSUES_MAX_ITEMS,
   ...autoCompleteProps
@@ -32,6 +38,17 @@ export const IssuesSearch = ({
     [onChange],
   );
 
+  const handlePopupScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLDivElement;
+      const { scrollTop, clientHeight, scrollHeight } = target;
+      if (scrollHeight - scrollTop - clientHeight < 50 && hasMore && !isLoadingMore && loadMore) {
+        loadMore();
+      }
+    },
+    [hasMore, isLoadingMore, loadMore],
+  );
+
   return (
     <Select
       {...autoCompleteProps}
@@ -43,6 +60,7 @@ export const IssuesSearch = ({
       value={value || undefined}
       optionFilterProp="label"
       onSelect={handleSelect}
+      onPopupScroll={handlePopupScroll}
       popupRender={(menu) => <Spin spinning={isFetchingIssues}>{menu}</Spin>}
     />
   );

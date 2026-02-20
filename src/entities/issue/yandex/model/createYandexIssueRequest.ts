@@ -1,6 +1,7 @@
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { DATE_FORMAT_DATE_API } from 'features/date/lib/constants';
 import { QueryBuilder, QLogic } from 'entities/issue/common/lib/QueryBuilder';
+import { IQueryParam } from 'entities/issue/common/lib/QueryBuilder/IQueryParam';
 import { YandexQSorting } from 'entities/issue/yandex/lib/QueryBuilder/YandexQSorting';
 import { YandexQParam } from 'entities/issue/yandex/lib/QueryBuilder/YandexQParam';
 import { TGetIssuesParams, TGetUserIssuesParams, TSearchIssuesParams } from 'entities/issue/common/model/types';
@@ -69,11 +70,23 @@ const getUserIssuesQuery = ({
   return queryBuilder.buildQuery();
 };
 
-const getSearchIssuesQuery = ({ search }: TSearchIssuesParams) =>
-  new QueryBuilder(
-    new QLogic.OR(new YandexQParam('Summary', search), new YandexQParam('Key', search?.toUpperCase())),
-    new YandexQSorting('Updated', 'DESC'),
-  ).buildQuery();
+const getSearchIssuesQuery = ({ search, myIssues }: TSearchIssuesParams) => {
+  const conditions: IQueryParam[] = [];
+
+  if (myIssues) {
+    conditions.push(new YandexQParam('Author', 'me()'));
+  }
+
+  if (search) {
+    conditions.push(new QLogic.OR(new YandexQParam('Summary', search), new YandexQParam('Key', search?.toUpperCase())));
+  }
+
+  if (conditions.length === 0) {
+    conditions.push(new YandexQParam('Author', 'me()'));
+  }
+
+  return new QueryBuilder(...conditions, new YandexQSorting(myIssues ? 'Created' : 'Updated', 'DESC')).buildQuery();
+};
 
 export const createYandexIssueRequest = (params: TGetIssuesParams) => {
   let query: string | undefined;

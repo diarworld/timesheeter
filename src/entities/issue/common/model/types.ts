@@ -48,6 +48,7 @@ export type TGetUserIssuesParams = TIssuesCommonParams & {
 
 export type TSearchIssuesParams = TIssuesCommonParams & {
   search: string | undefined;
+  myIssues?: boolean;
 };
 
 export type TGetIssuesParams = TGetUserIssuesParams | TSearchIssuesParams;

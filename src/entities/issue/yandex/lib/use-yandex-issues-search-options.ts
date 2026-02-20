@@ -28,37 +28,107 @@ const sortIssuesBySearchPriority = (issues: TIssue[], searchTerm: string): TIssu
 export const useYandexIssuesSearchOptions = (
   tracker: TTrackerConfig,
   value: string | undefined,
-  maxItems?: number,
-  perPage?: number,
+  perPage: number = 40,
 ) => {
   const [search, setSearch, isDebouncingSearch] = useDebouncedState<string>('');
+  const [page, setPage] = useState(1);
+  const [accumulatedIssues, setAccumulatedIssues] = useState<TIssue[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
   const initialIssueKey = useInitialValue(value);
+  const isUserSearch = !search;
 
-  const { currentData: issueList, isFetching: isFetchingIssues } = yandexIssueApi.useGetYandexIssuesQuery(
-    { search, utcOffsetInMinutes: undefined, tracker, maxItems, perPage },
+  const { currentData: searchPageData, isFetching: isFetchingSearch } = yandexIssueApi.useGetYandexIssuesPageQuery(
+    { search, utcOffsetInMinutes: undefined, tracker, perPage, page },
     { skip: !search },
   );
+
+  const { currentData: userPageData, isFetching: isFetchingUser } = yandexIssueApi.useGetYandexIssuesPageQuery(
+    { search: undefined, myIssues: true, utcOffsetInMinutes: undefined, tracker, perPage, page },
+    { skip: !!search },
+  );
+
+  useMemo(() => {
+    if (search) {
+      if (searchPageData?.issues) {
+        if (page === 1) {
+          setAccumulatedIssues(searchPageData.issues);
+        } else {
+          setAccumulatedIssues((prev) => {
+            const existingKeys = new Set(prev.map((i) => i.key));
+            const newIssues = searchPageData.issues.filter((i) => !existingKeys.has(i.key));
+            return [...prev, ...newIssues];
+          });
+        }
+        setTotalPages(searchPageData.totalPages);
+      }
+    } else if (userPageData?.issues) {
+      if (page === 1) {
+        setAccumulatedIssues(userPageData.issues);
+      } else {
+        setAccumulatedIssues((prev) => {
+          const existingKeys = new Set(prev.map((i) => i.key));
+          const newIssues = userPageData.issues.filter((i) => !existingKeys.has(i.key));
+          return [...prev, ...newIssues];
+        });
+      }
+      setTotalPages(userPageData.totalPages);
+    }
+  }, [search, page, searchPageData, userPageData]);
+
+  useMemo(() => {
+    setPage(1);
+    setAccumulatedIssues([]);
+  }, [search]);
+
   const { currentData: initialIssue, isFetching: isFetchingIssue } = yandexIssueApi.useGetYandexIssueQuery(
     { issueIdOrKey: initialIssueKey ?? '', tracker },
     { skip: !initialIssueKey },
   );
 
-  const foundIssuesAsOptions = useMemo(() => {
-    if (!issueList) return emptyArray;
+  const loadMore = useCallback(() => {
+    if (page < totalPages) {
+      setPage((p) => p + 1);
+    }
+  }, [page, totalPages]);
 
-    const sortedIssues = sortIssuesBySearchPriority(issueList, search);
+  const searchIssuesAsOptions = useMemo(() => {
+    const issues = search ? accumulatedIssues : [];
+    if (!issues.length) return emptyArray;
+    const sortedIssues = sortIssuesBySearchPriority(issues, search);
     return sortedIssues.map((issue) => getOptionFromIssue(issue, search));
-  }, [issueList, search]);
+  }, [accumulatedIssues, search]);
+
+  const userIssuesAsOptions = useMemo(() => {
+    if (!accumulatedIssues.length || search) return emptyArray;
+    console.warn('[useYandexIssuesSearchOptions] Loaded user issues', { count: accumulatedIssues.length });
+    return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
+  }, [accumulatedIssues, search]);
 
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),
     [initialIssue],
   );
 
+  const hasMore = page < totalPages;
+
+  const isLoadingUserIssues = isUserSearch && isFetchingUser;
+  const isLoadingSearch = !!search && isFetchingSearch;
+
+  console.warn('[useYandexIssuesSearchOptions]', {
+    search,
+    isUserSearch,
+    isLoadingUserIssues,
+    isLoadingSearch,
+    accumulatedIssuesCount: accumulatedIssues.length,
+  });
+
   return {
-    isFetching: isFetchingIssues || isFetchingIssue || isDebouncingSearch,
-    options: search ? foundIssuesAsOptions : initialIssueAsOptions,
+    isFetching: isFetchingSearch || isFetchingIssue || isDebouncingSearch || isLoadingUserIssues || isLoadingSearch,
+    options: search ? searchIssuesAsOptions : isUserSearch ? userIssuesAsOptions : initialIssueAsOptions,
     onSearch: setSearch,
+    loadMore,
+    hasMore,
+    isLoadingMore: isFetchingSearch || isFetchingUser,
   };
 };
 
@@ -72,32 +142,49 @@ export const useYandexIssuesSearchOptionsPaginated = (
   const [accumulatedIssues, setAccumulatedIssues] = useState<TIssue[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const initialIssueKey = useInitialValue(value);
+  const isUserSearch = !search;
 
-  const { currentData: pageData, isFetching: isFetchingPage } = yandexIssueApi.useGetYandexIssuesPageQuery(
+  const { currentData: searchPageData, isFetching: isFetchingSearch } = yandexIssueApi.useGetYandexIssuesPageQuery(
     { search, utcOffsetInMinutes: undefined, tracker, perPage, page },
     { skip: !search },
   );
 
-  useMemo(() => {
-    if (pageData?.issues) {
-      if (page === 1) {
-        setAccumulatedIssues(pageData.issues);
-      } else {
-        setAccumulatedIssues((prev) => {
-          const existingKeys = new Set(prev.map((i) => i.key));
-          const newIssues = pageData.issues.filter((i) => !existingKeys.has(i.key));
-          return [...prev, ...newIssues];
-        });
-      }
-      setTotalPages(pageData.totalPages);
-    }
-  }, [pageData, page]);
+  const { currentData: userPageData, isFetching: isFetchingUser } = yandexIssueApi.useGetYandexIssuesPageQuery(
+    { search: undefined, myIssues: true, utcOffsetInMinutes: undefined, tracker, perPage, page },
+    { skip: !!search },
+  );
 
   useMemo(() => {
     if (search) {
-      setPage(1);
-      setAccumulatedIssues([]);
+      if (searchPageData?.issues) {
+        if (page === 1) {
+          setAccumulatedIssues(searchPageData.issues);
+        } else {
+          setAccumulatedIssues((prev) => {
+            const existingKeys = new Set(prev.map((i) => i.key));
+            const newIssues = searchPageData.issues.filter((i) => !existingKeys.has(i.key));
+            return [...prev, ...newIssues];
+          });
+        }
+        setTotalPages(searchPageData.totalPages);
+      }
+    } else if (userPageData?.issues) {
+      if (page === 1) {
+        setAccumulatedIssues(userPageData.issues);
+      } else {
+        setAccumulatedIssues((prev) => {
+          const existingKeys = new Set(prev.map((i) => i.key));
+          const newIssues = userPageData.issues.filter((i) => !existingKeys.has(i.key));
+          return [...prev, ...newIssues];
+        });
+      }
+      setTotalPages(userPageData.totalPages);
     }
+  }, [search, page, searchPageData, userPageData]);
+
+  useMemo(() => {
+    setPage(1);
+    setAccumulatedIssues([]);
   }, [search]);
 
   const { currentData: initialIssue, isFetching: isFetchingIssue } = yandexIssueApi.useGetYandexIssueQuery(
@@ -120,6 +207,12 @@ export const useYandexIssuesSearchOptionsPaginated = (
     return allIssues.map((issue) => getOptionFromIssue(issue, search));
   }, [allIssues, search]);
 
+  const userIssuesAsOptions = useMemo(() => {
+    if (!accumulatedIssues.length) return emptyArray;
+    console.warn('[useYandexIssuesSearchOptionsPaginated] Loaded user issues', { count: accumulatedIssues.length });
+    return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
+  }, [accumulatedIssues]);
+
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),
     [initialIssue],
@@ -127,12 +220,22 @@ export const useYandexIssuesSearchOptionsPaginated = (
 
   const hasMore = page < totalPages;
 
+  const isLoadingUserIssues = isUserSearch && isFetchingUser;
+  const isLoadingSearch = !!search && isFetchingSearch;
+
+  console.warn('[useYandexIssuesSearchOptionsPaginated]', {
+    search,
+    isUserSearch,
+    isLoadingUserIssues,
+    isLoadingSearch,
+  });
+
   return {
-    isFetching: isFetchingPage || isFetchingIssue || isDebouncingSearch,
-    options: search ? foundIssuesAsOptions : initialIssueAsOptions,
+    isFetching: isFetchingSearch || isFetchingIssue || isDebouncingSearch || isLoadingUserIssues || isLoadingSearch,
+    options: search ? foundIssuesAsOptions : isUserSearch ? userIssuesAsOptions : initialIssueAsOptions,
     onSearch: setSearch,
     loadMore,
     hasMore,
-    isLoadingMore: isFetchingPage,
+    isLoadingMore: isFetchingSearch || isFetchingUser,
   };
 };

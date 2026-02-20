@@ -27,31 +27,55 @@ const sortIssuesBySearchPriority = (issues: TIssue[], searchTerm: string): TIssu
 export const useJiraIssuesSearchOptions = (tracker: TTrackerConfig, value: string | undefined) => {
   const [search, setSearch, isDebouncingSearch] = useDebouncedState('');
   const initialIssueKey = useInitialValue(value);
+  const isUserSearch = !search;
 
-  const { currentData: issueList, isFetching: isFetchingIssues } = jiraIssueApi.useGetJiraIssuesQuery(
+  const { currentData: searchIssues, isFetching: isFetchingSearch } = jiraIssueApi.useGetJiraIssuesQuery(
     { search, utcOffsetInMinutes: undefined, tracker },
     { skip: !search },
   );
+
+  const { currentData: userIssues, isFetching: isFetchingUser } = jiraIssueApi.useGetJiraIssuesQuery(
+    { search: undefined, myIssues: true, utcOffsetInMinutes: undefined, tracker },
+    { skip: !!search },
+  );
+
   const { currentData: initialIssue, isFetching: isFetchingIssue } = jiraIssueApi.useGetJiraIssueQuery(
     { issueIdOrKey: initialIssueKey ?? '', tracker },
     { skip: !initialIssueKey },
   );
 
-  const foundIssuesAsOptions = useMemo(() => {
-    if (!issueList) return emptyArray;
+  const searchIssuesAsOptions = useMemo(() => {
+    if (!searchIssues) return emptyArray;
 
-    const sortedIssues = sortIssuesBySearchPriority(issueList, search);
+    const sortedIssues = sortIssuesBySearchPriority(searchIssues, search);
     return sortedIssues.map((issue) => getOptionFromIssue(issue, search));
-  }, [issueList, search]);
+  }, [searchIssues, search]);
+
+  const userIssuesAsOptions = useMemo(() => {
+    if (!userIssues) return emptyArray;
+    console.warn('[useJiraIssuesSearchOptions] Loaded user issues', { count: userIssues.length });
+    return userIssues.map((issue) => getOptionFromIssue(issue, ''));
+  }, [userIssues]);
 
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),
     [initialIssue],
   );
 
+  const isLoadingUserIssues = isUserSearch && isFetchingUser;
+  const isLoadingSearch = !!search && isFetchingSearch;
+
+  console.warn('[useJiraIssuesSearchOptions]', {
+    search,
+    isUserSearch,
+    isLoadingUserIssues,
+    isLoadingSearch,
+    userIssuesCount: userIssues?.length ?? 0,
+  });
+
   return {
-    isFetching: isFetchingIssues || isFetchingIssue || isDebouncingSearch,
-    options: search ? foundIssuesAsOptions : initialIssueAsOptions,
+    isFetching: isFetchingIssue || isDebouncingSearch || isLoadingUserIssues || isLoadingSearch,
+    options: search ? searchIssuesAsOptions : isUserSearch ? userIssuesAsOptions : initialIssueAsOptions,
     onSearch: setSearch,
   };
 };

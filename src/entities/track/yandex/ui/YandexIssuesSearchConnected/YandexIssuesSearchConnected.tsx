@@ -12,8 +12,22 @@ type TProps = AutoCompleteProps<string> &
   };
 
 export const YandexIssuesSearchConnected = (props: TProps) => {
-  const { value, tracker, maxItems, perPage } = props;
-  const { onSearch, options, isFetching } = useYandexIssuesSearchOptions(tracker, value, maxItems, perPage);
+  const { value, tracker, perPage = 40 } = props;
+  const { onSearch, options, isFetching, loadMore, hasMore, isLoadingMore } = useYandexIssuesSearchOptions(
+    tracker,
+    value,
+    perPage,
+  );
 
-  return <IssuesSearch {...props} onSearch={onSearch} options={options} isFetchingIssues={isFetching} />;
+  return (
+    <IssuesSearch
+      {...props}
+      onSearch={onSearch}
+      options={options}
+      isFetchingIssues={isFetching}
+      loadMore={loadMore}
+      hasMore={hasMore}
+      isLoadingMore={isLoadingMore}
+    />
+  );
 };

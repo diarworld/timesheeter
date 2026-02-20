@@ -1,6 +1,7 @@
 import { DateWrapper } from 'features/date/lib/DateWrapper';
 import { DATE_FORMAT_DATE, DATE_TIME_FORMAT_JIRA_API } from 'features/date/lib/constants';
 import { QLogic, QueryBuilder } from 'entities/issue/common/lib/QueryBuilder';
+import { IQueryParam } from 'entities/issue/common/lib/QueryBuilder/IQueryParam';
 import { JiraQParam } from 'entities/issue/jira/lib/QueryBuilder/JiraQParam';
 import { TGetIssuesParams, TGetUserIssuesParams, TSearchIssuesParams } from 'entities/issue/common/model/types';
 import { JiraQSorting } from 'entities/issue/jira/lib/QueryBuilder/JiraQSorting';
@@ -58,10 +59,25 @@ const getUserIssuesQuery = ({
   return queryBuilder.buildQuery();
 };
 
-const getSearchIssuesQuery = ({ search }: TSearchIssuesParams) =>
-  new QueryBuilder(
-    new QLogic.OR(new JiraQParam('Summary', search, '~'), new JiraQParam('issueKey', search?.toUpperCase())),
-  ).buildQuery();
+const getSearchIssuesQuery = ({ search, myIssues }: TSearchIssuesParams) => {
+  const conditions: IQueryParam[] = [];
+
+  if (myIssues) {
+    conditions.push(new JiraQParam('reporter', 'currentUser()'));
+  }
+
+  if (search) {
+    conditions.push(
+      new QLogic.OR(new JiraQParam('Summary', search, '~'), new JiraQParam('issueKey', search?.toUpperCase())),
+    );
+  }
+
+  if (conditions.length === 0) {
+    conditions.push(new JiraQParam('reporter', 'currentUser()'));
+  }
+
+  return new QueryBuilder(...conditions, new JiraQSorting(myIssues ? 'Created' : 'Updated', 'DESC')).buildQuery();
+};
 
 export const createJiraIssueRequest = (params: TGetIssuesParams) => {
   let query: string | undefined;
