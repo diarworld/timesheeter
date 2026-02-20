@@ -1,7 +1,6 @@
-# Implementation Plan: Issue Summary Report for Team
+# Implementation Plan: Load User's Tasks by Default in Task Selector
 
-Branch: none
-Created: 2026-02-17
+Created: 2026-02-20
 
 ## Settings
 
@@ -11,66 +10,80 @@ Created: 2026-02-17
 
 ## Overview
 
-Add a new "Issue Summary" report to the Reports tab. The report displays a table where:
+When creating a new track, the task selector is currently empty until the user starts typing. This feature adds functionality to load the current user's assigned tasks ordered by created date by default.
 
-- **Rows**: Team issues (issue keys with summaries)
-- **Columns**: Team members (people)
-- **Cell values**: Time logged by each person on each issue
-
-This complements the existing "Time by Day" report which shows users vs days.
-
-## Commit Plan
-
-- **Commit 1** (after tasks 1-3): "feat: add report type selector and data transformation"
-- **Commit 2** (after tasks 4-6): "feat: implement IssueSummaryTable component"
-- **Commit 3** (after task 7): "feat: add tests for issue summary report"
+**Note:** User ID is already available via `self?.uid` from `useYandexUser`/`useJiraUser` hooks - no extra API call needed.
 
 ## Tasks
 
-### Phase 1: Data & UI Foundation
+### Phase 1: Yandex Implementation
 
-- [x] **Task 1**: Add report type selector to Reports tab header
-  - Add Segmented or Radio component to switch between "Time by Day" and "Issue Summary" reports
-  - Persist selection in component state
-  - Files: `src/entities/track/yandex/ui/YandexTimesheet/YandexTimesheet.tsx`
+1. **[Task 1] Modify useYandexIssuesSearchOptions to accept userId and fetch user's assigned issues**
+   - Add `userId` parameter to the hook
+   - When search is empty and userId exists, call `yandexIssueApi.useGetYandexIssuesQuery` with assignee filter
+   - Sort results by Created date
+   - LOG: Log when loading user's issues vs search
 
-- [x] **Task 2**: Create data transformation utility for issue grouping
-  - Create function to group tracks by issueKey
-  - Calculate total duration per issue per user
-  - Return structured data for table rendering
-  - LOGGING: Log input track count, grouped issue count, any empty/null duration values
-  - Files: `src/entities/track/common/lib/transform-tracks-by-issue.ts` (new)
+   Files: `src/entities/issue/yandex/lib/use-yandex-issues-search-options.ts`
 
-- [ ] **Task 3**: Add localization keys for new report
-  - Add keys: report.issueSummary, report.timeByDay, report.issue, report.totalTime, report.noIssues
-  - Files: `public/local/api/locale-en.json`, `public/local/api/locale-ru.json`
-  <!-- 🔄 Commit checkpoint: tasks 1-3 -->
+2. **[Task 2] Update YandexIssuesSearchConnected to pass userId**
+   - Add `userId` prop to component
+   - Pass it to `useYandexIssuesSearchOptions`
 
-### Phase 2: Component Implementation
+   Files: `src/entities/track/yandex/ui/YandexIssuesSearchConnected/YandexIssuesSearchConnected.tsx`
 
-- [ ] **Task 4**: Create IssueSummaryTable component
-  - Build table with issues as rows, team members as columns
-  - Show duration per issue per user, with total per issue
-  - Include sorting by issue key or total time
-  - Add link to issue in Yandex Tracker
-  - Files: `src/entities/track/yandex/ui/YandexTimesheet/IssueSummaryTable.tsx` (new)
+3. **[Task 3] Pass userId from YandexTimesheet to renderIssuesSearchConnected**
+   - Update `TrackModalCreate` to accept optional `userId` prop
+   - Pass `userId` to `renderIssuesSearchConnected`
+   - Pass `self?.uid` from `YandexTimesheet` to `TrackModalCreate`
 
-- [ ] **Task 5**: Create IssueSummaryTable styles
-  - Match existing ReportsTable styling
-  - Support dark/light mode
-  - Files: `src/entities/track/yandex/ui/YandexTimesheet/IssueSummaryTable.module.scss` (new)
+   Files: `src/entities/track/yandex/ui/YandexTimesheet/YandexTimesheet.tsx`, `src/entities/track/common/ui/TrackModalCreate/TrackModalCreate.tsx`, `src/entities/track/common/ui/TrackFormCreate/TrackFormCreate.tsx`
 
-- [ ] **Task 6**: Integrate IssueSummaryTable in YandexTimesheet
-  - Conditionally render based on report type selection
-  - Pass transformed data to component
-  - Handle loading state
-  - Files: `src/entities/track/yandex/ui/YandexTimesheet/YandexTimesheet.tsx`
-  <!-- 🔄 Commit checkpoint: tasks 4-6 -->
+4. **[Task 4] Write unit tests for Yandex issue search options hook**
+   - Test that user's issues are loaded when search is empty
+   - Test that user's issues are sorted by Created date
+   - Test that search works normally when user types
 
-### Phase 3: Testing
+   Files: `src/entities/issue/yandex/lib/__tests__/use-yandex-issues-search-options.test.ts`
 
-- [ ] **Task 7**: Write unit tests for track transformation
-  - Test grouping by issueKey
-  - Test duration calculation
-  - Test handling of empty tracks
-  - Files: `src/entities/track/common/lib/transform-tracks-by-issue.test.ts` (new)
+### Phase 2: Jira Implementation
+
+5. **[Task 5] Modify useJiraIssuesSearchOptions to accept userId and fetch user's assigned issues**
+   - Add `userId` parameter to the hook
+   - When search is empty and userId exists, call `jiraIssueApi.useGetJiraIssuesQuery` with assignee filter
+   - Sort results by Created date
+   - LOG: Log when loading user's issues vs search
+
+   Files: `src/entities/issue/jira/lib/use-jira-issues-search-options.ts`
+
+6. **[Task 6] Update JiraIssuesSearchConnected to pass userId**
+   - Add `userId` prop to component
+   - Pass it to `useJiraIssuesSearchOptions`
+
+   Files: `src/entities/track/jira/ui/JiraIssuesSearchConnected/JiraIssuesSearchConnected.tsx`
+
+7. **[Task 7] Pass userId from JiraTimesheet to TrackModalCreate**
+   - Pass `uId` from `JiraAuthorizedTimesheet` to `TrackModalCreate`
+
+   Files: `src/entities/track/jira/ui/JiraTimesheet/JiraTimesheet.tsx` (or similar)
+
+8. **[Task 8] Write unit tests for Jira issue search options hook**
+   - Test that user's issues are loaded when search is empty
+   - Test that user's issues are sorted by Created date
+   - Test that search works normally when user types
+
+   Files: `src/entities/issue/jira/lib/__tests__/use-jira-issues-search-options.test.ts`
+
+### Phase 3: Verification
+
+9. **[Task 9] Verify both implementations work correctly**
+   - Run existing tests to ensure no regressions
+   - Verify that task selector shows user's issues on open
+
+---
+
+## Commit Plan
+
+- **Commit 1** (after tasks 1-4): "feat: load user's Yandex tasks by default in task selector"
+- **Commit 2** (after tasks 5-8): "feat: load user's Jira tasks by default in task selector"
+- **Commit 3** (after task 9): "test: add unit tests for user tasks default loading"
