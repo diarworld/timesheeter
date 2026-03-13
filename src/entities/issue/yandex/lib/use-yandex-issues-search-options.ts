@@ -46,39 +46,6 @@ export const useYandexIssuesSearchOptions = (
     { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
-  useMemo(() => {
-    if (search) {
-      if (searchPageData?.issues) {
-        if (page === 1) {
-          setAccumulatedIssues(searchPageData.issues);
-        } else {
-          setAccumulatedIssues((prev) => {
-            const existingKeys = new Set(prev.map((i) => i.key));
-            const newIssues = searchPageData.issues.filter((i) => !existingKeys.has(i.key));
-            return [...prev, ...newIssues];
-          });
-        }
-        setTotalPages(searchPageData.totalPages);
-      }
-    } else if (userPageData?.issues) {
-      if (page === 1) {
-        setAccumulatedIssues(userPageData.issues);
-      } else {
-        setAccumulatedIssues((prev) => {
-          const existingKeys = new Set(prev.map((i) => i.key));
-          const newIssues = userPageData.issues.filter((i) => !existingKeys.has(i.key));
-          return [...prev, ...newIssues];
-        });
-      }
-      setTotalPages(userPageData.totalPages);
-    }
-  }, [search, page, searchPageData, userPageData]);
-
-  useMemo(() => {
-    setPage(1);
-    setAccumulatedIssues([]);
-  }, [search]);
-
   const { currentData: initialIssue, isFetching: isFetchingIssue } = yandexIssueApi.useGetYandexIssueQuery(
     { issueIdOrKey: initialIssueKey ?? '', tracker },
     { skip: !initialIssueKey },
@@ -149,39 +116,6 @@ export const useYandexIssuesSearchOptionsPaginated = (
     { search: undefined, myIssues: true, utcOffsetInMinutes: undefined, tracker, perPage, page },
     { skip: !!search, refetchOnMountOrArgChange: true },
   );
-
-  useMemo(() => {
-    if (search) {
-      if (searchPageData?.issues) {
-        if (page === 1) {
-          setAccumulatedIssues(searchPageData.issues);
-        } else {
-          setAccumulatedIssues((prev) => {
-            const existingKeys = new Set(prev.map((i) => i.key));
-            const newIssues = searchPageData.issues.filter((i) => !existingKeys.has(i.key));
-            return [...prev, ...newIssues];
-          });
-        }
-        setTotalPages(searchPageData.totalPages);
-      }
-    } else if (userPageData?.issues) {
-      if (page === 1) {
-        setAccumulatedIssues(userPageData.issues);
-      } else {
-        setAccumulatedIssues((prev) => {
-          const existingKeys = new Set(prev.map((i) => i.key));
-          const newIssues = userPageData.issues.filter((i) => !existingKeys.has(i.key));
-          return [...prev, ...newIssues];
-        });
-      }
-      setTotalPages(userPageData.totalPages);
-    }
-  }, [search, page, searchPageData, userPageData]);
-
-  useMemo(() => {
-    setPage(1);
-    setAccumulatedIssues([]);
-  }, [search]);
 
   const { currentData: initialIssue, isFetching: isFetchingIssue } = yandexIssueApi.useGetYandexIssueQuery(
     { issueIdOrKey: initialIssueKey ?? '', tracker },
