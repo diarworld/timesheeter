@@ -65,6 +65,11 @@ jest.mock('entities/issue/yandex/model/yandex-api', () => ({
       isFetching: false,
       error: null,
     }),
+    useGetYandexIssuesPageQuery: () => ({
+      currentData: { issues: [], totalPages: 1 },
+      isFetching: false,
+      error: null,
+    }),
     useGetYandexIssueQuery: () => ({
       currentData: null,
       isFetching: false,
