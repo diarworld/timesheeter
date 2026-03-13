@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useDebouncedState } from 'shared/lib/useDebouncedState';
-import { useInitialValue } from 'shared/lib/useInitialValue';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { TOption } from 'shared/lib/types';
 import { getOptionFromIssue } from 'entities/issue/common/lib/get-option-from-issue';
@@ -26,7 +25,7 @@ const sortIssuesBySearchPriority = (issues: TIssue[], searchTerm: string): TIssu
 
 export const useJiraIssuesSearchOptions = (tracker: TTrackerConfig, value: string | undefined) => {
   const [search, setSearch, isDebouncingSearch] = useDebouncedState('');
-  const initialIssueKey = useInitialValue(value);
+  const initialIssueKey = value;
   const isUserSearch = !search;
 
   const { currentData: searchIssues, isFetching: isFetchingSearch } = jiraIssueApi.useGetJiraIssuesQuery(
@@ -36,7 +35,7 @@ export const useJiraIssuesSearchOptions = (tracker: TTrackerConfig, value: strin
 
   const { currentData: userIssues, isFetching: isFetchingUser } = jiraIssueApi.useGetJiraIssuesQuery(
     { search: undefined, myIssues: true, utcOffsetInMinutes: undefined, tracker },
-    { skip: !!search },
+    { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
   const { currentData: initialIssue, isFetching: isFetchingIssue } = jiraIssueApi.useGetJiraIssueQuery(
