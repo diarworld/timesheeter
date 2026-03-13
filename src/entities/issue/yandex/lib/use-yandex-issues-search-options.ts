@@ -2,7 +2,6 @@ import { useMemo, useState, useCallback } from 'react';
 
 import { yandexIssueApi } from 'entities/issue/yandex/model/yandex-api';
 import { useDebouncedState } from 'shared/lib/useDebouncedState';
-import { useInitialValue } from 'shared/lib/useInitialValue';
 import { TTrackerConfig } from 'entities/tracker/model/types';
 import { TOption } from 'shared/lib/types';
 import { getOptionFromIssue } from 'entities/issue/common/lib/get-option-from-issue';
@@ -34,7 +33,7 @@ export const useYandexIssuesSearchOptions = (
   const [page, setPage] = useState(1);
   const [accumulatedIssues, setAccumulatedIssues] = useState<TIssue[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const initialIssueKey = useInitialValue(value);
+  const initialIssueKey = value;
   const isUserSearch = !search;
 
   const { currentData: searchPageData, isFetching: isFetchingSearch } = yandexIssueApi.useGetYandexIssuesPageQuery(
@@ -44,7 +43,7 @@ export const useYandexIssuesSearchOptions = (
 
   const { currentData: userPageData, isFetching: isFetchingUser } = yandexIssueApi.useGetYandexIssuesPageQuery(
     { search: undefined, myIssues: true, utcOffsetInMinutes: undefined, tracker, perPage, page },
-    { skip: !!search },
+    { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
   useMemo(() => {
@@ -99,9 +98,17 @@ export const useYandexIssuesSearchOptions = (
   }, [accumulatedIssues, search]);
 
   const userIssuesAsOptions = useMemo(() => {
-    if (!accumulatedIssues.length || search) return emptyArray;
-    return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
-  }, [accumulatedIssues, search]);
+    if (search) return emptyArray;
+    // Check accumulatedIssues FIRST - it contains all loaded pages
+    if (accumulatedIssues.length) {
+      return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
+    }
+    // Fallback to current page data only for initial load
+    if (userPageData?.issues) {
+      return userPageData.issues.map((issue) => getOptionFromIssue(issue, ''));
+    }
+    return emptyArray;
+  }, [search, userPageData, accumulatedIssues]);
 
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),
@@ -132,7 +139,7 @@ export const useYandexIssuesSearchOptionsPaginated = (
   const [page, setPage] = useState(1);
   const [accumulatedIssues, setAccumulatedIssues] = useState<TIssue[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const initialIssueKey = useInitialValue(value);
+  const initialIssueKey = value;
   const isUserSearch = !search;
 
   const { currentData: searchPageData, isFetching: isFetchingSearch } = yandexIssueApi.useGetYandexIssuesPageQuery(
@@ -142,7 +149,7 @@ export const useYandexIssuesSearchOptionsPaginated = (
 
   const { currentData: userPageData, isFetching: isFetchingUser } = yandexIssueApi.useGetYandexIssuesPageQuery(
     { search: undefined, myIssues: true, utcOffsetInMinutes: undefined, tracker, perPage, page },
-    { skip: !!search },
+    { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
   useMemo(() => {
@@ -199,9 +206,15 @@ export const useYandexIssuesSearchOptionsPaginated = (
   }, [allIssues, search]);
 
   const userIssuesAsOptions = useMemo(() => {
-    if (!accumulatedIssues.length) return emptyArray;
-    return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
-  }, [accumulatedIssues]);
+    if (search) return emptyArray;
+    if (accumulatedIssues.length) {
+      return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
+    }
+    if (userPageData?.issues) {
+      return userPageData.issues.map((issue) => getOptionFromIssue(issue, ''));
+    }
+    return emptyArray;
+  }, [search, userPageData, accumulatedIssues]);
 
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),

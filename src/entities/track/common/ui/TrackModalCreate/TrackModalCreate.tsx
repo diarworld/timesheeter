@@ -45,6 +45,7 @@ export const TrackModalCreate = ({
       onCancel={onTrackModalClose}
       footer={null}
       width="fit-content"
+      destroyOnClose
     >
       <TrackFormCreate
         tracker={tracker}
