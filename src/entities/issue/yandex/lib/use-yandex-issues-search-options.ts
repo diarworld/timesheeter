@@ -46,39 +46,6 @@ export const useYandexIssuesSearchOptions = (
     { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
-  useMemo(() => {
-    if (search) {
-      if (searchPageData?.issues) {
-        if (page === 1) {
-          setAccumulatedIssues(searchPageData.issues);
-        } else {
-          setAccumulatedIssues((prev) => {
-            const existingKeys = new Set(prev.map((i) => i.key));
-            const newIssues = searchPageData.issues.filter((i) => !existingKeys.has(i.key));
-            return [...prev, ...newIssues];
-          });
-        }
-        setTotalPages(searchPageData.totalPages);
-      }
-    } else if (userPageData?.issues) {
-      if (page === 1) {
-        setAccumulatedIssues(userPageData.issues);
-      } else {
-        setAccumulatedIssues((prev) => {
-          const existingKeys = new Set(prev.map((i) => i.key));
-          const newIssues = userPageData.issues.filter((i) => !existingKeys.has(i.key));
-          return [...prev, ...newIssues];
-        });
-      }
-      setTotalPages(userPageData.totalPages);
-    }
-  }, [search, page, searchPageData, userPageData]);
-
-  useMemo(() => {
-    setPage(1);
-    setAccumulatedIssues([]);
-  }, [search]);
-
   const { currentData: initialIssue, isFetching: isFetchingIssue } = yandexIssueApi.useGetYandexIssueQuery(
     { issueIdOrKey: initialIssueKey ?? '', tracker },
     { skip: !initialIssueKey },
@@ -91,22 +58,18 @@ export const useYandexIssuesSearchOptions = (
   }, [page, totalPages]);
 
   const searchIssuesAsOptions = useMemo(() => {
-    const issues = search ? accumulatedIssues : [];
-    if (!issues.length) return emptyArray;
-    const sortedIssues = sortIssuesBySearchPriority(issues, search);
+    if (!search || !searchPageData?.issues) return emptyArray;
+    const sortedIssues = sortIssuesBySearchPriority(searchPageData.issues, search);
     return sortedIssues.map((issue) => getOptionFromIssue(issue, search));
-  }, [accumulatedIssues, search]);
+  }, [search, searchPageData]);
 
   const userIssuesAsOptions = useMemo(() => {
     if (search) return emptyArray;
     if (userPageData?.issues) {
       return userPageData.issues.map((issue) => getOptionFromIssue(issue, ''));
     }
-    if (accumulatedIssues.length) {
-      return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
-    }
     return emptyArray;
-  }, [search, userPageData, accumulatedIssues]);
+  }, [search, userPageData]);
 
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),
@@ -150,39 +113,6 @@ export const useYandexIssuesSearchOptionsPaginated = (
     { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
-  useMemo(() => {
-    if (search) {
-      if (searchPageData?.issues) {
-        if (page === 1) {
-          setAccumulatedIssues(searchPageData.issues);
-        } else {
-          setAccumulatedIssues((prev) => {
-            const existingKeys = new Set(prev.map((i) => i.key));
-            const newIssues = searchPageData.issues.filter((i) => !existingKeys.has(i.key));
-            return [...prev, ...newIssues];
-          });
-        }
-        setTotalPages(searchPageData.totalPages);
-      }
-    } else if (userPageData?.issues) {
-      if (page === 1) {
-        setAccumulatedIssues(userPageData.issues);
-      } else {
-        setAccumulatedIssues((prev) => {
-          const existingKeys = new Set(prev.map((i) => i.key));
-          const newIssues = userPageData.issues.filter((i) => !existingKeys.has(i.key));
-          return [...prev, ...newIssues];
-        });
-      }
-      setTotalPages(userPageData.totalPages);
-    }
-  }, [search, page, searchPageData, userPageData]);
-
-  useMemo(() => {
-    setPage(1);
-    setAccumulatedIssues([]);
-  }, [search]);
-
   const { currentData: initialIssue, isFetching: isFetchingIssue } = yandexIssueApi.useGetYandexIssueQuery(
     { issueIdOrKey: initialIssueKey ?? '', tracker },
     { skip: !initialIssueKey },
@@ -208,11 +138,8 @@ export const useYandexIssuesSearchOptionsPaginated = (
     if (userPageData?.issues) {
       return userPageData.issues.map((issue) => getOptionFromIssue(issue, ''));
     }
-    if (accumulatedIssues.length) {
-      return accumulatedIssues.map((issue) => getOptionFromIssue(issue, ''));
-    }
     return emptyArray;
-  }, [search, userPageData, accumulatedIssues]);
+  }, [search, userPageData]);
 
   const initialIssueAsOptions = useMemo(
     () => (initialIssue ? [getOptionFromIssue(initialIssue)] : emptyArray),
