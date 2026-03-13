@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 
 import { yandexIssueApi } from 'entities/issue/yandex/model/yandex-api';
 import { useDebouncedState } from 'shared/lib/useDebouncedState';
@@ -46,7 +46,7 @@ export const useYandexIssuesSearchOptions = (
     { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
-  useEffect(() => {
+  useMemo(() => {
     if (search) {
       if (searchPageData?.issues) {
         if (page === 1) {
@@ -74,7 +74,7 @@ export const useYandexIssuesSearchOptions = (
     }
   }, [search, page, searchPageData, userPageData]);
 
-  useEffect(() => {
+  useMemo(() => {
     setPage(1);
     setAccumulatedIssues([]);
   }, [search]);
@@ -150,7 +150,7 @@ export const useYandexIssuesSearchOptionsPaginated = (
     { skip: !!search, refetchOnMountOrArgChange: true },
   );
 
-  useEffect(() => {
+  useMemo(() => {
     if (search) {
       if (searchPageData?.issues) {
         if (page === 1) {
@@ -178,7 +178,7 @@ export const useYandexIssuesSearchOptionsPaginated = (
     }
   }, [search, page, searchPageData, userPageData]);
 
-  useEffect(() => {
+  useMemo(() => {
     setPage(1);
     setAccumulatedIssues([]);
   }, [search]);
