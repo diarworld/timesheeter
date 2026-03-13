@@ -61,12 +61,12 @@ jest.mock('entities/user/yandex/model/yandex-api', () => ({
 jest.mock('entities/issue/yandex/model/yandex-api', () => ({
   yandexIssueApi: {
     useGetYandexIssuesQuery: () => ({
-      currentData: [],
+      currentData: undefined,
       isFetching: false,
       error: null,
     }),
     useGetYandexIssuesPageQuery: () => ({
-      currentData: { issues: [], totalPages: 1 },
+      currentData: undefined,
       isFetching: false,
       error: null,
     }),
