@@ -1,31 +1,136 @@
 {
-  "version": "1.8.0",
-  "agent": "opencode",
-  "skillsDir": ".opencode/skills",
-  "installedSkills": [
-    "ai-factory",
-    "architecture",
-    "best-practices",
-    "build-automation",
-    "ci",
-    "commit",
-    "deploy",
-    "dockerize",
-    "docs",
-    "evolve",
-    "feature",
-    "fix",
-    "implement",
-    "improve",
-    "review",
-    "security-checklist",
-    "skill-generator",
-    "task",
-    "verify"
+  "version": "2.9.2",
+  "agents": [
+    {
+      "id": "opencode",
+      "skillsDir": ".opencode/skills",
+      "installedSkills": [
+        "aif",
+        "aif-architecture",
+        "aif-best-practices",
+        "aif-build-automation",
+        "aif-ci",
+        "aif-commit",
+        "aif-dockerize",
+        "aif-docs",
+        "aif-evolve",
+        "aif-explore",
+        "aif-fix",
+        "aif-grounded",
+        "aif-implement",
+        "aif-improve",
+        "aif-loop",
+        "aif-plan",
+        "aif-reference",
+        "aif-review",
+        "aif-roadmap",
+        "aif-rules",
+        "aif-security-checklist",
+        "aif-skill-generator",
+        "aif-verify"
+      ],
+      "mcp": {
+        "github": false,
+        "filesystem": false,
+        "postgres": false,
+        "chromeDevtools": false,
+        "playwright": false
+      },
+      "managedSkills": {
+        "aif": {
+          "sourceHash": "8f9140e59e889c0040ad33b9f287dce36971a33d2ee396d60a522b58f93c9d8e",
+          "installedHash": "b99853f6d9547a26aef0236f18a0b7dd265a54e8eea42969b6c2e8d49357dbce"
+        },
+        "aif-architecture": {
+          "sourceHash": "55b42058acd5d1396b0e6cdce71055a38e3f76a5346fb1c1d4ffe8bd0caec3ac",
+          "installedHash": "3d9ac4754e7a15b2aa9d3365a84eeaa5e03f2bbcb0e8114692493204d0adc89e"
+        },
+        "aif-best-practices": {
+          "sourceHash": "761ccf625c0276b19282d426037279a3438602087e56d2c52af5156a8e5be245",
+          "installedHash": "8d789b6db0c0f63b181a1d9e9ff786449cf777a6ce73c7234de3e03938ed2ded"
+        },
+        "aif-build-automation": {
+          "sourceHash": "02005d1767c28b807dcb5307965acc0231fd9fddb3318b88853ad6d136d23ab5",
+          "installedHash": "5341fd4acf65b3f3de7f5b8fbe382d64913aa602bea885ac51aae728efeb65cd"
+        },
+        "aif-ci": {
+          "sourceHash": "37abfac4b6e5ab15cd6fd5c3d6d6a22436448675ff9263ac6d443bbcd438aa94",
+          "installedHash": "513e211ed5cd443eafbe9c26d910ca41c059c29f8a5ad4566b2bc24038643f24"
+        },
+        "aif-commit": {
+          "sourceHash": "d962b0b4d7471e13f02f9b32e21ffdb40fbc13f4eeb8c554a901162650a60fd1",
+          "installedHash": "221cd20141c3d20d3b86169ce930b60148908aa8688de037b966317ca55b77d1"
+        },
+        "aif-dockerize": {
+          "sourceHash": "2cd2ec0a6e942270ef0b1105de8e521ee29d99483e3c8e17281c5b293461c68f",
+          "installedHash": "8a337abe764e4dc13ca54d0d708997066bdf28556e964f4e7beaf92ab9ac31ed"
+        },
+        "aif-docs": {
+          "sourceHash": "489958faf586f83a96048366e766851b81d909222d082dedb5e8b7de8966fbc8",
+          "installedHash": "dc965114650f40ab2cade4f0e4d882934170a8574b9299351bd4286ab3e4a83b"
+        },
+        "aif-evolve": {
+          "sourceHash": "9f4f0bcbd0427c5522d58c531e516cd0bb9e2392fa03436fbb3b226f02036168",
+          "installedHash": "c3c01267ad4d206301a6be1b60d138596a0bcf8c715871c6d5525fc6c2ef8d40"
+        },
+        "aif-explore": {
+          "sourceHash": "0e903e45de0f74b08a137145f8898201b1bbd826281b3ee629ea854353b94f69",
+          "installedHash": "bf289d00626ede144455a2900abb3fde92118bbdc6d2e66f030d68da71a95ace"
+        },
+        "aif-fix": {
+          "sourceHash": "4e668661c8963f3144732c97ca09cd52993fb99fc48ebe32f6a9c019d4948f97",
+          "installedHash": "4916814daed8cf3aa5c7bd02b7569dab76a029127d130ab3cb1aa65f67b5d676"
+        },
+        "aif-grounded": {
+          "sourceHash": "96eb67434f47d51e655dc3923ca847231d1f80a5a91c75f91e9a509d31a50680",
+          "installedHash": "11a25f6e08c468e798a77ee28f8ed62c881c2c161f02761d9cc54ed946ddcc9f"
+        },
+        "aif-implement": {
+          "sourceHash": "c2464776ad7b71444e849201bb17e7e9f0a210189bbe46157b87be5b747a30de",
+          "installedHash": "8a88c781f3a285cca9b7a5a25a01c6c5c12310517f9f20b1b66b7e47c84dfa5e"
+        },
+        "aif-improve": {
+          "sourceHash": "bcad15befd3b623c16c3ab9829916c058378693c6c5c9b6b8411ebe7369dce2e",
+          "installedHash": "a197bc16e9aa5173f512fefab855e869cf1f67166286b38a342a856fa76640c1"
+        },
+        "aif-loop": {
+          "sourceHash": "7b4cde8be1e6cedbfb0f0504abac233e0d578c6147288012b265ef5d2e6be274",
+          "installedHash": "688bfaee782bd10bf3bec648ca3e185a83038a340f95b19e512e044719cf504b"
+        },
+        "aif-plan": {
+          "sourceHash": "2cf257547df5cf56e087957d56b2f85ea89fe6cf514bc6160a8f12f23071288d",
+          "installedHash": "e87f0eb82db8cd0d703e9444413bddc8162216438215851b68e739782993b2be"
+        },
+        "aif-reference": {
+          "sourceHash": "3a191dc096ecfe54c99862ff80752f4600b38c8fd162326843f0ab037ec9f83c",
+          "installedHash": "591aa61dc683137dbf0270c9a263eeae696ff20e11ca126fb55554c5635ca7dc"
+        },
+        "aif-review": {
+          "sourceHash": "a5644a84ba6f54ad3a6bd8066c18b042e2e1d76ae26bd85cee5bf9cc98c14e1c",
+          "installedHash": "ad7ad5daf3e03453baa06d50165f95ea0bb09710b80234d40f1cec54aaefb264"
+        },
+        "aif-roadmap": {
+          "sourceHash": "ac51300d582ad9a9c92750187d64c9f37824082c491c3ab08caf81c56b44deb0",
+          "installedHash": "8dc239b47a285993f440ab86ac453b7bcd868e258075ea58aa4d427fea07d2e3"
+        },
+        "aif-rules": {
+          "sourceHash": "fd5ba45156b4b9aca5410dc83c63af1bacffd81d67a19da7ce08703f28a4c59e",
+          "installedHash": "b068ce38f96c29a4d0a3306bd4c531b3cea4a69ca9c6c463f3ca48df7cdcefef"
+        },
+        "aif-security-checklist": {
+          "sourceHash": "92a1f473c9401e4666fd6fefb29e28be0cdab86c6970240ead679dc787c65e3a",
+          "installedHash": "679e04e7776dd47783a515c4d6de249da47a17002223fbf842b73a9d88bbdb40"
+        },
+        "aif-skill-generator": {
+          "sourceHash": "8d1e9073a50af8ea736247d649ea554a67edc36e837c37ab059a92c877b8453a",
+          "installedHash": "79582c5ba30c57e46ad0f29b614b40ea196b08e8c12baa3bf13f11dda45b6c85"
+        },
+        "aif-verify": {
+          "sourceHash": "e11b397ea6c5ab5fcf430e45d3f24246ec40691ea2e7b2f1b0f3a0d5db023afb",
+          "installedHash": "02e4020d0a60f0f5fa8a893d5728cf4edb4d715e97f68e64907143daf669037f"
+        }
+      }
+    }
   ],
-  "mcp": {
-    "github": true,
-    "filesystem": true,
-    "postgres": true
-  }
+  "extensions": []
 }
